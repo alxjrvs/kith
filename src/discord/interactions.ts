@@ -414,10 +414,8 @@ async function upcoming(interaction: Interaction, env: Env): Promise<Json> {
  * A login link, and the two things Discord's terms require: the privacy policy
  * and a way out.
  *
- * The link carries a five-minute signed token, so the redirect to Discord's
- * authorize endpoint only happens for somebody who asked for it here, just now.
- * The response is ephemeral, so the link is seen by the person who ran the
- * command and nobody else.
+ * The link is the same public sign-in the front page offers; the command is a
+ * shortcut to it, not the only way in (see src/console/link.ts).
  *
  * The **Delete my data** button stays exactly where it is. It is the only way
  * out Orrey offers until the console has a page of its own for it, which is
@@ -431,18 +429,7 @@ async function console_(
   const actor = actorOf(interaction);
   if (!actor) return ephemeral("Orrey could not tell who asked.");
 
-  // A deploy without `CONSOLE_SESSION_SECRET` cannot mint a link. That must not
-  // cost the person the privacy policy and the way out, and it must never reach
-  // them as "interaction failed" — so the link line is what goes missing, and it
-  // says why.
-  let linkLine: string;
-  try {
-    const link = await loginLink(env, ctx.origin, actor.id, new Date());
-    linkLine = `**The Orrey console** — <${link}>\n-# That link is yours and lasts five minutes. Run \`/console\` again for another.`;
-  } catch (error) {
-    console.error("could not mint a console link", error);
-    linkLine = "**The Orrey console** — not available on this deploy.";
-  }
+  const linkLine = `**The Orrey console** — <${loginLink(ctx.origin)}>`;
 
   return ephemeral(
     [

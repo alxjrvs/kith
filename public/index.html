@@ -15,16 +15,21 @@
       h1 { font-size: 1.5rem; margin: 0 0 .5rem; letter-spacing: -0.01em; }
       p { margin: 0 0 1rem; color: #a5a2a0; }
       a { color: #9ec1ff; }
+      a.signin {
+        display: inline-block; padding: .6rem 1.1rem; border-radius: 8px;
+        background: #5865f2; color: #fff; font-weight: 600; text-decoration: none;
+      }
+      a.signin:hover, a.signin:focus-visible { background: #4752c4; }
     </style>
   </head>
   <body>
     <main>
       <h1>The Orrey</h1>
       <p>Campaign and game-day scheduling for the Orrey of Worlds.</p>
+      <p><a class="signin" href="/console/login">Sign in with Discord</a></p>
       <p>
-        The console is at <a href="/console">/console</a>, and you get into it by
-        running <code>/console</code> in Discord — Orrey has no password of its
-        own and never will.
+        Discord is how Orrey knows who you are. It asks Discord for your name and
+        nothing else, and it has no password of its own.
       </p>
       <p><a href="/privacy">What the Orrey knows about you</a></p>
     </main>

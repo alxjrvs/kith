@@ -89,12 +89,11 @@ describe("delete-my-data", () => {
     });
 
     const link = json.data.content.match(
-      /<(https:\/\/orrey\.test\/console\/login\?t=[^>]+)>/,
+      /<(https:\/\/orrey\.test\/console\/login)>/,
     )?.[1];
     expect(link).toBeTruthy();
 
-    // The command and the route agree, which is the only thing worth asserting
-    // about a signed token: it is not a string that merely looks right.
+    // The command and the route agree: the link it posts is the public sign-in.
     const response = await app.fetch(
       new Request(link!, { redirect: "manual" }),
       discord.env(env),

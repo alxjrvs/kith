@@ -17,7 +17,7 @@ async function api(path, init) {
     ...(init?.body === undefined ? {} : { headers: { "content-type": "application/json" } }),
   });
 
-  if (response.status === 401) throw new Refusal("Not signed in. Run /console in Discord.");
+  if (response.status === 401) throw new Refusal("Not signed in. Sign in with Discord on the front page.");
   if (response.status === 403) throw new Refusal("That is an organiser's to do.");
   if (response.status === 503) {
     const body = await response.json().catch(() => ({}));
