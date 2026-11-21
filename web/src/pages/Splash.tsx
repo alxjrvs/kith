@@ -118,6 +118,7 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
       <Orbits />
       <header>
         <Link to="/" className="wordmark" style={{ fontSize: 14 }}>
+          <img src="/mark.svg" alt="" width="26" height="26" />
           ORREY
         </Link>
         <div className="row" style={{ gap: 10 }}>

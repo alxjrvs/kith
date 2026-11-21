@@ -8,6 +8,7 @@ export function Header() {
   return (
     <header className="site-header">
       <Link to="/" className="wordmark">
+        <img src="/mark.svg" alt="" width="22" height="22" />
         ORREY
       </Link>
       <nav aria-label="Main" className="site-nav">
