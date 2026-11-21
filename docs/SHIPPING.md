@@ -52,8 +52,8 @@ schema and a Worker rollback never needs a schema rollback.
 
 These need repo admin, which an agent here doesn't have.
 
-1. **Rulesets.** Today `default-branch-protection` requires a PR and
-   `quality-checks`, with no bypass. Swap it for the factory's two rulesets
+1. **Rulesets.** Until 2026-11-21 `default-branch-protection` required a PR and
+   `quality-checks`, with no bypass. It was swapped for the factory's two rulesets
    (history lock; PR plus `CI`, `Audit`, `Review` from GitHub Actions,
    squash or rebase only, admins bypass, maintainers bypass only by PR) from a
    checkout of TheGnarCo/agent-skills:
@@ -67,9 +67,7 @@ These need repo admin, which an agent here doesn't have.
    token to read-only, and turns on Dependabot and secret push protection.
    It doesn't touch the old ruleset (another name), so delete that one too:
    `gh api -X DELETE repos/alxjrvs/orrey/rulesets/23124853`.
-   Do this **after** the PR adding these workflows merges, since a required
-   check that never reports blocks every PR. Then delete the `quality-checks`
-   job from `required-ci.yml`.
+   Done 2026-11-21; the old `quality-checks` job is gone.
 2. **Production environment.** Move `CLOUDFLARE_API_TOKEN` and
    `CLOUDFLARE_ACCOUNT_ID` to secrets of the `production` environment (repo
    secrets still work), and add the variable
