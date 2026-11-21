@@ -22,9 +22,12 @@ import type { InteractionUser } from "../discord/types.ts";
  * `src/hub/visibility.ts`; writes need a signed-in person and act only as them.
  * The id always comes off the session cookie, never off the request.
  *
- * Writes require a JSON body. The session cookie is SameSite=Lax, so another
- * site cannot send it on a POST; a JSON content type also cannot be sent
- * cross-origin without a preflight this origin never answers.
+ * Writes are refused unless they come from this origin. SameSite=Lax is not
+ * enough on its own, because a sibling subdomain of the same site is
+ * "same-site" and gets the cookie sent. So a write needs a content type of
+ * exactly `application/json` (which no page can send cross-origin without a
+ * preflight this origin never answers), and, when the browser says where the
+ * request came from, it has to say this origin.
  */
 type HubEnv = { Bindings: Env; Variables: { viewer: Viewer } };
 
@@ -137,12 +140,27 @@ export function hubRoutes() {
   return hub;
 }
 
+/**
+ * The site's organiser flag, remembered for a minute per person.
+ *
+ * One page load asks the hub three or four things, and each answer would
+ * otherwise be a guild-member fetch. The flag here only decides what the site
+ * *shows* (hidden listings, edit buttons); every organiser *write* goes through
+ * the console's gate, which still reads the role fresh on every request.
+ */
+const ORGANISER_TTL_MS = 60_000;
+const organiserSeen = new Map<string, { value: boolean; until: number }>();
+
 async function viewerOf(env: Env, cookie: string | undefined): Promise<Viewer> {
   const session = await sessionFrom(env, cookie, new Date());
   if (!session) return ANONYMOUS;
+  const seen = organiserSeen.get(session.userId);
+  if (seen && seen.until > Date.now()) return { userId: session.userId, organiser: seen.value };
+
   let organiser = false;
   try {
     organiser = await isOrganiser(env, session.userId);
+    organiserSeen.set(session.userId, { value: organiser, until: Date.now() + ORGANISER_TTL_MS });
   } catch (error) {
     // An unseeded role or Discord being slow means "not an organiser" here,
     // not a broken page for everybody. The console's gate still says 503.
@@ -151,20 +169,32 @@ async function viewerOf(env: Env, cookie: string | undefined): Promise<Viewer> {
   return { userId: session.userId, organiser };
 }
 
+/** For tests: forget every remembered organiser flag. */
+export function forgetOrganisers(): void {
+  organiserSeen.clear();
+}
+
 function userRow(env: Env, userId: string) {
   return db(env).select().from(schema.users).where(eq(schema.users.discordId, userId)).get();
 }
 
 /** The signed-in person as the shape the locks take, or the response that refuses. */
 async function signedInActor(c: Context<HubEnv>): Promise<InteractionUser | Response> {
-  if (!(c.req.header("content-type") ?? "").includes("application/json")) {
-    return c.json({ error: "Send JSON." }, 415);
-  }
+  const mediaType = (c.req.header("content-type") ?? "").split(";")[0]!.trim().toLowerCase();
+  if (mediaType !== "application/json") return c.json({ error: "Send JSON." }, 415);
+  if (!sameOrigin(c)) return c.json({ error: "That did not come from Orrey." }, 403);
   const userId = c.get("viewer").userId;
   if (!userId) return c.json({ error: "Sign in with Discord first." }, 401);
   const user = await userRow(c.env, userId);
   if (!user) return c.json({ error: "Sign in with Discord first." }, 401);
   return { id: user.discordId, username: user.username ?? user.discordId, global_name: user.globalName };
+}
+
+function sameOrigin(c: Context<HubEnv>): boolean {
+  const fetchSite = c.req.header("sec-fetch-site");
+  if (fetchSite && fetchSite !== "same-origin") return false;
+  const origin = c.req.header("origin");
+  return !origin || origin === new URL(c.req.url).origin;
 }
 
 async function body(c: Context<HubEnv>): Promise<Record<string, unknown>> {
@@ -176,7 +206,7 @@ async function body(c: Context<HubEnv>): Promise<Record<string, unknown>> {
   }
 }
 
-/** On the roster of the session's campaign, or holding a seat at its game day. */
+/** On the roster of the session's campaign, or holding a seat at (or hosting) its game day. */
 async function onTable(
   env: Env,
   target: NonNullable<Awaited<ReturnType<typeof loadProjectionTarget>>>,
@@ -192,6 +222,7 @@ async function onTable(
     return member.some((m) => m.userId === userId);
   }
   if (target.gameDay) {
+    if (target.gameDay.hostUserId === userId) return true;
     const seats = await d
       .select({ userId: schema.signups.userId, state: schema.signups.state, type: schema.signups.targetType })
       .from(schema.signups)

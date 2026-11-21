@@ -5,6 +5,7 @@ import { SETTING_KEYS, setSetting } from "../src/db/settings.ts";
 import { createApp } from "../src/http/app.ts";
 import { SESSION_COOKIE, issueSession } from "../src/console/cookies.ts";
 import { canSee } from "../src/hub/visibility.ts";
+import { forgetOrganisers } from "../src/http/hub.ts";
 
 /**
  * The site's API. What matters: anybody can read what is public and nothing
@@ -55,6 +56,7 @@ async function person(id: string, name: string) {
 
 beforeEach(async () => {
   roles = {};
+  forgetOrganisers();
   globalThis.fetch = (async (input: RequestInfo | URL) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     const member = url.match(/\/members\/(\d+)/);
@@ -180,6 +182,32 @@ describe("signing up from the site", () => {
       hubEnv(),
     );
     expect(form.status).toBe(415);
+
+    // A media type that merely mentions JSON is a simple request a page can send cross-origin.
+    const sneaky = await app.fetch(
+      new Request("https://orrey.test/api/hub/campaigns/hollowmere/signup", {
+        method: "POST",
+        headers: { cookie: await as("1001"), "content-type": "text/plain; x=application/json" },
+        body: JSON.stringify({ action: "seat" }),
+      }),
+      hubEnv(),
+    );
+    expect(sneaky.status).toBe(415);
+  });
+
+  it("refuses a write that says it came from somewhere else", async () => {
+    for (const headers of [{ origin: "https://other.alxjrvs.com" }, { "sec-fetch-site": "same-site" }]) {
+      const response = await app.fetch(
+        new Request("https://orrey.test/api/hub/campaigns/hollowmere/signup", {
+          method: "POST",
+          headers: { cookie: await as("1001"), "content-type": "application/json", ...headers },
+          body: JSON.stringify({ action: "seat" }),
+        }),
+        hubEnv(),
+      );
+      expect(response.status).toBe(403);
+    }
+    expect(await db(env).select().from(schema.signups).all()).toEqual([]);
   });
 
   it("seats the first, queues the next, and moves the queue up when a seat frees", async () => {
@@ -239,6 +267,35 @@ describe("saying in or out from the site", () => {
 
     const theirs = (await (await call("GET", "/api/hub/agenda", await as("1002"))).json()) as { rows: unknown[] };
     expect(theirs.rows).toEqual([]);
+  });
+});
+
+describe("a game day on the agenda", () => {
+  beforeEach(async () => {
+    await db(env).update(schema.gameDays).set({ visibility: "members", hostUserId: "1003" });
+    await db(env).insert(schema.sessions).values({
+      id: "d1",
+      kind: "one_off",
+      gameDayId: "arcs-afternoon",
+      startsAt: later,
+      endsAt: later + 3600,
+    });
+  });
+
+  it("is on the host's agenda and theirs to answer, seat or no seat", async () => {
+    const agenda = (await (await call("GET", "/api/hub/agenda", await as("1003"))).json()) as {
+      rows: { sessionId: string; mine: boolean; canAnswer: boolean }[];
+    };
+    expect(agenda.rows).toMatchObject([{ sessionId: "d1", mine: true, canAnswer: true }]);
+  });
+
+  it("shows the waitlist the day without letting them answer for it", async () => {
+    await db(env).insert(schema.signups).values({ targetType: "game_day", targetId: "arcs-afternoon", userId: "1002", state: "waitlisted", position: 1 });
+    const agenda = (await (await call("GET", "/api/hub/agenda", await as("1002"))).json()) as {
+      rows: { sessionId: string; mine: boolean; canAnswer: boolean }[];
+    };
+    expect(agenda.rows).toMatchObject([{ sessionId: "d1", mine: true, canAnswer: false }]);
+    expect((await call("POST", "/api/hub/sessions/d1/intent", await as("1002"), { intent: "in" })).status).toBe(403);
   });
 });
 
