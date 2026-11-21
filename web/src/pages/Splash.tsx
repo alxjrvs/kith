@@ -174,9 +174,12 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
             </span>
           </div>
         </div>
-        <a href="#details" style={{ fontSize: 13 }}>
-          Read the full details
-        </a>
+        <div className="row" style={{ gap: 18, fontSize: 13 }}>
+          <a href="#details">Read the full details</a>
+          <Link to="/table/$kind/$id" params={{ kind: listing.kind, id: listing.id }}>
+            Links and pages
+          </Link>
+        </div>
       </main>
     </div>
   );

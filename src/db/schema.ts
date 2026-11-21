@@ -853,3 +853,57 @@ export const pollResponses = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.pollDateId, t.userId] })],
 );
+
+/**
+ * What a table points at and what it knows: the hub's links and knowledge
+ * pages. Both hang off a (target_type, target_id) pair, like signups, so they
+ * work the same on a campaign and on a game day; `target_id` is not a foreign
+ * key for the same reason it is not one there. Each row carries its own
+ * visibility, read through `src/hub/visibility.ts`.
+ */
+export const HUB_TARGETS = ["campaign", "game_day"] as const;
+
+export const links = sqliteTable(
+  "links",
+  {
+    id: text("id").primaryKey(),
+    targetType: text("target_type", { enum: HUB_TARGETS }).notNull(),
+    targetId: text("target_id").notNull(),
+    label: text("label").notNull(),
+    /** Always https; checked by the one writer. */
+    url: text("url").notNull(),
+    /** Only an icon and a sort: vtt, sheet, rules, doc, discord, other. */
+    kind: text("kind", { enum: ["vtt", "sheet", "rules", "doc", "discord", "other"] })
+      .notNull()
+      .default("other"),
+    visibility: text("visibility", { enum: VISIBILITY }).notNull().default("members"),
+    position: integer("position").notNull().default(0),
+    createdAt: integer("created_at").notNull().default(now),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => [
+    index("links_target_idx").on(t.targetType, t.targetId, t.position),
+    check("links_target_ck", sql`${t.targetType} IN ('campaign', 'game_day')`),
+  ],
+);
+
+export const pages = sqliteTable(
+  "pages",
+  {
+    targetType: text("target_type", { enum: HUB_TARGETS }).notNull(),
+    targetId: text("target_id").notNull(),
+    /** Lowercase words and hyphens, unique within the table: house-rules, npcs. */
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    /** Markdown. Rendered by the site's own small renderer, never as raw HTML. */
+    body: text("body").notNull().default(""),
+    visibility: text("visibility", { enum: VISIBILITY }).notNull().default("members"),
+    updatedBy: text("updated_by").references(() => users.discordId, { onDelete: "set null" }),
+    createdAt: integer("created_at").notNull().default(now),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => [
+    primaryKey({ columns: [t.targetType, t.targetId, t.slug] }),
+    check("pages_target_ck", sql`${t.targetType} IN ('campaign', 'game_day')`),
+  ],
+);

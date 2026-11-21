@@ -195,3 +195,11 @@ img { max-width: 100%; }
 @media (max-width: 640px) {
   .splash .orbit { opacity: 0.3; }
 }
+
+.prose blockquote { margin: 0 0 0.9em; padding-left: 12px; border-left: 2px solid var(--accent); color: var(--muted); }
+.prose hr { border: 0; border-top: 1px solid var(--border); margin: 1.2em 0; }
+.prose h4 { font-family: var(--font-head); margin: 1em 0 0.3em; }
+.link-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 14px; border-bottom: 1px solid var(--rule); }
+.link-row:last-child { border-bottom: 0; }
+.link-row a { font-weight: 600; }
+.prose > :first-child { margin-top: 0; }
