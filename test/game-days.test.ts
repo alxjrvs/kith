@@ -113,15 +113,22 @@ describe("what this PR does not do", () => {
       "discord_message_id",
       "ends_at",
       "game_id",
+      // Added by the site's listing (0016): the splash page's words and links,
+      // and who may see the day. The scheduler reads none of them.
+      "hero_url",
       "host_user_id",
       "id",
       "kind",
+      "pitch",
+      "sound_url",
       "starts_at",
       "state",
+      "tagline",
       "thread_id",
       "title",
       "updated_at",
       "venue",
+      "visibility",
       // Added by p7/6, which records how deep the queue was when the table
       // settled. The list is exact on purpose — a column arriving unannounced
       // is the thing this test is here to notice — so a later phase adding one

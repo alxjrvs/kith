@@ -123,10 +123,16 @@ export async function identify(accessToken: string): Promise<InteractionUser> {
     id?: string;
     username?: string;
     global_name?: string | null;
+    avatar?: string | null;
   };
   if (!body.id || !body.username) throw new OAuthError(502, "/users/@me carried no user");
 
-  return { id: body.id, username: body.username, global_name: body.global_name ?? null };
+  return {
+    id: body.id,
+    username: body.username,
+    global_name: body.global_name ?? null,
+    avatar: body.avatar ?? null,
+  };
 }
 
 /**

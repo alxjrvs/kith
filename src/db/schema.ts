@@ -35,9 +35,22 @@ export const users = sqliteTable("users", {
   dmState: text("dm_state", { enum: ["unknown", "open", "closed"] })
     .notNull()
     .default("unknown"),
+  /** Discord's avatar hash, a cache like the names. Null is Discord's default avatar. */
+  avatar: text("avatar"),
   createdAt: integer("created_at").notNull().default(now),
   updatedAt: integer("updated_at").notNull().default(now),
 });
+
+/**
+ * Who may see a thing on the site.
+ *
+ * `public` is anyone, signed in or not: the catalog, open listings, splash
+ * pages. `members` is the people on it (a campaign's roster and signups, a game
+ * day's seats and host) and organisers. `organisers` is organisers only.
+ * Checked in one place, `src/hub/visibility.ts`, like the quorum rule is.
+ */
+export const VISIBILITY = ["public", "members", "organisers"] as const;
+export type Visibility = (typeof VISIBILITY)[number];
 
 /** Single-guild key/value: guild id, channel ids, horizon size, feature flags. */
 export const settings = sqliteTable("settings", {
@@ -90,6 +103,12 @@ export const games = sqliteTable(
     maxPlayers: integer("max_players"),
     /** How long a session of it usually runs, in minutes. */
     defaultDurationMinutes: integer("default_duration_minutes"),
+    /** A tabletop RPG or a board game. The catalog sorts and labels by it. */
+    category: text("category", { enum: ["ttrpg", "board"] }).notNull().default("ttrpg"),
+    /** One or two sentences for the catalog card. */
+    summary: text("summary"),
+    /** An https URL to a cover image. Orrey stores the link, never the image. */
+    coverUrl: text("cover_url"),
     createdAt: integer("created_at").notNull().default(now),
     updatedAt: integer("updated_at").notNull().default(now),
   },
@@ -174,6 +193,17 @@ export const campaigns = sqliteTable(
      * that, not the next poll.
      */
     autoResolvePolls: integer("auto_resolve_polls").notNull().default(0),
+    /**
+     * The listing: what the site's Find a game and splash pages say about it.
+     * All optional, all organiser-written. `visibility` defaults to `members`, so
+     * nothing becomes public until an organiser says so.
+     */
+    visibility: text("visibility", { enum: VISIBILITY }).notNull().default("members"),
+    tagline: text("tagline"),
+    pitch: text("pitch"),
+    /** https URLs. Orrey links to the hero image and the sound; it hosts neither. */
+    heroUrl: text("hero_url"),
+    soundUrl: text("sound_url"),
     createdAt: integer("created_at").notNull().default(now),
     updatedAt: integer("updated_at").notNull().default(now),
   },
@@ -663,6 +693,18 @@ export const gameDays = sqliteTable("game_days", {
   discordChannelId: text("discord_channel_id"),
   discordMessageId: text("discord_message_id"),
   threadId: text("thread_id"),
+
+  /**
+   * The listing: what the site's Find a game and splash pages say about it.
+   * All optional, all organiser-written. `visibility` defaults to `members`, so
+   * nothing becomes public until an organiser says so.
+   */
+  visibility: text("visibility", { enum: VISIBILITY }).notNull().default("members"),
+  tagline: text("tagline"),
+  pitch: text("pitch"),
+  /** https URLs. Orrey links to the hero image and the sound; it hosts neither. */
+  heroUrl: text("hero_url"),
+  soundUrl: text("sound_url"),
 
   createdAt: integer("created_at").notNull().default(now),
   updatedAt: integer("updated_at").notNull().default(now),
