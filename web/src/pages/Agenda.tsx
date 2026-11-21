@@ -15,7 +15,7 @@ export function Agenda() {
 
   const days = new Map<string, Row[]>();
   for (const row of rows) days.set(row.day, [...(days.get(row.day) ?? []), row]);
-  const waiting = rows.filter((r) => r.mine && r.myIntent === null && r.state !== "LOCKED" && r.state !== "CANCELLED");
+  const waiting = rows.filter((r) => r.canAnswer && r.myIntent === null && r.state !== "LOCKED" && r.state !== "CANCELLED");
 
   return (
     <main className="page" style={{ gap: 20 }}>

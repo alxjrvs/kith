@@ -40,7 +40,7 @@ export function AgendaRow({ row, answer = true }: { row: Row; answer?: boolean }
         </span>
       </div>
       <span className={`pill ${status.tone}`}>{status.label}</span>
-      {answer && row.mine && taking ? (
+      {answer && row.canAnswer && taking ? (
         <div className="segmented" role="group" aria-label={`Your answer for ${row.title}`}>
           {(["in", "maybe", "out"] as const).map((value) => (
             <button

@@ -66,6 +66,7 @@ export interface AgendaRow {
   quorum: { rule: string; required: number | null; saidIn: number; roster: number; met: boolean; confirmed: boolean };
   inJeopardy: boolean;
   mine: boolean;
+  canAnswer: boolean;
   myIntent: Intent | null;
 }
 
