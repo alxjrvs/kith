@@ -84,22 +84,28 @@ export function nextCookie(path: string): string {
 /**
  * A same-origin path, or undefined.
  *
- * Only a path is ever honoured: `//evil.example` and `/\\evil.example` are
+ * The value arrives already decoded (Hono decodes the query string) and is
+ * never decoded again here. Only a path is ever honoured: `//evil.example` and `/\\evil.example` are
  * read by browsers as another host, so anything that is not a single leading
  * slash followed by something other than a slash or backslash is refused, and
  * the landing falls back to the default.
  */
-export function safeNext(raw: string | undefined | null): string | undefined {
+export function safeNext(path: string | undefined | null): string | undefined {
+  if (!path) return undefined;
+  if (!path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\")) return undefined;
+  // Control characters, and anything a Location header cannot carry as-is.
+  if (/[\u0000-\u001f\u007f]/.test(path) || /[^\u0020-\u007e]/.test(path)) return undefined;
+  return path;
+}
+
+/** The cookie holds the path URI-encoded; a value that will not decode is no path. */
+export function nextFromCookie(raw: string | undefined): string | undefined {
   if (!raw) return undefined;
-  let path: string;
   try {
-    path = decodeURIComponent(raw);
+    return safeNext(decodeURIComponent(raw));
   } catch {
     return undefined;
   }
-  if (!path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\")) return undefined;
-  if (/[\u0000-\u001f]/.test(path)) return undefined;
-  return path;
 }
 
 /** Same attributes, zero age: the only way a Set-Cookie removes one. */

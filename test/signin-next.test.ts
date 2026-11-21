@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/http/app.ts";
-import { NEXT_COOKIE, STATE_COOKIE, safeNext } from "../src/console/cookies.ts";
+import { NEXT_COOKIE, STATE_COOKIE, nextFromCookie, safeNext } from "../src/console/cookies.ts";
 
 /**
  * The site's "Sign in with Discord" brings people back to the page they were
@@ -45,11 +45,16 @@ afterEach(() => {
 describe("safeNext", () => {
   it("keeps a same-origin path", () => {
     expect(safeNext("/join/campaign/hollowmere")).toBe("/join/campaign/hollowmere");
-    expect(safeNext(encodeURIComponent("/agenda?mine=1"))).toBe("/agenda?mine=1");
+    expect(safeNext("/find?q=a%26b")).toBe("/find?q=a%26b");
+  });
+
+  it("decodes the cookie exactly once", () => {
+    expect(nextFromCookie(encodeURIComponent("/find?q=100%25"))).toBe("/find?q=100%25");
+    expect(nextFromCookie("%E0%A4%A")).toBeUndefined();
   });
 
   it("refuses anything a browser would read as another host", () => {
-    for (const raw of ["//evil.example", "/\\evil.example", "https://evil.example", "evil", "", "%2F%2Fevil.example"]) {
+    for (const raw of ["//evil.example", "/\\evil.example", "https://evil.example", "evil", "", "/caf\u00e9"]) {
       expect(safeNext(raw)).toBeUndefined();
     }
   });

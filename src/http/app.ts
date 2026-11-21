@@ -9,6 +9,7 @@ import {
   STATE_COOKIE,
   clear,
   nextCookie,
+  nextFromCookie,
   safeNext,
   mintState,
   readCookie,
@@ -152,7 +153,7 @@ export function createApp() {
       c.header("set-cookie", sessionCookie(await issueSession(c.env, user.id, new Date())), {
         append: true,
       });
-      const next = safeNext(readCookie(c.req.header("cookie"), NEXT_COOKIE));
+      const next = nextFromCookie(readCookie(c.req.header("cookie"), NEXT_COOKIE));
       c.header("set-cookie", clear(NEXT_COOKIE), { append: true });
       return c.redirect(next ?? "/console", 302);
     } catch (error) {
