@@ -86,6 +86,23 @@ npm run stack -- restack p1 --apply   # replay the stack after the bottom PR mer
 npm run stack -- push p1 --apply      # --force-with-lease, in order
 ```
 
+## The custom domain
+
+The Worker answers at **orrey.alxjrvs.com** (a Workers Custom Domain, declared in
+`wrangler.jsonc`) as well as at orrey.alxjrvs.workers.dev, which stays on. Code derives
+its origin from the request, so the deploy alone changes nothing users see. Three steps
+outside the repo move people over:
+
+- **Discord developer portal, OAuth2:** add `https://orrey.alxjrvs.com/console/callback`
+  as a redirect. Keep the workers.dev one until nothing uses it.
+- **Discord developer portal, Interactions Endpoint URL:** set it to
+  `https://orrey.alxjrvs.com/interactions`. `/console` login links and the privacy link
+  are built from the interaction's origin, so this is the switch that sends people to the
+  new hostname. Discord validates on save, so deploy first.
+- **Google:** verify orrey.alxjrvs.com in the Google console, *then* change
+  `PUBLIC_ORIGIN`. Google refuses push channels to an unverified domain, so changing the
+  var first would break the next channel renewal.
+
 ## Cutover, when it comes
 
 Orrey reuses the existing **Hermuz** Discord application rather than registering a new one,
