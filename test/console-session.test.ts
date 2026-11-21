@@ -18,7 +18,7 @@ import { sessionDetail, syncStateOf } from "../src/console/session-detail.ts";
 const app = createApp();
 const discord = await fakeDiscord();
 const realFetch = globalThis.fetch;
-const NOW = new Date("2026-11-01T12:00:00Z");
+const NOW = new Date("2037-11-01T12:00:00Z");
 const START = Math.floor(NOW.getTime() / 1000) + 86_400;
 const ORGANISER_ROLE = "role-organiser";
 
