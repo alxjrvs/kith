@@ -1,0 +1,207 @@
+import { Hono, type Context } from "hono";
+import { eq } from "drizzle-orm";
+import type { Env } from "../env.ts";
+import { db, schema } from "../db/index.ts";
+import { sessionFrom } from "../console/session.ts";
+import { isOrganiser } from "../console/roles.ts";
+import { personFrom } from "../hub/people.ts";
+import { ANONYMOUS, type Viewer } from "../hub/visibility.ts";
+import { listingFor, openListings } from "../hub/listings.ts";
+import { catalog } from "../hub/catalog.ts";
+import { agendaFor } from "../hub/agenda.ts";
+import { joinForming, leaveForming } from "../campaigns/forming-signup.ts";
+import { loadProjectionTarget } from "../projection/target.ts";
+import { takesIntent } from "../sessions/lifecycle.ts";
+import type { InteractionUser } from "../discord/types.ts";
+
+/**
+ * `/api/hub/*`: the site's API, for everybody.
+ *
+ * The rest of `/api/*` is the organiser console and sits behind the organiser
+ * gate. These routes do not: reads answer anybody and filter by
+ * `src/hub/visibility.ts`; writes need a signed-in person and act only as them.
+ * The id always comes off the session cookie, never off the request.
+ *
+ * Writes require a JSON body. The session cookie is SameSite=Lax, so another
+ * site cannot send it on a POST; a JSON content type also cannot be sent
+ * cross-origin without a preflight this origin never answers.
+ */
+type HubEnv = { Bindings: Env; Variables: { viewer: Viewer } };
+
+export function hubRoutes() {
+  const hub = new Hono<HubEnv>();
+
+  hub.use("*", async (c, next) => {
+    c.set("viewer", await viewerOf(c.env, c.req.header("cookie")));
+    await next();
+  });
+
+  hub.get("/me", async (c) => {
+    const viewer = c.get("viewer");
+    if (!viewer.userId) return c.json({ signedIn: false });
+    const user = await userRow(c.env, viewer.userId);
+    if (!user) return c.json({ signedIn: false });
+    return c.json({ signedIn: true, user: personFrom(user), organiser: viewer.organiser });
+  });
+
+  hub.get("/listings", async (c) =>
+    c.json({ asOf: unixNow(), listings: await openListings(c.env, c.get("viewer")) }),
+  );
+
+  hub.get("/listings/:kind/:id", async (c) => {
+    const kind = c.req.param("kind");
+    if (kind !== "campaign" && kind !== "game-day") return c.json({ error: "No such listing." }, 404);
+    const listing = await listingFor(c.env, kind, c.req.param("id"), c.get("viewer"));
+    // Not there and not yours to see are the same answer, so a guess learns nothing.
+    return listing
+      ? c.json({ asOf: unixNow(), listing })
+      : c.json({ error: "Orrey has no listing here, or it is not public." }, 404);
+  });
+
+  hub.get("/games", async (c) => c.json({ games: await catalog(c.env) }));
+
+  hub.get("/agenda", async (c) => {
+    const scope = c.req.query("scope") === "public" ? "public" : "mine";
+    return c.json(await agendaFor(c.env, c.get("viewer"), scope, new Date()));
+  });
+
+  hub.post("/campaigns/:id/signup", async (c) => {
+    const actor = await signedInActor(c);
+    if (actor instanceof Response) return actor;
+    const action = (await body(c)).action;
+    const id = c.req.param("id");
+
+    // Visibility first: a campaign you cannot see is not one you can join.
+    const listing = await listingFor(c.env, "campaign", id, c.get("viewer"));
+    if (!listing) return c.json({ error: "Orrey has no listing here, or it is not public." }, 404);
+
+    const outcome =
+      action === "out"
+        ? await leaveForming(c.env, id, actor.id)
+        : action === "seat" || action === "waitlist"
+          ? await joinForming(c.env, id, actor.id, action)
+          : undefined;
+    if (!outcome) return c.json({ error: "action is seat, waitlist or out" }, 400);
+    if (outcome === "not-forming") return c.json({ error: "That campaign has stopped taking signups." }, 409);
+    return c.json({ outcome, listing: await listingFor(c.env, "campaign", id, c.get("viewer")) });
+  });
+
+  hub.post("/game-days/:id/seat", async (c) => {
+    const actor = await signedInActor(c);
+    if (actor instanceof Response) return actor;
+    const action = (await body(c)).action;
+    const id = c.req.param("id");
+
+    const listing = await listingFor(c.env, "game-day", id, c.get("viewer"));
+    if (!listing) return c.json({ error: "Orrey has no listing here, or it is not public." }, 404);
+    if (!listing.open) return c.json({ error: "Seating for that day is closed." }, 409);
+
+    // Through the day's lock, the same one the Discord buttons use, so a click
+    // here and a click there cannot both take the last seat.
+    const lock = c.env.SESSION_LOCK.get(c.env.SESSION_LOCK.idFromName(id));
+    if (action === "seat" || action === "waitlist") {
+      await lock.takeSeat({ gameDayId: id, actor, prefer: action });
+    } else if (action === "out") {
+      await lock.leaveSeat({ gameDayId: id, actor });
+    } else {
+      return c.json({ error: "action is seat, waitlist or out" }, 400);
+    }
+    return c.json({ listing: await listingFor(c.env, "game-day", id, c.get("viewer")) });
+  });
+
+  hub.post("/sessions/:id/intent", async (c) => {
+    const actor = await signedInActor(c);
+    if (actor instanceof Response) return actor;
+    const intent = (await body(c)).intent;
+    if (intent !== "in" && intent !== "out" && intent !== "maybe") {
+      return c.json({ error: "intent is in, out or maybe" }, 400);
+    }
+
+    const sessionId = c.req.param("id");
+    const target = await loadProjectionTarget(c.env, sessionId);
+    if (!target) return c.json({ error: "Orrey does not know that session." }, 404);
+    if (!(await onTable(c.env, target, actor.id))) {
+      return c.json({ error: "That is for the people at that table." }, 403);
+    }
+    if (!takesIntent(target.session)) {
+      return c.json({ error: "That session has stopped taking answers." }, 409);
+    }
+
+    // The lock the attendance post's buttons go through: the click here that
+    // crosses quorum confirms the session exactly as a click in Discord would.
+    const lock = c.env.SESSION_LOCK.get(c.env.SESSION_LOCK.idFromName(sessionId));
+    await lock.setIntent({ sessionId, actor, intent });
+    return c.json({ ok: true, intent });
+  });
+
+  return hub;
+}
+
+async function viewerOf(env: Env, cookie: string | undefined): Promise<Viewer> {
+  const session = await sessionFrom(env, cookie, new Date());
+  if (!session) return ANONYMOUS;
+  let organiser = false;
+  try {
+    organiser = await isOrganiser(env, session.userId);
+  } catch (error) {
+    // An unseeded role or Discord being slow means "not an organiser" here,
+    // not a broken page for everybody. The console's gate still says 503.
+    console.warn("organiser check failed on the site", error);
+  }
+  return { userId: session.userId, organiser };
+}
+
+function userRow(env: Env, userId: string) {
+  return db(env).select().from(schema.users).where(eq(schema.users.discordId, userId)).get();
+}
+
+/** The signed-in person as the shape the locks take, or the response that refuses. */
+async function signedInActor(c: Context<HubEnv>): Promise<InteractionUser | Response> {
+  if (!(c.req.header("content-type") ?? "").includes("application/json")) {
+    return c.json({ error: "Send JSON." }, 415);
+  }
+  const userId = c.get("viewer").userId;
+  if (!userId) return c.json({ error: "Sign in with Discord first." }, 401);
+  const user = await userRow(c.env, userId);
+  if (!user) return c.json({ error: "Sign in with Discord first." }, 401);
+  return { id: user.discordId, username: user.username ?? user.discordId, global_name: user.globalName };
+}
+
+async function body(c: Context<HubEnv>): Promise<Record<string, unknown>> {
+  try {
+    const parsed = (await c.req.json()) as unknown;
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** On the roster of the session's campaign, or holding a seat at its game day. */
+async function onTable(
+  env: Env,
+  target: NonNullable<Awaited<ReturnType<typeof loadProjectionTarget>>>,
+  userId: string,
+): Promise<boolean> {
+  const d = db(env);
+  if (target.campaign) {
+    const member = await d
+      .select({ userId: schema.campaignMembers.userId })
+      .from(schema.campaignMembers)
+      .where(eq(schema.campaignMembers.campaignId, target.campaign.id))
+      .all();
+    return member.some((m) => m.userId === userId);
+  }
+  if (target.gameDay) {
+    const seats = await d
+      .select({ userId: schema.signups.userId, state: schema.signups.state, type: schema.signups.targetType })
+      .from(schema.signups)
+      .where(eq(schema.signups.targetId, target.gameDay.id))
+      .all();
+    return seats.some((s) => s.type === "game_day" && s.userId === userId && s.state === "in");
+  }
+  return false;
+}
+
+function unixNow(): number {
+  return Math.floor(Date.now() / 1000);
+}

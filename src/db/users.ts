@@ -13,6 +13,9 @@ import type { InteractionUser } from "../discord/types.ts";
  */
 export async function rememberUser(env: Env, actor: InteractionUser): Promise<void> {
   const d = db(env);
+  // Only a sighting that carries the avatar may change it, so an interaction
+  // that omits the field never blanks the one sign-in stored.
+  const avatar = actor.avatar === undefined ? {} : { avatar: actor.avatar };
   await d
     .insert(schema.users)
     .values({
@@ -20,12 +23,14 @@ export async function rememberUser(env: Env, actor: InteractionUser): Promise<vo
       username: actor.username,
       globalName: actor.global_name ?? null,
       feedToken: mintFeedToken(),
+      ...avatar,
     })
     .onConflictDoUpdate({
       target: schema.users.discordId,
       set: {
         username: actor.username,
         globalName: actor.global_name ?? null,
+        ...avatar,
         updatedAt: sql`(unixepoch())`,
       },
     });

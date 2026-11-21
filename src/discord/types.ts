@@ -40,6 +40,8 @@ export interface InteractionUser {
   id: string;
   username: string;
   global_name?: string | null;
+  /** Discord's avatar hash. Absent means "not said", which leaves the cache as it is. */
+  avatar?: string | null;
 }
 
 export interface Interaction {

@@ -32,6 +32,8 @@ import { gameDayPage } from "../console/game-day.ts";
 import { monthGrid } from "../console/month.ts";
 import { deleteGame, gameRows } from "../console/games.ts";
 import { InvalidSetting, putSetting, settingsView } from "../console/settings.ts";
+import { hubRoutes } from "./hub.ts";
+import { InvalidListing, updateCatalogEntry, updateListing } from "../hub/write.ts";
 import { auditActors, auditPage } from "../console/audit.ts";
 import { agendaBetween, windowAround } from "../console/agenda.ts";
 import { sessionDetail } from "../console/session-detail.ts";
@@ -174,7 +176,15 @@ export function createApp() {
    * carried in the cookie and nothing is cached, so a role removed in Discord is
    * a permission gone on the next request rather than on the next login.
    */
+  /**
+   * The site's API. Mounted above the organiser gate, and the gate steps aside
+   * for it, because these routes answer everybody and decide what each person
+   * sees in `src/hub/visibility.ts`.
+   */
+  app.route("/api/hub", hubRoutes());
+
   app.use("/api/*", async (c, next) => {
+    if (c.req.path.startsWith("/api/hub/")) return next();
     const session = await sessionFrom(c.env, c.req.header("cookie"), new Date());
     if (!session) return c.json({ error: "Not signed in. Sign in with Discord on the front page." }, 401);
 
@@ -210,6 +220,32 @@ export function createApp() {
    * break *before* it is attempted, rather than the organiser finding out
    * afterwards.
    */
+  /**
+   * The site's words about a table: who may see it, the tagline and pitch, the
+   * hero image and the sound its splash page plays. Organisers only, under the
+   * gate above; nothing here touches the schedule.
+   */
+  app.patch("/api/campaigns/:id/listing", async (c) =>
+    refusable(c, async () => {
+      const found = await updateListing(c.env, "campaign", c.req.param("id"), await c.req.json(), c.get("userId"));
+      return found ? c.json({ ok: true }) : c.json({ error: "Orrey does not know that campaign." }, 404);
+    }),
+  );
+
+  app.patch("/api/game-days/:id/listing", async (c) =>
+    refusable(c, async () => {
+      const found = await updateListing(c.env, "game-day", c.req.param("id"), await c.req.json(), c.get("userId"));
+      return found ? c.json({ ok: true }) : c.json({ error: "Orrey does not know that game day." }, 404);
+    }),
+  );
+
+  app.patch("/api/games/:id/catalog", async (c) =>
+    refusable(c, async () => {
+      const found = await updateCatalogEntry(c.env, c.req.param("id"), await c.req.json(), c.get("userId"));
+      return found ? c.json({ ok: true }) : c.json({ error: "Orrey does not know that game." }, 404);
+    }),
+  );
+
   app.get("/api/games/usage", async (c) => c.json({ games: await gameRows(c.env) }));
 
   /**
@@ -719,7 +755,8 @@ async function refusable(
       error instanceof InvalidCampaign ||
       error instanceof IllegalTransition ||
       error instanceof InvalidGame ||
-      error instanceof InvalidSetting
+      error instanceof InvalidSetting ||
+      error instanceof InvalidListing
     ) {
       return c.json({ error: error.message }, 400);
     }
