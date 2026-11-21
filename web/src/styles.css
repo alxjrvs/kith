@@ -190,3 +190,8 @@ img { max-width: 100%; }
   .splash header, .splash main { padding-left: 16px; padding-right: 16px; }
   .page { padding-left: 16px; padding-right: 16px; }
 }
+
+/* On a phone the orrery sits behind the words, so it steps back. */
+@media (max-width: 640px) {
+  .splash .orbit { opacity: 0.3; }
+}
