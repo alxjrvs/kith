@@ -21,7 +21,7 @@ import { fakeDiscord } from "./discord.ts";
  */
 const discord = await fakeDiscord();
 const app = createApp();
-const START = Date.parse("2026-11-07T18:00:00Z") / 1000;
+const START = Date.parse("2037-11-07T18:00:00Z") / 1000;
 const DAY_ID = "day-1";
 
 async function day(over: Partial<typeof schema.gameDays.$inferInsert> = {}) {

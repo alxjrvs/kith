@@ -7,6 +7,13 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
 
+  // orrey.alxjrvs.com as a Workers Custom Domain: `wrangler deploy` creates the
+  // DNS record and the certificate. alxjrvs.com has to be a zone in this same
+  // Cloudflare account, or the deploy fails rather than half-applying.
+  // workers.dev stays on, so nothing pointing at it breaks.
+  "routes": [{ "pattern": "orrey.alxjrvs.com", "custom_domain": true }],
+  "workers_dev": true,
+
   // The console is a static SPA served from the same origin as the API.
   "assets": { "directory": "./public", "binding": "ASSETS", "not_found_handling": "single-page-application" },
 

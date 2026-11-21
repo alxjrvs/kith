@@ -23,7 +23,7 @@ import {
  * an audit row — which is still the point, because there is no other way to move
  * a day and therefore no way to move one without leaving the record.
  */
-const START = Date.parse("2026-11-07T18:00:00Z") / 1000;
+const START = Date.parse("2037-11-07T18:00:00Z") / 1000;
 const DAY_ID = "day-1";
 
 async function day(over: Partial<typeof schema.gameDays.$inferInsert> = {}) {
