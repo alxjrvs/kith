@@ -4,9 +4,12 @@ import { verifyDiscordRequest } from "../discord/verify.ts";
 import { handleInteraction } from "../discord/interactions.ts";
 import type { Interaction } from "../discord/types.ts";
 import {
+  NEXT_COOKIE,
   SESSION_COOKIE,
   STATE_COOKIE,
   clear,
+  nextCookie,
+  safeNext,
   mintState,
   readCookie,
   sessionCookie,
@@ -119,6 +122,10 @@ export function createApp() {
     // what the callback checks before a code is worth anything.
     const state = mintState();
     c.header("set-cookie", stateCookie(state));
+    // The site passes the page it was on; the slash command's link passes
+    // nothing and lands in the organiser console, as it always has.
+    const next = safeNext(c.req.query("next"));
+    c.header("set-cookie", next ? nextCookie(next) : clear(NEXT_COOKIE), { append: true });
     return c.redirect(authorizeUrl(c.env, new URL(c.req.url).origin, state), 302);
   });
 
@@ -145,7 +152,9 @@ export function createApp() {
       c.header("set-cookie", sessionCookie(await issueSession(c.env, user.id, new Date())), {
         append: true,
       });
-      return c.redirect("/console", 302);
+      const next = safeNext(readCookie(c.req.header("cookie"), NEXT_COOKIE));
+      c.header("set-cookie", clear(NEXT_COOKIE), { append: true });
+      return c.redirect(next ?? "/console", 302);
     } catch (error) {
       console.error("console login failed", error);
       c.header("set-cookie", clear(STATE_COOKIE));

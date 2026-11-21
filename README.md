@@ -54,24 +54,35 @@ scripts/
   register-commands.ts  Bulk overwrite of the guild command set
   seed-session.ts       SQL for the one hardcoded campaign and its next session
   stack.ts              Status, restack and push for a stacked PR train
-public/               The console (static, same origin)
+web/                  The site: React 19, TanStack Router + Query, Vite → dist/
+public/               Copied into dist/ as-is: the old organiser console, privacy page
 ```
 
 ## Getting started
 
+Bun workspaces: the root package is the Worker, `web/` is the site it serves.
+
 ```sh
-npm install
+bun install
 cp .dev.vars.example .dev.vars      # fill in the Discord application secrets
 
-npx wrangler d1 create orrey        # paste database_id into wrangler.jsonc
-npm run db:generate                 # drizzle-kit → ./drizzle
-npm run db:migrate:local
+bunx wrangler d1 create orrey       # paste database_id into wrangler.jsonc
+bun run db:generate                 # drizzle-kit → ./drizzle
+bun run db:migrate:local
 
-npm run dev
+bun run build && bun run dev        # the Worker on :8787, serving dist/
+bun run dev:web                     # the site with hot reload on :5173, proxying the Worker
 ```
 
-`npm run dev` serves `/interactions` locally; point a tunnel at it to exercise real
-interactions, or POST a signed request yourself.
+`bun run dev` serves `/interactions` locally; point a tunnel at it to exercise real
+interactions, or POST a signed request yourself. The Worker's tests stay on Vitest
+(`bun run test`), because the Workers test pool runs inside workerd.
+
+## Deploying
+
+`bun run deploy` builds the site and runs `wrangler deploy`. On GitHub, the Deploy
+workflow does the same after CI passes on `main`, and applies D1 migrations first;
+it needs the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets.
 
 ## How the work is cut
 
@@ -81,9 +92,9 @@ at once, merged bottom-first and restacked after each merge. The workflow is
 [`docs/PHASE-1-STACK.md`](docs/PHASE-1-STACK.md).
 
 ```sh
-npm run stack -- status p1 --prs      # the chain, its drift, and each PR's state
-npm run stack -- restack p1 --apply   # replay the stack after the bottom PR merges
-npm run stack -- push p1 --apply      # --force-with-lease, in order
+bun run stack -- status p1 --prs      # the chain, its drift, and each PR's state
+bun run stack -- restack p1 --apply   # replay the stack after the bottom PR merges
+bun run stack -- push p1 --apply      # --force-with-lease, in order
 ```
 
 ## The custom domain

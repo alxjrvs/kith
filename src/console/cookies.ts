@@ -14,6 +14,8 @@ import type { Env } from "../env.ts";
  */
 export const SESSION_COOKIE = "orrey_session";
 export const STATE_COOKIE = "orrey_oauth_state";
+/** Where to land after the callback: the page "Sign in" was pressed on. */
+export const NEXT_COOKIE = "orrey_next";
 
 /** A week, matching Discord's own access-token lifetime. */
 const SESSION_SECONDS = 7 * 24 * 60 * 60;
@@ -73,6 +75,31 @@ export function sessionCookie(value: string): string {
 
 export function stateCookie(value: string): string {
   return attributes(`${STATE_COOKIE}=${value}`, STATE_SECONDS);
+}
+
+export function nextCookie(path: string): string {
+  return attributes(`${NEXT_COOKIE}=${encodeURIComponent(path)}`, STATE_SECONDS);
+}
+
+/**
+ * A same-origin path, or undefined.
+ *
+ * Only a path is ever honoured: `//evil.example` and `/\\evil.example` are
+ * read by browsers as another host, so anything that is not a single leading
+ * slash followed by something other than a slash or backslash is refused, and
+ * the landing falls back to the default.
+ */
+export function safeNext(raw: string | undefined | null): string | undefined {
+  if (!raw) return undefined;
+  let path: string;
+  try {
+    path = decodeURIComponent(raw);
+  } catch {
+    return undefined;
+  }
+  if (!path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\")) return undefined;
+  if (/[\u0000-\u001f]/.test(path)) return undefined;
+  return path;
 }
 
 /** Same attributes, zero age: the only way a Set-Cookie removes one. */

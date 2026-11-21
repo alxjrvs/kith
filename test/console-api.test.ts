@@ -179,9 +179,9 @@ describe("the page itself", () => {
     expect(html).toContain("/console/console.js");
   });
 
-  it("says something true on the holding page", async () => {
+  it("serves the site, not the console, at the front door", async () => {
     const html = await (await get("/")).text();
-    expect(html).not.toContain("lands in phase 2");
-    expect(html).toContain("/console");
+    expect(html).toContain('<div id="root">');
+    expect(html).not.toContain("/console/console.js");
   });
 });
