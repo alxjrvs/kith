@@ -44,13 +44,3 @@ jobs:
       - name: All required jobs passed
         run: |
           [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "false" ]
-
-  # The old required check, kept only until the ruleset requires "CI" instead
-  # (docs/SHIPPING.md, "Admin steps"). Delete it in the PR after that.
-  quality-checks:
-    if: always()
-    needs: [ci]
-    runs-on: ubuntu-latest
-    steps:
-      - name: CI passed
-        run: '[ "${{ needs.ci.result }}" = "success" ]'
