@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
-import { usePage, useTable, useTableEdits, type Visibility } from "../api.ts";
+import { ApiError, usePage, useTable, useTableEdits, type Visibility } from "../api.ts";
 import { Markdown } from "../markdown.tsx";
 
 /** One knowledge page: read it, or, for organisers, write it. */
@@ -10,7 +10,9 @@ export function KnowledgePage() {
   const table = useTable(kind, id);
   const page = usePage(kind, id, slug);
   const canEdit = table.data?.canEdit === true;
-  const missing = page.isError;
+  // Only a 404 is a page that does not exist yet. Any other failure must never
+  // open an empty editor over a page that is really there.
+  const missing = page.error instanceof ApiError && page.error.status === 404;
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export function KnowledgePage() {
     );
   }
 
-  if (missing) {
+  if (page.isError) {
     return (
       <main className="page">
         {back}

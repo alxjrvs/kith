@@ -94,6 +94,13 @@ export async function pageFor(
 
 const LINK_KINDS = ["vtt", "sheet", "rules", "doc", "discord", "other"] as const;
 
+/** Whether the campaign or game day a link or page would hang off exists. */
+export async function tableExists(env: Env, kind: Kind, id: string): Promise<boolean> {
+  const table = kind === "campaign" ? schema.campaigns : schema.gameDays;
+  const row = await db(env).select({ id: table.id }).from(table).where(eq(table.id, id)).get();
+  return row !== undefined;
+}
+
 export async function addLink(env: Env, kind: Kind, id: string, input: Record<string, unknown>, actor: string): Promise<string> {
   const label = requiredText(input.label, "label", 80);
   const url = httpsUrl(input.url);
@@ -203,5 +210,6 @@ function httpsUrl(value: unknown): string {
     throw new InvalidKnowledge("url is not a URL");
   }
   if (parsed.protocol !== "https:") throw new InvalidKnowledge("url has to start with https://");
+  if (parsed.href.length > 2000) throw new InvalidKnowledge("url is too long");
   return parsed.href;
 }

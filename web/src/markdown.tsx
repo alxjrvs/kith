@@ -57,7 +57,8 @@ export function Markdown({ source }: { source: string }) {
   return <div className="prose">{blocks}</div>;
 }
 
-const TOKEN = /(`[^`]+`)|(\*\*[^*]+\*\*)|(\*[^*]+\*|_[^_]+_)|(\[[^\]]+\]\([^)\s]+\))/g;
+// `_emphasis_` only counts at a word boundary, so snake_case stays snake_case.
+const TOKEN = /(`[^`]+`)|(\*\*[^*]+\*\*)|(\*[^*\s][^*]*\*|(?<![\w])_[^_\s][^_]*_(?![\w]))|(\[[^\]]+\]\([^)\s]+\))/g;
 
 function inline(text: string): ReactNode {
   const out: ReactNode[] = [];

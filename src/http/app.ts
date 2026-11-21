@@ -34,7 +34,7 @@ import { deleteGame, gameRows } from "../console/games.ts";
 import { InvalidSetting, putSetting, settingsView } from "../console/settings.ts";
 import { hubRoutes } from "./hub.ts";
 import { InvalidListing, updateCatalogEntry, updateListing } from "../hub/write.ts";
-import { InvalidKnowledge, addLink, putPage, removeLink, removePage } from "../hub/knowledge.ts";
+import { InvalidKnowledge, addLink, putPage, removeLink, removePage, tableExists } from "../hub/knowledge.ts";
 import { auditActors, auditPage } from "../console/audit.ts";
 import { agendaBetween, windowAround } from "../console/agenda.ts";
 import { sessionDetail } from "../console/session-detail.ts";
@@ -254,7 +254,7 @@ export function createApp() {
   app.post("/api/tables/:kind/:id/links", async (c) =>
     refusable(c, async () => {
       const kind = tableKind(c.req.param("kind"));
-      if (!kind) return c.json({ error: "No such table." }, 404);
+      if (!kind || !(await tableExists(c.env, kind, c.req.param("id")))) return c.json({ error: "No such table." }, 404);
       const id = await addLink(c.env, kind, c.req.param("id"), await c.req.json(), c.get("userId"));
       return c.json({ id }, 201);
     }),
@@ -269,7 +269,7 @@ export function createApp() {
   app.put("/api/tables/:kind/:id/pages/:slug", async (c) =>
     refusable(c, async () => {
       const kind = tableKind(c.req.param("kind"));
-      if (!kind) return c.json({ error: "No such table." }, 404);
+      if (!kind || !(await tableExists(c.env, kind, c.req.param("id")))) return c.json({ error: "No such table." }, 404);
       await putPage(c.env, kind, c.req.param("id"), c.req.param("slug"), await c.req.json(), c.get("userId"));
       return c.json({ ok: true });
     }),

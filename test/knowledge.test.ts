@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { db, schema } from "../src/db/index.ts";
 import { SETTING_KEYS, setSetting } from "../src/db/settings.ts";
 import { createApp } from "../src/http/app.ts";
+import { forgetOrganisers } from "../src/http/hub.ts";
 import { SESSION_COOKIE, issueSession } from "../src/console/cookies.ts";
 
 /**
@@ -53,6 +54,7 @@ async function person(id: string, name: string) {
 
 beforeEach(async () => {
   roles = {};
+  forgetOrganisers();
   globalThis.fetch = (async (input: RequestInfo | URL) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     const member = url.match(/\/members\/(\d+)/);
@@ -160,6 +162,8 @@ describe("links and pages", () => {
     const boss = await as("1003");
     expect((await call("POST", "/api/tables/campaign/hollowmere/links", boss, { label: "x", url: "javascript:alert(1)" })).status).toBe(400);
     expect((await call("PUT", "/api/tables/campaign/hollowmere/pages/Bad Slug", boss, { title: "X" })).status).toBe(400);
+    expect((await call("POST", "/api/tables/campaign/nope/links", boss, { label: "x", url: "https://example.com" })).status).toBe(404);
+    expect((await call("PUT", "/api/tables/game-day/nope/pages/notes", boss, { title: "X" })).status).toBe(404);
 
     const { links } = (await (await call("GET", "/api/hub/tables/campaign/hollowmere", boss)).json()) as { links: { id: string }[] };
     expect((await call("DELETE", `/api/links/${links[0]!.id}`, boss)).status).toBe(200);

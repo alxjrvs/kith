@@ -148,6 +148,7 @@ export function useSignup(listing: Pick<Listing, "kind" | "id">) {
       }));
       void client.invalidateQueries({ queryKey: ["listings"] });
       void client.invalidateQueries({ queryKey: ["agenda"] });
+      void client.invalidateQueries({ queryKey: ["table", listing.kind, listing.id] });
     },
   });
 }
@@ -172,6 +173,7 @@ export function useListingEdit(listing: Pick<Listing, "kind" | "id">) {
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ["listing", listing.kind, listing.id] });
       void client.invalidateQueries({ queryKey: ["listings"] });
+      void client.invalidateQueries({ queryKey: ["table", listing.kind, listing.id] });
     },
   });
 }

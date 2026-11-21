@@ -192,8 +192,8 @@ function NewPage({ kind, id }: { kind: string; id: string }) {
   const slug = title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
+    .slice(0, 60)
+    .replace(/^-+|-+$/g, "");
   return (
     <div className="panel-body row" style={{ borderTop: "1px solid var(--border)", alignItems: "flex-end" }}>
       <div className="field">
