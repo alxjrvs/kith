@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Deploys orrey to production: the deploy step of .github/workflows/deploy.yml.
+# Builds the site into dist/, applies D1 migrations, then deploys the Worker
+# with the site as its assets. Reads CLOUDFLARE_API_TOKEN and
+# CLOUDFLARE_ACCOUNT_ID. Migrations expand before code that needs them, and
+# contract only once no deployed release reads the old shape, so rolling the
+# Worker back never needs a schema rollback.
+set -euo pipefail
+
+target="${1:-production}"
+[ "$target" = "production" ] || { echo "bin/deploy: orrey has only production, not '$target'" >&2; exit 2; }
+: "${CLOUDFLARE_API_TOKEN:?set CLOUDFLARE_API_TOKEN (a secret of the production environment)}"
+: "${CLOUDFLARE_ACCOUNT_ID:?set CLOUDFLARE_ACCOUNT_ID (a secret of the production environment)}"
+
+bun run build
+bunx wrangler d1 migrations apply orrey --remote
+bunx wrangler deploy

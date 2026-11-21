@@ -1,0 +1,63 @@
+# Posts one Slack message when CI, Audit, Review or Deploy goes red on main, and
+# nothing when they pass. The GitHub Slack app's workflow subscription can't
+# filter by result, so subscribing it posts a green check for every run; this
+# replaces that with red only.
+#
+# It posts to a Slack incoming webhook kept in the Actions secret
+# SLACK_ALERTS_WEBHOOK_URL (factory:repo-ruleset). Without the secret it warns
+# and stays green. Like every workflow_run trigger, it is read from the default
+# branch: it does nothing until merged.
+name: Notify red
+
+on:
+  workflow_run:
+    # The workflows' names, not their jobs': rename to match this repo's.
+    workflows: [CI, Audit, Review, Deploy]
+    types: [completed]
+    branches: [main] # the main branch: replace when it is not main
+
+# The job only reads the event and calls Slack; the token needs no access.
+permissions: {}
+
+jobs:
+  notify:
+    # Only main's own runs: a PR's red runs belong to its author, not the channel.
+    # CI, Audit and Review run on push; Deploy runs on workflow_run (after CI).
+    # failure and timed_out are red; cancelled and skipped (a superseded run, a
+    # deploy gate skipping green) are not. A red Audit or Review also fails
+    # Deploy's gate, so that commit posts twice: the check, then Deploy.
+    if: >-
+      (github.event.workflow_run.event == 'push' ||
+       github.event.workflow_run.event == 'workflow_run') &&
+      (github.event.workflow_run.conclusion == 'failure' ||
+       github.event.workflow_run.conclusion == 'timed_out')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5 # one curl; a hung call shouldn't hold a runner for 6 hours
+    steps:
+      - name: Post to Slack
+        env:
+          # Event fields reach the script as variables, never inline ${{ }}: a commit
+          # message is untrusted text and would otherwise be run as shell.
+          WEBHOOK: ${{ secrets.SLACK_ALERTS_WEBHOOK_URL }}
+          WORKFLOW: ${{ github.event.workflow_run.name }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          MESSAGE: ${{ github.event.workflow_run.head_commit.message }}
+          AUTHOR: ${{ github.event.workflow_run.head_commit.author.name }}
+        run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "::warning title=Notify red::SLACK_ALERTS_WEBHOOK_URL isn't set, so nobody was told $WORKFLOW went red. Add the secret to send alerts."
+            exit 0
+          fi
+          # jq builds the JSON, so quotes and newlines in the commit can't break it, and
+          # escapes &, < and > as Slack's mrkdwn requires.
+          payload=$(jq -n \
+            --arg repo "$GITHUB_REPOSITORY" --arg workflow "$WORKFLOW" \
+            --arg conclusion "$CONCLUSION" --arg url "$RUN_URL" --arg sha "${SHA:0:7}" \
+            --arg title "${MESSAGE%%$'\n'*}" --arg author "$AUTHOR" '
+            def esc: gsub("&"; "&amp;") | gsub("<"; "&lt;") | gsub(">"; "&gt;");
+            {text: ":red_circle: \($repo | esc): \($workflow | esc) \($conclusion) on main\n\($title | esc) (`\($sha)`) by \($author | esc)\n<\($url)|View the run>"}')
+          # --fail turns a rejected webhook into a red run, so a broken alert is seen.
+          curl --silent --show-error --fail --max-time 30 \
+            -H 'Content-Type: application/json' --data "$payload" "$WEBHOOK"

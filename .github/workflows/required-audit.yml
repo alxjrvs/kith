@@ -1,0 +1,57 @@
+# The "Audit" gate (factory:repo-ruleset): runs `bun audit` on every PR and every push
+# to the main branch, against the commit before it, and fails only on
+# advisories that change adds, so an advisory against a dependency already on
+# main never blocks an unrelated PR. The weekly run reports everything on main.
+# Keep the job name "Audit"; it is the required check.
+#
+# Escape hatch: acknowledge an advisory the team has decided to live with in
+# .github/audit-allow.txt, one ID per line with a "# reason", through a PR.
+name: Audit
+
+on:
+  pull_request:
+  push:
+    branches: [main] # the main branch: replace when it is not main
+  schedule:
+    - cron: "23 13 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: read
+
+env:
+  # A PR compares with its base. A push compares with the commit before it, or,
+  # when that commit's Audit was red, with the last commit whose Audit passed
+  # (the step below), so a later push can't hide an advisory an earlier one
+  # added. A new branch and the weekly run report everything.
+  MODE: ${{ github.event_name == 'pull_request' && format('--base {0}', github.event.pull_request.base.sha) || github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000' && format('--base {0}', github.event.before) || '--full' }}
+  LEVEL: high
+  AUDIT: node .github/scripts/audit-new.mjs
+
+jobs:
+  audit:
+    # The weekly and manual runs report under another name, so a full report
+    # of old advisories never reads as a red "Audit" on main's head.
+    name: ${{ (github.event_name == 'push' || github.event_name == 'pull_request') && 'Audit' || 'Audit (full)' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Compare a push with the last green Audit
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          base=$(node .github/scripts/review-stamp.mjs green-base "$BEFORE" Audit)
+          [ -n "$base" ] || { echo "::error title=Audit::Couldn't find the last green Audit before $BEFORE"; exit 1; }
+          echo "MODE=--base $base" >> "$GITHUB_ENV"
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+      - name: bun audit
+        run: $AUDIT $MODE --level $LEVEL -- bun audit --json --audit-level=$LEVEL
