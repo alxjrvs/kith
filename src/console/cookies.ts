@@ -14,6 +14,8 @@ import type { Env } from "../env.ts";
  */
 export const SESSION_COOKIE = "orrey_session";
 export const STATE_COOKIE = "orrey_oauth_state";
+/** Where to land after the callback: the page "Sign in" was pressed on. */
+export const NEXT_COOKIE = "orrey_next";
 
 /** A week, matching Discord's own access-token lifetime. */
 const SESSION_SECONDS = 7 * 24 * 60 * 60;
@@ -73,6 +75,37 @@ export function sessionCookie(value: string): string {
 
 export function stateCookie(value: string): string {
   return attributes(`${STATE_COOKIE}=${value}`, STATE_SECONDS);
+}
+
+export function nextCookie(path: string): string {
+  return attributes(`${NEXT_COOKIE}=${encodeURIComponent(path)}`, STATE_SECONDS);
+}
+
+/**
+ * A same-origin path, or undefined.
+ *
+ * The value arrives already decoded (Hono decodes the query string) and is
+ * never decoded again here. Only a path is ever honoured: `//evil.example` and `/\\evil.example` are
+ * read by browsers as another host, so anything that is not a single leading
+ * slash followed by something other than a slash or backslash is refused, and
+ * the landing falls back to the default.
+ */
+export function safeNext(path: string | undefined | null): string | undefined {
+  if (!path) return undefined;
+  if (!path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\")) return undefined;
+  // Control characters, and anything a Location header cannot carry as-is.
+  if (/[\u0000-\u001f\u007f]/.test(path) || /[^\u0020-\u007e]/.test(path)) return undefined;
+  return path;
+}
+
+/** The cookie holds the path URI-encoded; a value that will not decode is no path. */
+export function nextFromCookie(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  try {
+    return safeNext(decodeURIComponent(raw));
+  } catch {
+    return undefined;
+  }
 }
 
 /** Same attributes, zero age: the only way a Set-Cookie removes one. */

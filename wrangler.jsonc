@@ -14,8 +14,31 @@
   "routes": [{ "pattern": "orrey.alxjrvs.com", "custom_domain": true }],
   "workers_dev": true,
 
-  // The console is a static SPA served from the same origin as the API.
-  "assets": { "directory": "./public", "binding": "ASSETS", "not_found_handling": "single-page-application" },
+  // The site (web/, built by Vite into dist/) is a static SPA served from the
+  // same origin as the API. `bun run build` has to run before `wrangler deploy`;
+  // `bun run deploy` does both.
+  //
+  // With SPA fallback on, a browser *navigation* to a path no file matches is
+  // answered with index.html without the Worker ever seeing it. The paths below
+  // are the Worker's own pages and redirects, so they go to the Worker first.
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/api/*",
+      "/console/login",
+      "/console/callback",
+      "/console/logout",
+      "/console/me/*",
+      "/interactions",
+      "/ics/*",
+      "/google/*",
+      "/healthz",
+      "/privacy",
+      "/me"
+    ]
+  },
 
   "d1_databases": [
     {
