@@ -10,7 +10,6 @@ import {
   readSession,
 } from "../src/console/cookies.ts";
 import { SCOPE, storedTokens } from "../src/console/oauth.ts";
-import { loginLink } from "../src/console/link.ts";
 
 /**
  * Discord is the only identity system, and this is the file where that could
@@ -31,15 +30,9 @@ function consoleEnv() {
   return { ...env, CONSOLE_SESSION_SECRET: "a-secret", DISCORD_APPLICATION_ID: "app-1", DISCORD_CLIENT_SECRET: "shh" };
 }
 
-/** The console has no public front door: `/console/login` needs a minted link. */
+/** The front door is public: `/console/login` starts OAuth for anybody. */
 async function login(cookie?: string) {
-  // Minted against the real clock, not `NOW`. The link carries five minutes of
-  // life and the route checks it against the clock it is actually running on,
-  // so a fixed date works only for the five minutes either side of itself and
-  // then turns every test through this helper red, for ever, on a change to
-  // nothing. The tests below that want a *stale* link say so by minting one.
-  const link = await loginLink(consoleEnv(), "https://orrey.test", "1001", new Date());
-  return get(link.replace("https://orrey.test", ""), cookie);
+  return get("/console/login", cookie);
 }
 
 function get(path: string, cookie?: string) {
@@ -114,46 +107,17 @@ describe("the authorize redirect", () => {
 });
 
 describe("the front door", () => {
-  it("refuses to start a login nobody asked for", async () => {
-    // A redirect to Discord's authorize endpoint that anybody can trigger is a
-    // phishing primitive rather than a convenience.
-    expect((await get("/console/login")).status).toBe(400);
-    expect((await get("/console/login?t=made-up")).status).toBe(400);
+  it("starts a login for anybody, with no link from Discord", async () => {
+    // Public on purpose (src/console/link.ts). What protects a login is the
+    // state check at the callback, which the tests above cover.
+    const res = await get("/console/login");
+    expect(res.status).toBe(302);
+    expect(new URL(res.headers.get("location")!).hostname).toBe("discord.com");
+    expect(readCookie(res.headers.get("set-cookie") ?? "", STATE_COOKIE)).toBeTruthy();
   });
 
-  it("refuses a link that has gone stale", async () => {
-    // Minted ten minutes ago against the real clock the route reads. Five is the
-    // whole life of one of these.
-    const stale = await loginLink(
-      consoleEnv(),
-      "https://orrey.test",
-      "1001",
-      new Date(Date.now() - 10 * 60_000),
-    );
-
-    expect((await get(stale.replace("https://orrey.test", ""))).status).toBe(400);
-  });
-
-  it("accepts one minted a moment ago", async () => {
-    const fresh = await loginLink(consoleEnv(), "https://orrey.test", "1001", new Date());
-    expect((await get(fresh.replace("https://orrey.test", ""))).status).toBe(302);
-  });
-
-  it("is not a session cookie, however much it looks like one", async () => {
-    const link = await loginLink(consoleEnv(), "https://orrey.test", "1001", new Date());
-    const token = new URL(link).searchParams.get("t")!;
-
-    // Same payload shape, same key. Without a purpose inside the signed bytes
-    // this token authenticates as a session — and it rides in a URL, which a
-    // browser keeps in history and a link preview fetches.
-    expect(await readSession(consoleEnv(), token, NOW)).toBeUndefined();
-  });
-
-  it("refuses a link whose signature has been edited", async () => {
-    const fresh = await loginLink(consoleEnv(), "https://orrey.test", "9999", new Date());
-    const forged = fresh.replace("t=9999", "t=1001");
-
-    expect((await get(forged.replace("https://orrey.test", ""))).status).toBe(400);
+  it("ignores a leftover token from an old /console link", async () => {
+    expect((await get("/console/login?t=made-up")).status).toBe(302);
   });
 });
 

@@ -19,7 +19,6 @@ import { deleteUserData, describeReceipt } from "../privacy/delete.ts";
 import { feedFor, icsResponse } from "../ics/feed.ts";
 import { feedsPanel, rotateFeedToken } from "../ics/feeds-panel.ts";
 import { NotConfigured, isOrganiser } from "../console/roles.ts";
-import { readLoginToken } from "../console/link.ts";
 import { campaignSummaries, gameDaySummaries, gameSummaries } from "../console/api.ts";
 import { campaignPage } from "../console/campaign.ts";
 import { campaignHistory } from "../console/campaign-history.ts";
@@ -116,13 +115,8 @@ export function createApp() {
   });
 
   app.get("/console/login", async (c) => {
-    // The console has no public front door. A redirect to Discord's authorize
-    // endpoint that anybody can trigger is a phishing primitive rather than a
-    // convenience, so the link has to have come from `/console` just now.
-    if (!(await readLoginToken(c.env, c.req.query("t"), new Date()))) {
-      return c.text("That login link has expired. Run /console in Discord again.", 400);
-    }
-
+    // Public on purpose: see src/console/link.ts. The state cookie set here is
+    // what the callback checks before a code is worth anything.
     const state = mintState();
     c.header("set-cookie", stateCookie(state));
     return c.redirect(authorizeUrl(c.env, new URL(c.req.url).origin, state), 302);
@@ -138,7 +132,7 @@ export function createApp() {
     // somebody guessing which half to keep.
     if (!code || !returned || !expected || returned !== expected) {
       c.header("set-cookie", clear(STATE_COOKIE));
-      return c.text("That login link did not check out. Run /console again.", 400);
+      return c.text("That sign-in did not check out. Try again from the front page.", 400);
     }
 
     const origin = new URL(c.req.url).origin;
@@ -155,7 +149,7 @@ export function createApp() {
     } catch (error) {
       console.error("console login failed", error);
       c.header("set-cookie", clear(STATE_COOKIE));
-      return c.text("Discord would not complete that login. Run /console again.", 502);
+      return c.text("Discord would not complete that sign-in. Try again from the front page.", 502);
     }
   });
 
@@ -172,7 +166,7 @@ export function createApp() {
    */
   app.use("/api/*", async (c, next) => {
     const session = await sessionFrom(c.env, c.req.header("cookie"), new Date());
-    if (!session) return c.json({ error: "Not signed in. Run /console in Discord." }, 401);
+    if (!session) return c.json({ error: "Not signed in. Sign in with Discord on the front page." }, 401);
 
     try {
       if (!(await isOrganiser(c.env, session.userId))) {
@@ -573,7 +567,7 @@ export function createApp() {
    */
   app.post("/console/me/delete", async (c) => {
     const session = await sessionFrom(c.env, c.req.header("cookie"), new Date());
-    if (!session) return c.json({ error: "Not signed in. Run /console in Discord." }, 401);
+    if (!session) return c.json({ error: "Not signed in. Sign in with Discord on the front page." }, 401);
 
     const receipt = await deleteUserData(c.env, session.userId);
     // The cookie goes with the row it authenticated. Leaving it set would mean a
@@ -592,7 +586,7 @@ export function createApp() {
    */
   app.get("/console/me/feeds", async (c) => {
     const session = await sessionFrom(c.env, c.req.header("cookie"), new Date());
-    if (!session) return c.json({ error: "Not signed in. Run /console in Discord." }, 401);
+    if (!session) return c.json({ error: "Not signed in. Sign in with Discord on the front page." }, 401);
 
     // The request's own origin, so a copied URL works on the environment it was
     // copied from. A hardcoded host is wrong everywhere but one place, and the
@@ -603,7 +597,7 @@ export function createApp() {
 
   app.post("/console/me/feeds/rotate", async (c) => {
     const session = await sessionFrom(c.env, c.req.header("cookie"), new Date());
-    if (!session) return c.json({ error: "Not signed in. Run /console in Discord." }, 401);
+    if (!session) return c.json({ error: "Not signed in. Sign in with Discord on the front page." }, 401);
 
     const rotated = await rotateFeedToken(c.env, session.userId);
     if (!rotated) return c.json({ error: "Orrey does not know you yet." }, 404);
