@@ -1,48 +1,163 @@
+# Deploys main to production once CI, Audit and Review all pass on the same
+# commit, then tags it as a release (factory:repo-ruleset, --deploy production).
+#
+# It runs after the CI workflow finishes on main, waits for Audit and Review on
+# the same commit, and skips a commit that is no longer main's head, so a slow
+# run can't roll production back. A red CI, Audit or Review deploys nothing.
+# If the gate times out waiting (a slow Audit), re-run this run. There is no
+# manual trigger: nothing deploys red, by hand or not. To redeploy, re-run the
+# last green Deploy run.
+#
+# The deploy is bin/deploy (build the site, apply D1 migrations, wrangler
+# deploy). It reads CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, ideally as
+# secrets of the production environment (repo secrets work too), and the
+# environment's HEALTH_URL variable verifies it. A missing credential or
+# HEALTH_URL is a red deploy, never a silent skip.
+#
+# A verified deploy becomes a release: a tag vYYYY.MM.DD on the commit (a
+# second deploy that day is vYYYY.MM.DD.2, and so on) and a GitHub release with
+# notes generated from the PRs since the last one. Rollback: docs/SHIPPING.md.
 name: Deploy
 
-# Production follows main: once CI is green on a push to main, the site is
-# built, D1 migrations are applied, and the Worker (with the site as its
-# assets) is deployed. Runs can also be started by hand from the Actions tab.
-#
-# Needs two repository secrets: CLOUDFLARE_API_TOKEN (Workers Scripts edit,
-# D1 edit, Workers Routes edit, Zone DNS edit for the custom domain) and
-# CLOUDFLARE_ACCOUNT_ID. Until they exist this workflow fails at the first
-# wrangler step and production is untouched.
 on:
   workflow_run:
-    workflows: [CI]
+    workflows: [CI] # the workflow that holds the "CI" job
     types: [completed]
-    branches: [main]
-  workflow_dispatch:
+    branches: [main] # the main branch: replace when it is not main
 
-concurrency:
-  group: deploy-production
-  cancel-in-progress: false
+permissions:
+  contents: read
+  checks: read
+
+env:
+  TARGET: production
 
 jobs:
+  gate:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      current: ${{ steps.head.outputs.current }}
+    steps:
+      - id: ready
+        name: Something to deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          # Only a 404 means "nothing to deploy yet"; any other failure fails the run, so a
+          # flaky API never skips a real deploy in silence.
+          if gh api "repos/$GITHUB_REPOSITORY/contents/bin/deploy?ref=$SHA" --jq .path > /dev/null 2> err; then :
+          elif grep -q "HTTP 404" err; then echo "::notice title=Deploy::No bin/deploy on $SHA yet, so nothing deploys."; exit 0
+          else echo "::error title=Deploy::Couldn't tell whether $SHA has bin/deploy: $(cat err)"; exit 1; fi
+          echo ready=true >> "$GITHUB_OUTPUT"
+      - name: Audit and Review passed on the same commit
+        if: steps.ready.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          for check in Audit Review; do
+            for _ in $(seq 1 45); do
+              state=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/check-runs?check_name=$check" \
+                --jq '[.check_runs[] | select(.app.slug == "github-actions")] | sort_by(.started_at) | last | "\(.status) \(.conclusion)"')
+              case "$state" in
+                "completed success") continue 2 ;;
+                completed*) echo "::error title=$check::$check is ${state#completed } on $SHA; nothing deploys"; exit 1 ;;
+              esac
+              sleep 20
+            done
+            echo "::error title=$check::$check didn't finish on $SHA within 15 minutes"; exit 1
+          done
+      - id: head
+        name: Still main's head
+        if: steps.ready.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          head=$(gh api "repos/$GITHUB_REPOSITORY/commits/$BRANCH" --jq .sha)
+          if [ "$head" = "$SHA" ]; then echo current=true >> "$GITHUB_OUTPUT"
+          else echo "::notice::$SHA is no longer the head of $BRANCH; the newer commit deploys instead"; fi
+
   deploy:
-    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    needs: gate
+    if: needs.gate.outputs.current == 'true'
     runs-on: ubuntu-latest
     environment: production
+    # Writing the release tag is the only write this workflow makes.
+    permissions:
+      contents: write
+      checks: read
+      actions: write # to cancel a superseded run
+    # One deploy at a time per environment. It is on this job, not the workflow,
+    # so a gate still waiting on Audit never holds the queue.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v5
+      # A superseded run cancels itself here instead of skipping: a job that
+      # succeeds records a successful deployment of a commit production never
+      # ran, and a failure would tell the channel main is red when it isn't.
+      - name: Still main's head, now that it's this run's turn
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          head=$(gh api "repos/$GITHUB_REPOSITORY/commits/$BRANCH" --jq .sha)
+          [ "$head" != "$SHA" ] || exit 0
+          echo "::notice title=Superseded::$SHA is no longer the head of $BRANCH; the newer commit deploys instead"
+          gh run cancel "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY"
+          sleep 120 # the cancel lands while this waits
+          exit 1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
-      - uses: oven-sh/setup-bun@v2
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.4.4
-      - uses: actions/setup-node@v5
+      # The Workers build tooling runs under Node, as in CI.
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
       - run: bun install --frozen-lockfile
-      - run: bun run build
-      - name: Apply D1 migrations
-        run: bunx wrangler d1 migrations apply orrey --remote
+      # Keep deploy credentials as secrets of the production environment, which
+      # only main may deploy to.
+      - run: ./bin/deploy "$TARGET"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      - name: Deploy the Worker
-        run: bunx wrangler deploy
+      # The deploy isn't done until the app answers. A failure here fails the
+      # run, which alerts the channel and records a failed deployment, and
+      # no release is tagged. Then roll back: docs/SHIPPING.md.
+      # HEALTH_URL is a variable of the production environment:
+      # https://orrey.alxjrvs.com/healthz.
+      - name: Verify the deploy
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          HEALTH_URL: ${{ vars.HEALTH_URL }}
+        run: |
+          [ -n "$HEALTH_URL" ] || { echo "::error::Set the HEALTH_URL variable on this environment, so a deploy can be verified"; exit 1; }
+          curl --fail --silent --show-error --retry 5 --retry-delay 10 --retry-all-errors --max-time 20 -o /dev/null "$HEALTH_URL"
+      # Only a deploy that answered becomes a release. It runs inside this job's
+      # concurrency group, so two deploys on one day can't pick the same tag.
+      - name: Tag the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          # A re-run of a deploy that was already released tags nothing new.
+          already=$(gh api --paginate "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/v" \
+            --jq '.[] | select(.object.sha == env.SHA) | .ref' | head -n 1)
+          if [ -n "$already" ]; then echo "::notice title=Release::$SHA is already ${already#refs/tags/}"; exit 0; fi
+          # The day's first is vYYYY.MM.DD, then .2, .3: one past the highest taken.
+          day=$(date -u +%Y.%m.%d)
+          taken=$(gh api --paginate "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/v$day" --jq '.[].ref')
+          tag="v$day"
+          if [ -n "$taken" ]; then
+            top=$(printf '%s\n' "$taken" | sed -n "s|^refs/tags/v$day\.\([0-9][0-9]*\)$|\1|p" | sort -n | tail -n 1)
+            tag="v$day.$(( ${top:-1} + 1 ))"
+          fi
+          gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$SHA" --title "$tag" --generate-notes --latest
+          echo "::notice title=Release::Deployed and tagged $SHA as $tag"

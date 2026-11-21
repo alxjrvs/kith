@@ -40,3 +40,13 @@ Domain tables arrive with the phase that uses them — don't add schema ahead of
 A phase is cut as a stack of small PRs, reviewed and merged bottom-first:
 `.claude/skills/stack/SKILL.md` is the workflow, `docs/PHASE-1-STACK.md` is phase 1's
 slicing, and `npm run stack -- status p1` is where the chain's state lives.
+
+## Shipping
+
+- Ruleset: factory:repo-ruleset (this block wins where it differs)
+- Merge: pr. Every change reaches main by a squash-merged PR with `CI`, `Audit` and `Review` green
+- Deploy: production. A green main deploys and is tagged `vYYYY.MM.DD[.N]` as a GitHub release
+- Always a PR: everything, including `.github/`
+- Before pushing: tests, main green, /code-review, then
+  `node .github/scripts/review-stamp.mjs stamp pass`. Never stamp without the review
+- Red main: notify-red.yml alerts the channel in `SLACK_ALERTS_WEBHOOK_URL`; fix or revert before landing anything else

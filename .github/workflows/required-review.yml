@@ -1,0 +1,43 @@
+# The "Review" gate: every commit a push or PR adds carries an agent review
+# stamp, an "Agent-Reviewed" trailer matching its changed lines and recording
+# a passing review, written by `node .github/scripts/review-stamp.mjs stamp
+# pass` after the review in Claude Code. A `fail` stamp fails here. No model
+# runs here: it proves a passing review was recorded for that exact change,
+# not that the review happened or was any good.
+#
+# A push to main is judged from the last commit whose Review passed, so a later
+# clean push doesn't hide an earlier red one: main stays red until the commit
+# is reverted (`git revert`, no stamp needed) or reviewed and vouched for
+# (`review-stamp.mjs vouch <sha>`). A squash merge made on GitHub passes when
+# its PR's head passed Review; an edit in GitHub's web editor has no PR, so it
+# fails. Bot commits (Dependabot) are skipped; CI and Audit still gate them.
+# A commit that references no tracker item gets a warning. Keep the job name
+# "Review"; deploys wait for it.
+name: Review
+
+on:
+  pull_request:
+  push:
+    branches: [main] # the main branch: replace when it is not main
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: read
+
+jobs:
+  review:
+    name: Review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Every new commit has an agent review stamp
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # A PR checks its own commits; a push checks what it added (a new branch, its head).
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          SINCE_GREEN: ${{ github.event_name == 'push' && '--since-green Review' || '' }}
+        run: node .github/scripts/review-stamp.mjs check "$BASE" "$HEAD" $SINCE_GREEN

@@ -1,0 +1,36 @@
+#!/bin/sh
+# The local half of the gate (factory:repo-ruleset): before a push leaves this
+# machine, run the typecheck, the tests and the same Review check CI runs
+# after it arrives. Main takes no direct pushes here, so this runs for every
+# branch: a PR's Review fails on an unstamped commit just the same.
+#
+# `bun install` points git at .githooks (the prepare script) unless
+# core.hooksPath is already set; then call this from your own hooks.
+# `git push --no-verify` skips it; CI still runs the remote half.
+
+# Read every ref first: the checks below must not eat the ref list on stdin.
+refs=$(cat)
+heads=""
+while read -r _ local_sha remote_ref _; do
+  case "$local_sha" in *[!0]*) ;; *) continue ;; esac # deleting the branch
+  case "$remote_ref" in refs/heads/*) heads="$heads $local_sha" ;; esac # not tags
+done <<EOF_REFS
+$refs
+EOF_REFS
+[ -n "$heads" ] || exit 0
+
+bun run typecheck < /dev/null || exit 1
+bun run test < /dev/null || exit 1
+
+for local_sha in $heads; do
+  # Judge only the commits no remote branch holds yet, so a restack onto a
+  # newer main (whose squash merges GitHub made) or a stacked branch checks
+  # just its own commits.
+  first=$(git rev-list --reverse "$local_sha" --not --remotes | head -n 1)
+  [ -n "$first" ] || continue
+  git rev-parse -q --verify "$first^" > /dev/null || { echo "pre-push: $first is a root commit; CI's Review checks it" >&2; continue; }
+  node .github/scripts/review-stamp.mjs check "$first^" "$local_sha" < /dev/null || {
+    echo "pre-push: run /code-review until it passes, then: node .github/scripts/review-stamp.mjs stamp pass" >&2
+    exit 1
+  }
+done

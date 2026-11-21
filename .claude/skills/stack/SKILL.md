@@ -55,9 +55,12 @@ every one open and reviewable now, landing bottom-first.
 
 No PR lands, bottom or not, until all four hold:
 
-- `npm run typecheck` and `npm test` locally, and `quality-checks` green on the PR.
+- `bun run typecheck` and `bun run test` locally, and `CI`, `Audit` and `Review`
+  green on the PR (docs/SHIPPING.md).
 - **`/code-review`** run on the branch, and its findings either fixed or answered
-  in a reply. Red findings are never optional.
+  in a reply. Red findings are never optional. Then stamp the branch's own
+  commits: `node .github/scripts/review-stamp.mjs stamp pass --base <parent branch>`.
+  A restack that only moves lines keeps the stamp; any edit needs a new review.
 - **The invariants in CLAUDE.md**, checked against this diff by name — not "looks
   fine". The ones phase 1 can actually break:
   - no `PATCH /channels/:id/messages/:id`; the only rewrite is `UPDATE_MESSAGE`
