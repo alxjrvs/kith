@@ -147,7 +147,11 @@ async function campaignListing(
     soundUrl: campaign.soundUrl,
     lead: gm ? personFrom(gm.user) : null,
     capacity: campaign.capacity,
-    taken: claims.filter((c) => c.state === "in").length,
+    // While forming, the seats are the signups; once it runs, the roster.
+    taken:
+      campaign.state === "FORMING"
+        ? claims.filter((c) => c.state === "in").length
+        : members.filter((m) => m.member.role === "player").length,
     waitlist: claims.filter((c) => c.state === "waitlisted").length,
     when: {
       startsAt: campaign.recurrenceAnchor,

@@ -34,6 +34,7 @@ import { deleteGame, gameRows } from "../console/games.ts";
 import { InvalidSetting, putSetting, settingsView } from "../console/settings.ts";
 import { hubRoutes } from "./hub.ts";
 import { InvalidListing, updateCatalogEntry, updateListing } from "../hub/write.ts";
+import { InvalidKnowledge, addLink, putPage, removeLink, removePage } from "../hub/knowledge.ts";
 import { auditActors, auditPage } from "../console/audit.ts";
 import { agendaBetween, windowAround } from "../console/agenda.ts";
 import { sessionDetail } from "../console/session-detail.ts";
@@ -245,6 +246,42 @@ export function createApp() {
       return found ? c.json({ ok: true }) : c.json({ error: "Orrey does not know that game." }, 404);
     }),
   );
+
+  /**
+   * A table's links and knowledge pages. Organisers write them; the site shows
+   * each to whoever its own visibility allows.
+   */
+  app.post("/api/tables/:kind/:id/links", async (c) =>
+    refusable(c, async () => {
+      const kind = tableKind(c.req.param("kind"));
+      if (!kind) return c.json({ error: "No such table." }, 404);
+      const id = await addLink(c.env, kind, c.req.param("id"), await c.req.json(), c.get("userId"));
+      return c.json({ id }, 201);
+    }),
+  );
+
+  app.delete("/api/links/:id", async (c) =>
+    (await removeLink(c.env, c.req.param("id"), c.get("userId")))
+      ? c.json({ ok: true })
+      : c.json({ error: "Orrey does not know that link." }, 404),
+  );
+
+  app.put("/api/tables/:kind/:id/pages/:slug", async (c) =>
+    refusable(c, async () => {
+      const kind = tableKind(c.req.param("kind"));
+      if (!kind) return c.json({ error: "No such table." }, 404);
+      await putPage(c.env, kind, c.req.param("id"), c.req.param("slug"), await c.req.json(), c.get("userId"));
+      return c.json({ ok: true });
+    }),
+  );
+
+  app.delete("/api/tables/:kind/:id/pages/:slug", async (c) => {
+    const kind = tableKind(c.req.param("kind"));
+    if (!kind) return c.json({ error: "No such table." }, 404);
+    return (await removePage(c.env, kind, c.req.param("id"), c.req.param("slug"), c.get("userId")))
+      ? c.json({ ok: true })
+      : c.json({ error: "Orrey does not know that page." }, 404);
+  });
 
   app.get("/api/games/usage", async (c) => c.json({ games: await gameRows(c.env) }));
 
@@ -744,6 +781,10 @@ async function ics(
   return c.text(body, 200, headers);
 }
 
+function tableKind(raw: string): "campaign" | "game-day" | undefined {
+  return raw === "campaign" || raw === "game-day" ? raw : undefined;
+}
+
 async function refusable(
   c: { json: (body: unknown, status?: 200 | 201 | 400) => Response },
   work: () => Promise<Response>,
@@ -756,7 +797,8 @@ async function refusable(
       error instanceof IllegalTransition ||
       error instanceof InvalidGame ||
       error instanceof InvalidSetting ||
-      error instanceof InvalidListing
+      error instanceof InvalidListing ||
+      error instanceof InvalidKnowledge
     ) {
       return c.json({ error: error.message }, 400);
     }

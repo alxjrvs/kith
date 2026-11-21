@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useIntent, type AgendaRow as Row, type Intent } from "../api.ts";
 import { time } from "../format.ts";
 import { TallySquares } from "./Squares.tsx";
@@ -26,7 +27,17 @@ export function AgendaRow({ row, answer = true }: { row: Row; answer?: boolean }
         {time(row.startsAt)}
       </span>
       <div style={{ flex: "1 1 220px", display: "flex", flexDirection: "column" }}>
-        <span style={{ fontWeight: 600 }}>{row.title}</span>
+        {row.campaignId || row.gameDayId ? (
+          <Link
+            to="/table/$kind/$id"
+            params={{ kind: row.campaignId ? "campaign" : "game-day", id: (row.campaignId ?? row.gameDayId)! }}
+            style={{ fontWeight: 600, color: "var(--text)" }}
+          >
+            {row.title}
+          </Link>
+        ) : (
+          <span style={{ fontWeight: 600 }}>{row.title}</span>
+        )}
         {row.location ? (
           <span className="muted" style={{ fontSize: 12 }}>
             {row.location}

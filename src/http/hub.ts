@@ -9,6 +9,8 @@ import { ANONYMOUS, type Viewer } from "../hub/visibility.ts";
 import { listingFor, openListings } from "../hub/listings.ts";
 import { catalog } from "../hub/catalog.ts";
 import { agendaFor } from "../hub/agenda.ts";
+import { isMemberOf } from "../hub/membership.ts";
+import { linksFor, pageFor, pagesFor } from "../hub/knowledge.ts";
 import { joinForming, leaveForming } from "../campaigns/forming-signup.ts";
 import { loadProjectionTarget } from "../projection/target.ts";
 import { takesIntent } from "../sessions/lifecycle.ts";
@@ -59,6 +61,40 @@ export function hubRoutes() {
     return listing
       ? c.json({ asOf: unixNow(), listing })
       : c.json({ error: "Orrey has no listing here, or it is not public." }, 404);
+  });
+
+  /**
+   * A table's own page: the listing, its links and its knowledge pages. The
+   * table's visibility gates the lot; each link and page is then checked
+   * against its own.
+   */
+  hub.get("/tables/:kind/:id", async (c) => {
+    const kind = c.req.param("kind");
+    if (kind !== "campaign" && kind !== "game-day") return c.json({ error: "No such table." }, 404);
+    const id = c.req.param("id");
+    const viewer = c.get("viewer");
+    const listing = await listingFor(c.env, kind, id, viewer);
+    if (!listing) return c.json({ error: "Orrey has no table here, or it is not yours to see." }, 404);
+    const member = await isMemberOf(c.env, kind, id, viewer.userId);
+    return c.json({
+      listing,
+      member,
+      canEdit: viewer.organiser,
+      links: await linksFor(c.env, kind, id, viewer, member),
+      pages: await pagesFor(c.env, kind, id, viewer, member),
+    });
+  });
+
+  hub.get("/tables/:kind/:id/pages/:slug", async (c) => {
+    const kind = c.req.param("kind");
+    if (kind !== "campaign" && kind !== "game-day") return c.json({ error: "No such page." }, 404);
+    const id = c.req.param("id");
+    const viewer = c.get("viewer");
+    const missing = c.json({ error: "Orrey has no page here, or it is not yours to see." }, 404);
+    if (!(await listingFor(c.env, kind, id, viewer))) return missing;
+    const member = await isMemberOf(c.env, kind, id, viewer.userId);
+    const page = await pageFor(c.env, kind, id, c.req.param("slug"), viewer, member);
+    return page ? c.json({ page }) : missing;
   });
 
   hub.get("/games", async (c) => c.json({ games: await catalog(c.env) }));

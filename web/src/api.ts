@@ -184,3 +184,76 @@ export function useCatalogEdit(gameId: string) {
     onSuccess: () => void client.invalidateQueries({ queryKey: ["games"] }),
   });
 }
+
+export interface TableLink {
+  id: string;
+  label: string;
+  url: string;
+  kind: string;
+  visibility: Visibility;
+}
+
+export interface PageSummary {
+  slug: string;
+  title: string;
+  visibility: Visibility;
+  updatedAt: number;
+}
+
+export interface Page extends PageSummary {
+  body: string;
+  updatedBy: Person | null;
+}
+
+export interface Table {
+  listing: Listing;
+  member: boolean;
+  canEdit: boolean;
+  links: TableLink[];
+  pages: PageSummary[];
+}
+
+export const useTable = (kind: string, id: string) =>
+  useQuery({
+    queryKey: ["table", kind, id],
+    queryFn: () => api<Table>(`/api/hub/tables/${kind}/${encodeURIComponent(id)}`),
+    retry: false,
+  });
+
+export const usePage = (kind: string, id: string, slug: string, enabled = true) =>
+  useQuery({
+    queryKey: ["page", kind, id, slug],
+    queryFn: () => api<{ page: Page }>(`/api/hub/tables/${kind}/${encodeURIComponent(id)}/pages/${encodeURIComponent(slug)}`),
+    retry: false,
+    enabled,
+  });
+
+/** Organisers' writes to a table's links and pages. */
+export function useTableEdits(kind: string, id: string) {
+  const client = useQueryClient();
+  const base = `/api/tables/${kind}/${encodeURIComponent(id)}`;
+  const refresh = () => void client.invalidateQueries({ queryKey: ["table", kind, id] });
+  return {
+    addLink: useMutation({
+      mutationFn: (link: { label: string; url: string; kind: string; visibility: Visibility }) =>
+        api(`${base}/links`, { method: "POST", body: link }),
+      onSuccess: refresh,
+    }),
+    removeLink: useMutation({
+      mutationFn: (linkId: string) => api(`/api/links/${encodeURIComponent(linkId)}`, { method: "DELETE" }),
+      onSuccess: refresh,
+    }),
+    putPage: useMutation({
+      mutationFn: ({ slug, ...page }: { slug: string; title: string; body: string; visibility: Visibility }) =>
+        api(`${base}/pages/${encodeURIComponent(slug)}`, { method: "PUT", body: page }),
+      onSuccess: (_data, vars) => {
+        refresh();
+        void client.invalidateQueries({ queryKey: ["page", kind, id, vars.slug] });
+      },
+    }),
+    removePage: useMutation({
+      mutationFn: (slug: string) => api(`${base}/pages/${encodeURIComponent(slug)}`, { method: "DELETE" }),
+      onSuccess: refresh,
+    }),
+  };
+}
