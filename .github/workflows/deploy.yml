@@ -133,7 +133,7 @@ jobs:
       # run, which alerts the channel and records a failed deployment, and
       # no release is tagged. Then roll back: docs/SHIPPING.md.
       # HEALTH_URL is a variable of the production environment:
-      # https://orrey.alxjrvs.com/healthz.
+      # https://kith.alxjrvs.com/healthz.
       - name: Verify the deploy
         env:
           HEALTH_URL: ${{ vars.HEALTH_URL }}

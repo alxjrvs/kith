@@ -1,6 +1,6 @@
 # Shipping
 
-How a change gets from a commit to orrey.alxjrvs.com. Orrey follows The Gnar's
+How a change gets from a commit to kith.alxjrvs.com. Orrey follows The Gnar's
 `factory:repo-ruleset` ([TheGnarCo/agent-skills](https://github.com/TheGnarCo/agent-skills/tree/main/factory/skills/repo-ruleset))
 with **merge `pr`** and **deploy `production`**. The `## Shipping` block in
 `CLAUDE.md` is the short version and wins where the two differ.
@@ -71,7 +71,7 @@ These need repo admin, which an agent here doesn't have.
 2. **Production environment.** Move `CLOUDFLARE_API_TOKEN` and
    `CLOUDFLARE_ACCOUNT_ID` to secrets of the `production` environment (repo
    secrets still work), and add the variable
-   `HEALTH_URL=https://orrey.alxjrvs.com/healthz`.
+   `HEALTH_URL=https://kith.alxjrvs.com/healthz`.
 3. **Red-main alerts.** Add the Actions secret `SLACK_ALERTS_WEBHOOK_URL`. A
    Discord channel works: create a webhook on it and append `/slack` to its
    URL. Until then the workflow warns and stays green.
