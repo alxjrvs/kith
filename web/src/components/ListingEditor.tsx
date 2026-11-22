@@ -1,8 +1,53 @@
 import { useState, type FormEvent } from "react";
 import { useListingEdit, type Listing, type Visibility } from "../api.ts";
+import { EditInCms } from "./EditInCms.tsx";
 
-/** What organisers see under a splash page: the listing's words, links and who may see it. */
+/**
+ * What organisers see under a splash page. A campaign's words are written in
+ * kith-cms (docs/CMS.md), so for a campaign this sets only who may see it; a
+ * game day's words are still edited here.
+ */
 export function ListingEditor({ listing }: { listing: Listing }) {
+  return listing.kind === "campaign" ? <VisibilityEditor listing={listing} /> : <DayListingEditor listing={listing} />;
+}
+
+function VisibilityEditor({ listing }: { listing: Listing }) {
+  const edit = useListingEdit(listing);
+  const [visibility, setVisibility] = useState<Visibility>(listing.visibility);
+  return (
+    <form
+      className="panel"
+      onSubmit={(event: FormEvent) => {
+        event.preventDefault();
+        edit.mutate({ visibility });
+      }}
+    >
+      <div className="panel-head label">
+        <span>Organisers · who can see it</span>
+        <span>{edit.isSuccess ? "Saved" : ""}</span>
+      </div>
+      <div className="panel-body">
+        <div className="row" style={{ alignItems: "flex-end" }}>
+          <div className="field">
+            <label htmlFor="le-visibility">Who can see it</label>
+            <select id="le-visibility" value={visibility} onChange={(e) => setVisibility(e.target.value as Visibility)}>
+              <option value="public">Anyone (shown on the games hub)</option>
+              <option value="members">The people on it</option>
+              <option value="organisers">Organisers only</option>
+            </select>
+          </div>
+          <button type="submit" className="btn primary" disabled={edit.isPending}>
+            Save
+          </button>
+        </div>
+        {edit.error ? <p className="notice error">{edit.error.message}</p> : null}
+      </div>
+      <EditInCms collection="games">Edit the tagline, pitch, hero and sound in the CMS</EditInCms>
+    </form>
+  );
+}
+
+function DayListingEditor({ listing }: { listing: Listing }) {
   const edit = useListingEdit(listing);
   const [visibility, setVisibility] = useState<Visibility>(listing.visibility);
   const [tagline, setTagline] = useState(listing.tagline ?? "");

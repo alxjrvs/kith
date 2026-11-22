@@ -404,6 +404,21 @@ describe("each game's home base", () => {
     }
   });
 
+  it("serves the site's own copy from kith-cms, and nothing when it is not there", async () => {
+    expect(await (await call("GET", "/api/hub/copy")).json()).toEqual({ copy: {} });
+    cmsEntries = {
+      sections: [{ slug: "home", data: { title: "Every game we run", kicker: "Kith", body: [{ _type: "block", style: "normal", children: [{ text: "Pull up a chair." }] }] } }],
+    };
+    resetCmsCache();
+    try {
+      const { copy } = (await (await call("GET", "/api/hub/copy")).json()) as { copy: Record<string, unknown> };
+      expect(copy.home).toEqual({ title: "Every game we run", kicker: "Kith", body: "Pull up a chair." });
+    } finally {
+      cmsEntries = null;
+      resetCmsCache();
+    }
+  });
+
   it("shows anyone off the table the characters but not the people", async () => {
     await runHollowmere();
     for (const cookie of [undefined, await as("1002")]) {

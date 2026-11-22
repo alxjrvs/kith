@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { useAgenda, useHomes, useMe } from "../api.ts";
+import { useAgenda, useCopy, useHomes, useMe } from "../api.ts";
+import { Markdown } from "../markdown.tsx";
 import { GameCard } from "./Games.tsx";
 import { TallySquares } from "../components/Squares.tsx";
 import { statusOf } from "../components/AgendaRow.tsx";
@@ -7,6 +8,7 @@ import { inDays, stamp } from "../format.ts";
 
 export function Home() {
   const signedIn = useMe().data?.signedIn === true;
+  const copy = useCopy().data?.home;
   const games = (useHomes().data?.games ?? []).filter((g) => g.state !== "CONCLUDED");
   // Yours first, then the rest in the hub's order.
   const shown = [...games.filter((g) => g.mine), ...games.filter((g) => !g.mine)].slice(0, 6);
@@ -17,11 +19,15 @@ export function Home() {
     <main className="page" style={{ gap: 36 }}>
       <section className="row" style={{ alignItems: "stretch", gap: 24 }}>
         <div className="stack" style={{ flex: "1 1 440px", justifyContent: "center", gap: 14 }}>
-          <span className="label">The Orrey of Worlds</span>
-          <h1 style={{ fontSize: 40, lineHeight: 1.08, letterSpacing: "-0.02em" }}>Every game we run, in one place.</h1>
-          <p className="muted" style={{ fontSize: 15, maxWidth: "50ch" }}>
-            Each game has a home base: who plays whom, when it meets next, its links and what the table knows.
-          </p>
+          <span className="label">{copy?.kicker ?? "The Orrey of Worlds"}</span>
+          <h1 style={{ fontSize: 40, lineHeight: 1.08, letterSpacing: "-0.02em" }}>{copy?.title ?? "Every game we run, in one place."}</h1>
+          <div className="muted" style={{ fontSize: 15, maxWidth: "50ch" }}>
+            {copy?.body ? (
+              <Markdown source={copy.body} />
+            ) : (
+              <p>Each game has a home base: who plays whom, when it meets next, its links and what the table knows.</p>
+            )}
+          </div>
           <div className="row">
             <Link to="/games" className="btn primary">
               See the games

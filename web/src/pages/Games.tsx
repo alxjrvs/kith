@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useGames, useHomes, useMe, type CatalogEntry, type GameSummary } from "../api.ts";
+import { useCopy, useGames, useHomes, useMe, type CatalogEntry, type GameSummary } from "../api.ts";
+import { Markdown } from "../markdown.tsx";
 import { CatalogEditor } from "../components/CatalogEditor.tsx";
 import { inDays, stamp } from "../format.ts";
 import { signInHref } from "../signin.ts";
@@ -21,6 +22,7 @@ const STATE_LABEL: Record<string, string> = {
 export function Games() {
   const me = useMe().data;
   const homes = useHomes();
+  const copy = useCopy().data?.games;
   const all = homes.data?.games ?? [];
   const live = all.filter((g) => g.state !== "CONCLUDED");
   const groups: [string, GameSummary[]][] = [
@@ -33,8 +35,14 @@ export function Games() {
   return (
     <main className="page">
       <div className="stack" style={{ gap: 8 }}>
-        <h1 style={{ fontSize: 32 }}>Games</h1>
-        <p className="muted">Every table we run. Each one has a home base with who plays whom and when it meets next.</p>
+        <h1 style={{ fontSize: 32 }}>{copy?.title ?? "Games"}</h1>
+        {copy?.body ? (
+          <div className="muted">
+            <Markdown source={copy.body} />
+          </div>
+        ) : (
+          <p className="muted">Every table we run. Each one has a home base with who plays whom and when it meets next.</p>
+        )}
       </div>
       {homes.isError ? <p className="notice error">{homes.error.message}</p> : null}
       {homes.isSuccess && all.length === 0 ? (
