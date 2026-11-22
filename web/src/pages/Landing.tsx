@@ -58,13 +58,23 @@ function Empty() {
 }
 
 function Slides({ slides }: { slides: GameSummary[] }) {
-  const [at, setAt] = useState(0);
+  // Where the show is, where it came from, and which way it moved, so the
+  // incoming game slides in from that side and the outgoing one slides away.
+  const [turn, setTurn] = useState<{ at: number; from: number | null; dir: 1 | -1 }>({ at: 0, from: null, dir: 1 });
   const [held, setHeld] = useState(false);
   const calm = useReducedMotion();
   const count = slides.length;
+  const at = turn.at;
   const index = at % count;
 
-  const go = useCallback((step: number) => setAt((i) => (((i + step) % count) + count) % count), [count]);
+  const go = useCallback(
+    (step: number) =>
+      setTurn((t) => ({ at: (((t.at + step) % count) + count) % count, from: t.at, dir: step < 0 ? -1 : 1 })),
+    [count],
+  );
+  const jump = (i: number) => {
+    if (i !== at) setTurn({ at: i, from: at, dir: i < at ? -1 : 1 });
+  };
 
   // Turn on a timer, unless someone is reading (pointer or focus on a slide),
   // the tab is hidden, or they asked the system for less motion.
@@ -111,7 +121,13 @@ function Slides({ slides }: { slides: GameSummary[] }) {
         }}
       >
         {slides.map((game, i) => (
-          <Slide key={`${game.kind}:${game.slug}`} game={game} current={i === index} position={`${i + 1} of ${count}`} />
+          <Slide
+            key={`${game.kind}:${game.slug}`}
+            game={game}
+            current={i === index}
+            motion={i === index && turn.from !== null ? (turn.dir > 0 ? "in-next" : "in-prev") : i === turn.from ? (turn.dir > 0 ? "out-next" : "out-prev") : undefined}
+            position={`${i + 1} of ${count}`}
+          />
         ))}
       </section>
       <Footer>
@@ -123,7 +139,7 @@ function Slides({ slides }: { slides: GameSummary[] }) {
                 type="button"
                 aria-label={game.name}
                 aria-current={i === index ? "true" : undefined}
-                onClick={() => setAt(i)}
+                onClick={() => jump(i)}
               >
                 {i === index && !held && !calm ? <span key={at} className="fill" style={{ animationDuration: `${HOLD_MS}ms` }} /> : null}
               </button>
@@ -153,7 +169,22 @@ export function StillSlide({ game, action }: { game: GameSummary; action?: React
   );
 }
 
-function Slide({ game, current, position, still = false }: { game: GameSummary; current: boolean; position: string; still?: boolean }) {
+type Motion = "in-next" | "in-prev" | "out-next" | "out-prev";
+
+function Slide({
+  game,
+  current,
+  position,
+  still = false,
+  motion,
+}: {
+  game: GameSummary;
+  current: boolean;
+  position: string;
+  still?: boolean;
+  /** How this slide is moving: coming in, or going out, and from which side. */
+  motion?: Motion | undefined;
+}) {
   return (
     <article
       className="show-slide"
@@ -162,6 +193,7 @@ function Slide({ game, current, position, still = false }: { game: GameSummary; 
       aria-hidden={current ? undefined : true}
       data-current={current ? "" : undefined}
       data-still={still ? "" : undefined}
+      data-motion={motion}
       inert={current ? undefined : true}
     >
       {game.imageUrl ? (
