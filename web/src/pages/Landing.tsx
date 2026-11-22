@@ -76,8 +76,11 @@ function Slides({ slides }: { slides: GameSummary[] }) {
     if (i !== at) setTurn({ at: i, from: at, dir: i < at ? -1 : 1 });
   };
 
-  // Turn on a timer, unless someone is reading (pointer or focus on a slide),
-  // the tab is hidden, or they asked the system for less motion.
+  // Always moving on: a press, a swipe or a key restarts the count, and the
+  // only pause is while a keyboard user is on a slide's link, which ends when
+  // they move off it. (A hover pause would stop it for good: the slide fills
+  // the screen, so the pointer is always over it.) Hidden tabs skip a turn.
+  // Someone who asked their system for less motion moves it themselves.
   useEffect(() => {
     if (held || calm || count < 2) return;
     const timer = window.setInterval(() => {
@@ -103,9 +106,10 @@ function Slides({ slides }: { slides: GameSummary[] }) {
         className="show-slides"
         aria-roledescription="carousel"
         aria-label="The games"
-        onPointerEnter={(e) => e.pointerType === "mouse" && setHeld(true)}
-        onPointerLeave={(e) => e.pointerType === "mouse" && setHeld(false)}
-        onFocus={() => setHeld(true)}
+        onFocus={(e) => {
+          // Keyboard focus only: a click focuses too, and would hold it for good.
+          if (e.target instanceof HTMLElement && e.target.matches(":focus-visible")) setHeld(true);
+        }}
         onBlur={(e) => {
           if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHeld(false);
         }}
