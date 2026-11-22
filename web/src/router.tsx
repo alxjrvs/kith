@@ -1,4 +1,5 @@
-import { Outlet, createRootRoute, createRoute, createRouter, redirect } from "@tanstack/react-router";
+import { Navigate, Outlet, createRootRoute, createRoute, createRouter, redirect } from "@tanstack/react-router";
+import { useState } from "react";
 import { Header } from "./components/Header.tsx";
 import { Home } from "./pages/Home.tsx";
 import { Games } from "./pages/Games.tsx";
@@ -12,14 +13,33 @@ import { Table } from "./pages/Table.tsx";
 import { GameKnowledgePage, TableKnowledgePage } from "./pages/KnowledgePage.tsx";
 import { NotFound } from "./pages/NotFound.tsx";
 
-/** Every page but the splash wears the site header. */
+/**
+ * Every page but the splash wears the site header, and every one of them is for
+ * people who have signed in. Signed out, the only pages are the front page (the
+ * slideshow) and each game's own pages: a home base and its splash. Anything
+ * else goes to the nearest of those rather than showing the app around it.
+ */
 function Shell() {
+  const me = useMe();
+  if (me.isPending) return null;
+  if (!me.data?.signedIn) return <PublicOnly />;
   return (
     <>
       <Header />
       <Outlet />
     </>
   );
+}
+
+function PublicOnly() {
+  // Read once: while the redirect below is under way the router's location is
+  // already the target, and reading it again would send a game day on to "/".
+  const [path] = useState(() => window.location.pathname);
+  const day = path.match(/^\/table\/game-day\/([^/]+)/);
+  if (day) return <Navigate to="/join/$kind/$id" params={{ kind: "game-day", id: decodeURIComponent(day[1]!) }} replace />;
+  const game = path.match(/^\/(?:games|table\/campaign)\/([^/]+)/);
+  if (game) return <Navigate to="/games/$slug" params={{ slug: decodeURIComponent(game[1]!) }} replace />;
+  return <Navigate to="/" replace />;
 }
 
 const rootRoute = createRootRoute({ component: Outlet, notFoundComponent: NotFound });

@@ -26,6 +26,7 @@ const STATE_EYEBROW: Record<string, string> = {
 export function GameHome() {
   const { slug } = useParams({ from: "/games/$slug" });
   const home = useHome(slug);
+  const signedIn = useMe().data?.signedIn === true;
   useGameApp(home.data ? slug : undefined);
 
   if (home.isPending) return <div className="splash base" aria-busy="true" />;
@@ -36,7 +37,7 @@ export function GameHome() {
         <main className="page">
           <h1>Nothing here</h1>
           <p className="muted">
-            {home.error.message} <Link to="/games">See every game</Link>
+            {home.error.message} {signedIn ? <Link to="/games">See every game</Link> : <Link to="/">Back to the front page</Link>}
           </p>
         </main>
       </>
@@ -76,7 +77,8 @@ function BaseHero({
 }) {
   const me = useMe().data;
   return (
-    <div className="splash base">
+    // Signed out there is nothing below the fold, so the front door fills the screen.
+    <div className={me?.signedIn ? "splash base" : "splash"}>
       {heroUrl ? <div className="hero" style={{ backgroundImage: `url("${encodeURI(heroUrl)}")` }} /> : null}
       {heroUrl ? null : <TableMotif />}
       <header>
@@ -85,18 +87,16 @@ function BaseHero({
             <img src="/mark.svg" alt="" width="26" height="26" />
             Kith.town
           </Link>
-          <nav aria-label="Main" className="site-nav">
-            <Link to="/games">Games</Link>
-            <Link to="/agenda">Agenda</Link>
-          </nav>
+          {me?.signedIn ? (
+            <nav aria-label="Main" className="site-nav">
+              <Link to="/games">Games</Link>
+              <Link to="/agenda">Agenda</Link>
+            </nav>
+          ) : null}
         </div>
         <div className="row" style={{ gap: 10 }}>
+          {/* Signed out, the way in is the big button under the title. */}
           <SoundButton url={soundUrl} />
-          {me && !me.signedIn ? (
-            <a className="btn" href={signInHref()}>
-              Sign in
-            </a>
-          ) : null}
         </div>
       </header>
       <main>
@@ -120,6 +120,15 @@ function BaseHero({
   );
 }
 
+/** Signed out, with no seats to take: the way in. */
+function SignInButton() {
+  return (
+    <a className="btn primary big" href={signInHref()}>
+      Sign in with Discord
+    </a>
+  );
+}
+
 /** The next session, big, where the eye lands first. */
 function NextUp({ row }: { row: Row }) {
   return (
@@ -135,6 +144,9 @@ function NextUp({ row }: { row: Row }) {
 
 function CampaignBase({ home }: { home: CampaignHome }) {
   const { listing, roster, upcoming, links, pages, canEdit, member } = home;
+  // Signed out, a home base is its front door and nothing more: what the game
+  // is, when it next meets, and the way in. The rest is for the people on it.
+  const signedIn = useMe().data?.signedIn === true;
   const kind = "campaign";
   const id = listing.id;
   const days = new Map<string, Row[]>();
@@ -143,19 +155,19 @@ function CampaignBase({ home }: { home: CampaignHome }) {
   return (
     <>
       <BaseHero
-        eyebrow={`${STATE_EYEBROW[listing.state] ?? "Campaign"}${listing.lead ? ` run by ${listing.lead.name}` : ""}`}
+        eyebrow={`${STATE_EYEBROW[listing.state] ?? "Campaign"}${signedIn && listing.lead ? ` run by ${listing.lead.name}` : ""}`}
         title={listing.name}
         tagline={listing.tagline}
         heroUrl={listing.heroUrl}
         logoUrl={listing.logoUrl}
         soundUrl={listing.soundUrl}
         system={listing.system ?? listing.game?.name ?? null}
-        chips={[...cadence(listing), listing.where === "voice" ? "Voice" : listing.where].filter((c): c is string => Boolean(c))}
+        chips={signedIn ? [...cadence(listing), listing.where === "voice" ? "Voice" : listing.where].filter((c): c is string => Boolean(c)) : []}
       >
-        {upcoming[0] ? <NextUp row={upcoming[0]} /> : null}
+        {upcoming[0] && signedIn ? <NextUp row={upcoming[0]} /> : null}
         <div className="row" style={{ gap: "16px 24px" }}>
-          {listing.open ? <SignupButtons listing={listing} big /> : null}
-          <CalendarLink url={home.calendarUrl} />
+          {listing.open ? <SignupButtons listing={listing} big /> : signedIn ? null : <SignInButton />}
+          {signedIn ? <CalendarLink url={home.calendarUrl} /> : null}
           {listing.open || canEdit ? (
             <Link to="/join/$kind/$id" params={{ kind, id }}>
               Splash page
@@ -163,6 +175,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
           ) : null}
         </div>
       </BaseHero>
+    {!signedIn ? null : (
     <main className="page">
 
       <div className="split">
@@ -246,12 +259,14 @@ function CampaignBase({ home }: { home: CampaignHome }) {
         </aside>
       </div>
     </main>
+    )}
     </>
   );
 }
 
 function BoardBase({ home }: { home: BoardHome }) {
   const { game, upcoming, played, canEdit } = home;
+  const signedIn = useMe().data?.signedIn === true;
   const [editing, setEditing] = useState(false);
   const players =
     game.minPlayers && game.maxPlayers
@@ -265,14 +280,14 @@ function BoardBase({ home }: { home: BoardHome }) {
   return (
     <>
       <BaseHero
-        eyebrow={`Board game${next?.lead ? ` hosted by ${next.lead.name}` : ""}`}
+        eyebrow={`Board game${signedIn && next?.lead ? ` hosted by ${next.lead.name}` : ""}`}
         title={game.name}
         tagline={game.summary}
         heroUrl={next?.heroUrl ?? game.coverUrl}
         soundUrl={next?.soundUrl ?? null}
-        chips={[players, length, played > 0 ? `Played ${played}×` : null].filter((c): c is string => Boolean(c))}
+        chips={signedIn ? [players, length, played > 0 ? `Played ${played}×` : null].filter((c): c is string => Boolean(c)) : []}
       >
-        {next ? (
+        {next && signedIn ? (
           <div className="next-up">
             <span className="label">{next.when.startsAt ? `Next game day ${inDays(next.when.startsAt)}` : "Next game day, date to come"}</span>
             {next.when.startsAt ? <span className="num next-stamp">{stamp(next.when.startsAt)}</span> : null}
@@ -287,8 +302,8 @@ function BoardBase({ home }: { home: BoardHome }) {
           </div>
         ) : null}
         <div className="row" style={{ gap: "16px 24px" }}>
-          {next?.open ? <SignupButtons listing={next} big /> : null}
-          <CalendarLink url={home.calendarUrl} />
+          {next?.open ? <SignupButtons listing={next} big /> : signedIn ? null : <SignInButton />}
+          {signedIn ? <CalendarLink url={home.calendarUrl} /> : null}
           {canEdit && !editing ? (
             <button type="button" className="btn" onClick={() => setEditing(true)}>
               Edit the game
@@ -296,6 +311,7 @@ function BoardBase({ home }: { home: BoardHome }) {
           ) : null}
         </div>
       </BaseHero>
+    {!signedIn ? null : (
     <main className="page" id="days">
       {editing ? <CatalogEditor game={game} done={() => setEditing(false)} /> : null}
 
@@ -339,6 +355,7 @@ function BoardBase({ home }: { home: BoardHome }) {
         </div>
       </div>
     </main>
+    )}
     </>
   );
 }

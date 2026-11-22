@@ -11,6 +11,8 @@ export function Header() {
         <img src="/mark.svg" alt="" width="22" height="22" />
         Kith.town
       </Link>
+      {/* Signed out, there is no app to get around: only the front page and the game pages. */}
+      {me?.signedIn ? (
       <nav aria-label="Main" className="site-nav">
         <Link to="/games" activeProps={{ "aria-current": "page" }}>
           Games
@@ -18,8 +20,9 @@ export function Header() {
         <Link to="/agenda" activeProps={{ "aria-current": "page" }}>
           Agenda
         </Link>
-        {me?.signedIn && me.organiser ? <a href="/console">Organise</a> : null}
+        {me.organiser ? <a href="/console">Organise</a> : null}
       </nav>
+      ) : <span />}
       {me?.signedIn ? (
         <Link to="/profile" className="avatar" aria-label={`Your profile, ${me.user.name}`}>
           {me.user.avatarUrl ? <img src={me.user.avatarUrl} alt="" /> : initials(me.user.name)}

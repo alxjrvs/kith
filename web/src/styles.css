@@ -187,14 +187,11 @@ img { max-width: 100%; }
  * full strength on the right. A mask rather than an overlay, so the image is
  * never greyed where it shows.
  */
-.splash .hero {
-  position: absolute; inset: 0;
-  background-size: cover; background-position: center right;
-  /* Nothing behind the left half; the picture fades in over the next tenth. */
-  -webkit-mask-image: linear-gradient(90deg, transparent 50%, #000 60%);
-  mask-image: linear-gradient(90deg, transparent 50%, #000 60%);
-}
-.splash .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, var(--deep), transparent 40%); }
+.splash .hero { position: absolute; inset: 0; background-size: cover; background-position: center right; }
+.splash header, .splash main { text-shadow: 0 1px 3px #000c, 0 2px 18px #000a, 0 0 42px #0008; }
+/* The picture is shown whole, so the words carry their own soft shadow, and controls keep their own faces. */
+.splash .btn, .splash .chip, .splash .pill, .splash .panel { text-shadow: none; }
+.splash main > .label { color: var(--text); }
 /* No picture: the Kith mark, big, in the right half. */
 .splash .logo-art { position: absolute; right: 8%; top: 50%; transform: translateY(-50%); width: min(40vw, 72vh, 620px); height: auto; opacity: 0.9; pointer-events: none; }
 .splash header { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 32px; }
@@ -235,7 +232,6 @@ img { max-width: 100%; }
 @media (max-width: 640px) {
   .splash .logo-art { right: -15%; top: 30%; width: 90vw; opacity: 0.2; }
   /* On a phone the words run the full width, so the picture steps back behind them. */
-  .splash .hero { inset: 0; opacity: 0.35; -webkit-mask-image: linear-gradient(0deg, transparent 0%, #000 60%); mask-image: linear-gradient(0deg, transparent 0%, #000 60%); }
 }
 
 .prose blockquote { margin: 0 0 0.9em; padding-left: 12px; border-left: 2px solid var(--accent); color: var(--muted); }

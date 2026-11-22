@@ -30,7 +30,7 @@ export function Splash() {
               If it is a table you are on, <a href={signInHref()}>sign in with Discord</a>.
             </>
           ) : null}{" "}
-          <Link to="/games">See every game</Link>
+          {me?.signedIn ? <Link to="/games">See every game</Link> : <Link to="/">Back to the front page</Link>}
         </p>
       </main>
     );
@@ -182,9 +182,11 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
         </div>
         <div className="row" style={{ gap: 18, fontSize: 13 }}>
           <a href="#details">Read the full details</a>
-          <ToTable kind={listing.kind} id={listing.id}>
-            {listing.kind === "campaign" ? "The game's home base" : "Links and pages"}
-          </ToTable>
+          {signedIn || listing.kind === "campaign" ? (
+            <ToTable kind={listing.kind} id={listing.id}>
+              {listing.kind === "campaign" ? "The game's home base" : "Links and pages"}
+            </ToTable>
+          ) : null}
         </div>
       </main>
     </div>

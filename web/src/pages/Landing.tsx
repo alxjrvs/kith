@@ -155,7 +155,7 @@ function Slide({ game, current, position }: { game: GameSummary; current: boolea
             </span>
           ) : null}
           {game.open ? <span className="pill accent">Signing up</span> : null}
-          <GameLink game={game}>{game.state === "CONCLUDED" ? "See how it went" : "Visit its home base"}</GameLink>
+          {game.state === "CONCLUDED" ? null : <GameLink game={game}>{game.kind === "day" ? "See the game day" : "Visit its home base"}</GameLink>}
         </div>
       </div>
     </article>
@@ -163,8 +163,9 @@ function Slide({ game, current, position }: { game: GameSummary; current: boolea
 }
 
 function GameLink({ game, children }: { game: GameSummary; children: ReactNode }) {
+  // Signed out, a game day's page is its splash: the only page of it that is public.
   return game.kind === "day" ? (
-    <Link to="/table/$kind/$id" params={{ kind: "game-day", id: game.slug }}>
+    <Link to="/join/$kind/$id" params={{ kind: "game-day", id: game.slug }}>
       {children}
     </Link>
   ) : (
