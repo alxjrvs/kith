@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { useHomes, type GameSummary } from "../api.ts";
 import { inDays, stamp } from "../format.ts";
 import { signInHref } from "../signin.ts";
-import { STATE_LABEL } from "./Games.tsx";
 
 /** How long each game holds the screen before the next one comes in. */
 const HOLD_MS = 7000;
@@ -131,8 +130,6 @@ function Slides({ slides }: { slides: GameSummary[] }) {
 }
 
 function Slide({ game, current, position }: { game: GameSummary; current: boolean; position: string }) {
-  const state = STATE_LABEL[game.state] ?? game.state.toLowerCase();
-  const eyebrow = [state, game.label].filter(Boolean).join(", ");
   return (
     <article
       className="show-slide"
@@ -148,8 +145,7 @@ function Slide({ game, current, position }: { game: GameSummary; current: boolea
         <img className="show-mark" src="/mark.svg" alt="" aria-hidden="true" />
       )}
       <div className="show-slide-words">
-        {game.logoUrl ? <img className="show-logo" src={game.logoUrl} alt="" /> : null}
-        <span className="label">{eyebrow}</span>
+        {game.label ? <span className="chip system show-system">{game.label}</span> : null}
         <h1>{game.name}</h1>
         {game.tagline ? <p className="show-tagline">{game.tagline}</p> : null}
         <div className="row" style={{ gap: "8px 18px", fontSize: 14 }}>
