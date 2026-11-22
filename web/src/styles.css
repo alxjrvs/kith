@@ -182,14 +182,13 @@ img { max-width: 100%; }
 .splash .hero {
   position: absolute; inset: 0;
   background-size: cover; background-position: center right;
-  /* The cutover sits at half the width: dark under the words, picture beyond. */
-  -webkit-mask-image: linear-gradient(90deg, transparent 38%, #000 62%);
-  mask-image: linear-gradient(90deg, transparent 38%, #000 62%);
+  /* Nothing behind the left half; the picture fades in over the next tenth. */
+  -webkit-mask-image: linear-gradient(90deg, transparent 50%, #000 60%);
+  mask-image: linear-gradient(90deg, transparent 50%, #000 60%);
 }
 .splash .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, var(--deep), transparent 40%); }
-/* An organiser's picture is the art; the drawn table steps aside for it. */
-.splash .hero ~ .seat { display: none; }
-.splash .seat { position: absolute; border-radius: 50%; border: 1px solid var(--border); pointer-events: none; }
+/* No picture: the Kith mark, big, in the right half. */
+.splash .logo-art { position: absolute; right: 8%; top: 50%; transform: translateY(-50%); width: min(40vw, 72vh, 620px); height: auto; opacity: 0.9; pointer-events: none; }
 .splash header { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 32px; }
 .splash main { position: relative; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 24px; padding: 32px 32px 48px; max-width: 760px; }
 .splash h1 { font-size: clamp(48px, 10vw, 88px); line-height: 0.95; font-weight: 700; letter-spacing: -0.03em; }
@@ -221,9 +220,9 @@ img { max-width: 100%; }
   .page { padding-left: 16px; padding-right: 16px; }
 }
 
-/* On a phone the orrery sits behind the words, so it steps back. */
+/* On a phone the art sits behind the words, so it steps back. */
 @media (max-width: 640px) {
-  .splash .seat { opacity: 0.3; }
+  .splash .logo-art { right: -15%; top: 30%; width: 90vw; opacity: 0.2; }
   /* On a phone the words run the full width, so the picture steps back behind them. */
   .splash .hero { inset: 0; opacity: 0.35; -webkit-mask-image: linear-gradient(0deg, transparent 0%, #000 60%); mask-image: linear-gradient(0deg, transparent 0%, #000 60%); }
 }

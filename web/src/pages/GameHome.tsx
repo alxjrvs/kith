@@ -71,7 +71,7 @@ function BaseHero({
   return (
     <div className="splash base">
       {heroUrl ? <div className="hero" style={{ backgroundImage: `url("${encodeURI(heroUrl)}")` }} /> : null}
-      <TableMotif />
+      {heroUrl ? null : <TableMotif />}
       <header>
         <div className="row" style={{ gap: 24 }}>
           <Link to="/" className="wordmark" style={{ fontSize: 26 }}>

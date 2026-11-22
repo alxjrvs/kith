@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ToTable } from "../components/To.tsx";
 import { Link, useParams } from "@tanstack/react-router";
 import { useListing, useMe, type Listing } from "../api.ts";
@@ -142,7 +142,7 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
   return (
     <div className="splash">
       {listing.heroUrl ? <div className="hero" style={{ backgroundImage: `url("${encodeURI(listing.heroUrl)}")` }} /> : null}
-      <TableMotif />
+      {listing.heroUrl ? null : <TableMotif />}
       <header>
         <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
           <img src="/mark.svg" alt="" width="26" height="26" />
@@ -194,24 +194,10 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
   );
 }
 
-/** The mark, at room scale: a round table seen from above, six seats, the top one lit. */
+/**
+ * With no hero image, the art is the Kith logo itself, at room scale on the
+ * right. With one, the organiser's picture is the art and this stays out.
+ */
 export function TableMotif() {
-  const at = (size: number, style: CSSProperties, dx = 0, dy = 0) => (
-    <div
-      aria-hidden="true"
-      className="seat"
-      style={{ left: "68%", top: "46%", width: size, height: size, margin: `${dy - size / 2}px 0 0 ${dx - size / 2}px`, ...style }}
-    />
-  );
-  const seats = Array.from({ length: 6 }, (_, i) => {
-    const t = (i / 6) * Math.PI * 2 - Math.PI / 2;
-    return at(56, { background: i === 0 ? "var(--accent)" : "var(--border)", border: 0, opacity: i === 0 ? 0.85 : 0.5 }, 300 * Math.cos(t), 300 * Math.sin(t));
-  });
-  return (
-    <>
-      {at(1100, { borderColor: "var(--rule)" })}
-      {at(400, { background: "var(--panel)", border: "2px solid var(--accent)", opacity: 0.55 })}
-      {seats}
-    </>
-  );
+  return <img className="logo-art" src="/mark.svg" alt="" aria-hidden="true" />;
 }
