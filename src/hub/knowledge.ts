@@ -171,7 +171,7 @@ export async function addLink(env: Env, kind: Kind, id: string, input: Record<st
 }
 
 export async function removeLink(env: Env, linkId: string, actor: string): Promise<boolean> {
-  if (linkId.startsWith("cms:")) throw new InvalidKnowledge("this link is written in kith-cms: remove it at cms.kith.town");
+  if (linkId.startsWith("cms:")) throw new InvalidKnowledge("this link is written in kith-cms: remove it at admin.kith.town");
   const d = db(env);
   const before = await d.select().from(schema.links).where(eq(schema.links.id, linkId)).get();
   if (!before) return false;

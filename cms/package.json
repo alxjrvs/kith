@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Kith's CMS: EmDash on its own Worker (kith-cms), admin at cms.kith.town. Every word on kith.town is written here.",
+  "description": "Kith's CMS: EmDash on its own Worker (kith-cms), admin at admin.kith.town. Every word on kith.town is written here.",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",

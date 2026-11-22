@@ -4,7 +4,7 @@ Every word a visitor reads on kith.town is written in
 [EmDash](https://github.com/emdash-cms/emdash), Cloudflare's Astro CMS, the
 same one alxjrvs.com uses. It runs on its own Worker, **kith-cms** (`cms/`),
 with its own D1 database, R2 bucket and KV namespace. Its admin is at
-**cms.kith.town**, behind Cloudflare Access.
+**admin.kith.town**, behind Cloudflare Access.
 
 The Kith Worker reads published entries from EmDash's content API over a
 `CMS` service binding, with a read-only API token. It never reads EmDash's
@@ -56,13 +56,13 @@ fresh database; after that, collections and fields are edited in the admin
    `kith-emdash-media` (R2) and `kith-cms-sessions` (KV), and writes their ids
    into `cms/wrangler.jsonc`. Commit that.
 2. **Put the admin behind Access.** Zero Trust → Access → Applications → the
-   app that guards admin.alxjrvs.com → add `cms.kith.town` as another
+   app that guards admin.alxjrvs.com → add `admin.kith.town` as another
    public hostname. `cms/wrangler.jsonc` already names that app's AUD tag. (If
    Kith gets its own Access app instead, put its AUD in `CF_ACCESS_AUDIENCE`.)
    Do this before the first deploy, so the admin is never reachable without it.
 3. **Deploy.** Merging to main deploys kith-cms before the Kith Worker
    (`bin/deploy`). Until step 1 is committed, the deploy skips kith-cms.
-4. **Run the setup wizard** at cms.kith.town. It applies the content
+4. **Run the setup wizard** at admin.kith.town. It applies the content
    model and makes you its admin.
 5. **Give Kith a token.** In the admin, Settings → API tokens → a token with
    only `content:read`. Then `bunx wrangler secret put CMS_TOKEN --name kith`.

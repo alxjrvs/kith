@@ -13,7 +13,7 @@ rules that are easy to violate by accident.
   read state back out of a Discord message.
 - **Words live in EmDash; state lives in D1.** Every word a visitor reads (game copy,
   characters, knowledge pages, links, the site's own copy) is written in kith-cms
-  (`cms/`, admin at cms.kith.town) and read over the `CMS` service binding.
+  (`cms/`, admin at admin.kith.town) and read over the `CMS` service binding.
   Anything a rule reads (rosters, attendance, schedules, signups, visibility of a
   table) stays in D1. A game is born in EmDash; its D1 row follows it. `docs/CMS.md`.
 - **Discord is the only identity system.** `identify` scope only; roles come from the bot

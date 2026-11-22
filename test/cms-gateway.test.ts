@@ -5,9 +5,9 @@ const req = (url: string, method = "GET") => new Request(url, { method });
 
 describe("kith-cms gateway", () => {
   it("hands everything on the admin host to EmDash, behind Access", () => {
-    expect(route(req("https://cms.kith.town/_emdash/admin/"))).toBe("emdash");
-    expect(route(req("https://cms.kith.town/"))).toBe("emdash");
-    expect(route(req("https://cms.kith.town/_emdash/api/content/games", "POST"))).toBe("emdash");
+    expect(route(req("https://admin.kith.town/_emdash/admin/"))).toBe("emdash");
+    expect(route(req("https://admin.kith.town/"))).toBe("emdash");
+    expect(route(req("https://admin.kith.town/_emdash/api/content/games", "POST"))).toBe("emdash");
   });
 
   it("lets the Kith Worker's binding read the content API and nothing else", () => {

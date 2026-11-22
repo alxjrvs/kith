@@ -5,14 +5,14 @@ import { defineConfig } from "astro/config";
 import emdash from "emdash/astro";
 
 // kith-cms: EmDash on its own Worker (wrangler.jsonc). It has no public pages.
-// Its admin is at cms.kith.town, behind Cloudflare Access. The Kith
+// Its admin is at admin.kith.town, behind Cloudflare Access. The Kith
 // Worker (../wrangler.jsonc) reads published entries from EmDash's content API
 // over a service binding, with a read-only API token, and renders them itself.
 //
 // This is the same setup as alxjrvs.com's EmDash (alxjrvs/alxjrvs-dot-com),
 // minus the public site: Kith's pages are the React app in ../web.
 export default defineConfig({
-  site: "https://cms.kith.town",
+  site: "https://admin.kith.town",
   output: "server",
   adapter: cloudflare(),
   trailingSlash: "ignore",
@@ -22,7 +22,7 @@ export default defineConfig({
     react(),
     emdash({
       // The CMS's own origin: redirects, preview links and CSRF checks use it.
-      siteUrl: "https://cms.kith.town",
+      siteUrl: "https://admin.kith.town",
       database: d1({ binding: "DB", session: "auto", coalesce: true }),
       storage: r2({ binding: "MEDIA" }),
       // In production only Access can sign in (Google, the same identity as
