@@ -106,6 +106,9 @@ describe("reading kith-cms", () => {
   it("serves uploaded media from Kith's own origin", () => {
     expect(mediaUrl({ id: "x", src: "/_emdash/api/media/file/01ABC.png" })).toBe("/media/01ABC.png");
     expect(mediaUrl({ id: "x", meta: { storageKey: "01DEF.mp3" } })).toBe("/media/01DEF.mp3");
+    // The shape EmDash really writes: two ULIDs and the extension.
+    expect(mediaUrl({ id: "x", src: "/_emdash/api/media/file/01M81KC774.01M81KC7RE.png" })).toBe("/media/01M81KC774.01M81KC7RE.png");
+    expect(mediaUrl({ id: "x", meta: { storageKey: "a..png" } })).toBeUndefined();
     expect(mediaUrl({ id: "x", src: "https://cdn.example/x.png" })).toBe("https://cdn.example/x.png");
     expect(mediaUrl("http://insecure.example/x.png")).toBeUndefined();
     expect(mediaUrl(undefined)).toBeUndefined();
