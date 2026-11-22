@@ -122,8 +122,8 @@ function BaseHero({
 function NextUp({ row }: { row: Row }) {
   return (
     <div className="next-up">
-      <span className="label">Next up · {inDays(row.startsAt)}</span>
-      <span className="mono next-stamp">{stamp(row.startsAt)}</span>
+      <span className="label">Next up {inDays(row.startsAt)}</span>
+      <span className="num next-stamp">{stamp(row.startsAt)}</span>
       <div className="panel" style={{ marginTop: 4 }}>
         <AgendaRow row={row} tally={false} simple={row.quorum.rule === "unanimous"} />
       </div>
@@ -141,9 +141,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
   return (
     <>
       <BaseHero
-        eyebrow={[STATE_EYEBROW[listing.state] ?? "Campaign", listing.lead ? `GM ${listing.lead.name}` : null]
-          .filter(Boolean)
-          .join(" · ")}
+        eyebrow={`${STATE_EYEBROW[listing.state] ?? "Campaign"}${listing.lead ? ` run by ${listing.lead.name}` : ""}`}
         title={listing.name}
         tagline={listing.tagline}
         heroUrl={listing.heroUrl}
@@ -169,8 +167,8 @@ function CampaignBase({ home }: { home: CampaignHome }) {
         <div className="main">
           <section className="panel">
             <h2 className="panel-head label">
-              <span>Coming up · {upcoming.length}</span>
-              <Link to="/agenda" style={{ fontSize: 12, textTransform: "none", letterSpacing: 0 }}>
+              <span>Coming up</span>
+              <Link to="/agenda">
                 Full agenda
               </Link>
             </h2>
@@ -182,7 +180,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
               [...days.entries()].map(([day, list]) => (
                 <div key={day}>
                   <div className="label" style={{ padding: "10px 16px 0" }}>
-                    {list[0]!.dayLabel} · {inDays(list[0]!.startsAt)}
+                    {list[0]!.dayLabel}, {inDays(list[0]!.startsAt)}
                   </div>
                   {list.map((row) => (
                     <div key={row.sessionId}>
@@ -198,7 +196,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
 
           {listing.pitch ? (
             <section className="stack">
-              <h2 className="label" style={{ fontSize: 12 }}>
+              <h2 className="label">
                 The pitch
               </h2>
               <div className="prose">
@@ -209,7 +207,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
 
           <section className="panel">
             <h2 className="panel-head label">
-              <span>Knowledge · {pages.length}</span>
+              <span>Knowledge</span>
             </h2>
             {pages.length === 0 ? (
               <p className="panel-body muted">
@@ -236,7 +234,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
             empty={listing.state === "FORMING" ? "Nobody has signed up yet." : "No roster yet."}
           />
           <section className="panel">
-            <h2 className="panel-head label">Links · {links.length}</h2>
+            <h2 className="panel-head label">Links</h2>
             {links.length === 0 ? <p className="panel-body muted">No links yet.</p> : null}
             {links.map((link) => (
               <LinkRow key={link.id} link={link} canEdit={canEdit} removable={!link.id.startsWith("cms:")} kind={kind} id={id} />
@@ -265,7 +263,7 @@ function BoardBase({ home }: { home: BoardHome }) {
   return (
     <>
       <BaseHero
-        eyebrow={["Board game", next?.lead ? `Host ${next.lead.name}` : null].filter(Boolean).join(" · ")}
+        eyebrow={`Board game${next?.lead ? ` hosted by ${next.lead.name}` : ""}`}
         title={game.name}
         tagline={game.summary}
         heroUrl={next?.heroUrl ?? game.coverUrl}
@@ -274,12 +272,12 @@ function BoardBase({ home }: { home: BoardHome }) {
       >
         {next ? (
           <div className="next-up">
-            <span className="label">Next game day · {next.when.startsAt ? inDays(next.when.startsAt) : "date to come"}</span>
-            {next.when.startsAt ? <span className="mono next-stamp">{stamp(next.when.startsAt)}</span> : null}
+            <span className="label">{next.when.startsAt ? `Next game day ${inDays(next.when.startsAt)}` : "Next game day, date to come"}</span>
+            {next.when.startsAt ? <span className="num next-stamp">{stamp(next.when.startsAt)}</span> : null}
             {next.open ? (
               <div className="row">
                 <SeatSquares capacity={next.capacity} taken={next.taken} big />
-                <span className="mono" style={{ fontSize: 13 }}>
+                <span className="num" style={{ fontSize: 13 }}>
                   {seatLine(next)}
                 </span>
               </div>
@@ -301,15 +299,15 @@ function BoardBase({ home }: { home: BoardHome }) {
 
       <div className="split">
         <div className="main">
-          <h2 className="label" style={{ fontSize: 12 }}>
-            Upcoming game days · {upcoming.length}
+          <h2 className="label">
+            Upcoming game days
           </h2>
           {upcoming.length === 0 ? <p className="empty">No day on the calendar yet.</p> : null}
           {upcoming.map(({ listing, seats }) => (
             <section key={listing.id} className="panel">
               <h3 className="panel-head label">
                 <span>
-                  {listing.when.startsAt ? `${stamp(listing.when.startsAt)} · ${inDays(listing.when.startsAt)}` : "Date to come"}
+                  {listing.when.startsAt ? `${stamp(listing.when.startsAt)}, ${inDays(listing.when.startsAt)}` : "Date to come"}
                 </span>
                 <span>{listing.state.toLowerCase()}</span>
               </h3>
@@ -320,13 +318,13 @@ function BoardBase({ home }: { home: BoardHome }) {
                 {listing.tagline ? <p className="muted">{listing.tagline}</p> : null}
                 {listing.where || listing.lead ? (
                   <span className="muted" style={{ fontSize: 13 }}>
-                    {[listing.where, listing.lead ? `Host ${listing.lead.name}` : null].filter(Boolean).join(" · ")}
+                    {[listing.where, listing.lead ? `hosted by ${listing.lead.name}` : null].filter(Boolean).join(", ")}
                   </span>
                 ) : null}
                 {listing.open ? (
                   <div className="row">
                     <SeatSquares capacity={listing.capacity} taken={listing.taken} />
-                    <span className="mono" style={{ fontSize: 13 }}>
+                    <span className="num" style={{ fontSize: 13 }}>
                       {seatLine(listing)}
                     </span>
                   </div>
@@ -348,7 +346,7 @@ function Roster({ seats, title, empty }: { seats: Seat[]; title: string; empty: 
   return (
     <section className="panel" id="roster">
       <h2 className="panel-head label">
-        {title} · {seats.length}
+        {title}
       </h2>
       <RosterRows seats={seats} empty={empty} />
     </section>
@@ -387,7 +385,7 @@ function RosterRows({ seats, empty, characters = true }: { seats: Seat[]; empty:
             </td>
             <td className="roster-user">
               {seat.person?.name ?? <span className="muted">Kept to the table</span>}
-              {seat.state === "waitlisted" ? <span className="muted"> · waitlist</span> : null}
+              {seat.state === "waitlisted" ? <span className="muted"> (waitlist)</span> : null}
             </td>
             {characters ? (
               <td className="roster-character">

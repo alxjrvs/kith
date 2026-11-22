@@ -7,7 +7,7 @@ export function statusOf(row: Row): { label: string; tone: string } {
   if (row.state === "CANCELLED") return { label: "Called off", tone: "out" };
   if (row.inJeopardy) {
     const short = row.quorum.required !== null ? row.quorum.required - row.quorum.saidIn : 0;
-    return { label: short > 0 ? `Jeopardy · needs ${short}` : "Jeopardy", tone: "maybe" };
+    return { label: short > 0 ? `Needs ${short} more` : "Jeopardy", tone: "maybe" };
   }
   if (row.quorum.confirmed || row.state === "CONFIRMED") return { label: "Confirmed", tone: "in" };
   if (row.state === "LOCKED") return { label: "Locked", tone: "in" };
@@ -37,7 +37,7 @@ export function AgendaRow({
 
   return (
     <article className={`panel-row${row.inJeopardy ? " jeopardy" : ""}`}>
-      <span className="mono" style={{ width: 52, fontSize: 15 }}>
+      <span className="num" style={{ minWidth: 72, fontSize: 15, whiteSpace: "nowrap" }}>
         {time(row.startsAt)}
       </span>
       <div style={{ flex: "1 1 220px", display: "flex", flexDirection: "column" }}>
@@ -61,7 +61,7 @@ export function AgendaRow({
       {tally ? (
         <div className="row" style={{ gap: 10 }}>
           <TallySquares tally={row.tally} />
-          <span className="mono" style={{ fontSize: 13 }}>
+          <span className="num" style={{ fontSize: 13 }}>
             {row.tally.in} / {row.rosterSize}
           </span>
         </div>

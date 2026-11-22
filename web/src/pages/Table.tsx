@@ -37,11 +37,11 @@ function DayTable({ kind, id }: { kind: string; id: string }) {
       <div className="page-head">
         <div className="stack" style={{ gap: 6 }}>
           <span className="label">
-            {listing.kind === "campaign" ? "Campaign" : "Game day"} · {listing.state.toLowerCase()}
-            {listing.game && listing.game.category !== "board" ? ` · ${listing.game.name}` : ""}
+            {listing.kind === "campaign" ? "Campaign" : "Game day"}, {listing.state.toLowerCase()}
+            {listing.game && listing.game.category !== "board" ? `, ${listing.game.name}` : ""}
             {listing.game?.category === "board" ? (
               <>
-                {" · "}
+                {", "}
                 <Link to="/games/$slug" params={{ slug: listing.game.id }}>
                   {listing.game.name}
                 </Link>
@@ -63,7 +63,7 @@ function DayTable({ kind, id }: { kind: string; id: string }) {
         <div className="main">
           <section className="panel">
             <h2 className="panel-head label">
-              <span>Knowledge · {pages.length}</span>
+              <span>Knowledge</span>
             </h2>
             {pages.length === 0 ? (
               <p className="panel-body muted">
@@ -83,7 +83,7 @@ function DayTable({ kind, id }: { kind: string; id: string }) {
           </section>
           {listing.pitch ? (
             <section className="stack">
-              <h2 className="label" style={{ fontSize: 12 }}>
+              <h2 className="label">
                 The pitch
               </h2>
               <p className="prose" style={{ whiteSpace: "pre-line" }}>
@@ -94,7 +94,7 @@ function DayTable({ kind, id }: { kind: string; id: string }) {
         </div>
         <aside>
           <section className="panel">
-            <h2 className="panel-head label">Links · {links.length}</h2>
+            <h2 className="panel-head label">Links</h2>
             {links.length === 0 ? <p className="panel-body muted">No links yet.</p> : null}
             {links.map((link) => (
               <LinkRow key={link.id} link={link} canEdit={canEdit} kind={kind} id={id} />
@@ -104,7 +104,7 @@ function DayTable({ kind, id }: { kind: string; id: string }) {
           <section className="panel">
             <h2 className="panel-head label">The table</h2>
             <div className="panel-body">
-              {cadence(listing).length > 0 ? <span className="mono" style={{ fontSize: 12 }}>{cadence(listing).join(" · ").toUpperCase()}</span> : null}
+              {cadence(listing).length > 0 ? <span className="num" style={{ fontSize: 12 }}>{cadence(listing).join(", ")}</span> : null}
               {listing.lead ? (
                 <span className="muted">
                   {listing.kind === "campaign" ? "GM" : "Host"} {listing.lead.name}
@@ -112,7 +112,7 @@ function DayTable({ kind, id }: { kind: string; id: string }) {
               ) : null}
               <div className="row">
                 <SeatSquares capacity={listing.capacity} taken={listing.taken} />
-                <span className="mono" style={{ fontSize: 13 }}>
+                <span className="num" style={{ fontSize: 13 }}>
                   {seatLine(listing)}
                 </span>
               </div>

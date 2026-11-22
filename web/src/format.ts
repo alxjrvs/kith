@@ -4,11 +4,12 @@
  */
 const weekday = new Intl.DateTimeFormat(undefined, { weekday: "short" });
 const dayMonth = new Intl.DateTimeFormat(undefined, { day: "2-digit", month: "short" });
-const clock = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
+const clock = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+const weekdayLong = new Intl.DateTimeFormat(undefined, { weekday: "long" });
 
 export function stamp(unix: number): string {
   const d = new Date(unix * 1000);
-  return `${weekday.format(d)} ${dayMonth.format(d)} · ${clock.format(d)}`.toUpperCase();
+  return `${weekday.format(d)} ${dayMonth.format(d)} at ${clock.format(d)}`;
 }
 
 export function time(unix: number): string {
@@ -16,7 +17,7 @@ export function time(unix: number): string {
 }
 
 export function asOf(unix: number): string {
-  return `AS OF ${time(unix)}`;
+  return `as of ${time(unix)}`;
 }
 
 export function inDays(unix: number, now = Date.now()): string {
@@ -39,7 +40,8 @@ export function cadence(listing: { when: { startsAt: number | null; endsAt: numb
   const { startsAt, endsAt, intervalWeeks } = listing.when;
   const chips: string[] = [];
   if (intervalWeeks && startsAt) {
-    chips.push(`${weekday.format(new Date(startsAt * 1000))} · ${intervalWeeks === 1 ? "weekly" : `every ${intervalWeeks} weeks`}`);
+    const day = weekdayLong.format(new Date(startsAt * 1000));
+    chips.push(intervalWeeks === 1 ? `Every ${day}` : intervalWeeks === 2 ? `Every other ${day}` : `Every ${intervalWeeks} weeks on ${day}`);
     chips.push(time(startsAt));
   } else if (startsAt) {
     chips.push(stamp(startsAt));

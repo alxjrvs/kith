@@ -39,15 +39,15 @@ export function Home() {
         </div>
         {next ? (
           <div className="panel" style={{ flex: "1 1 340px" }}>
-            <div className="panel-head label">Next up · {inDays(next.startsAt)}</div>
+            <div className="panel-head label">Next up {inDays(next.startsAt)}</div>
             <div className="panel-body">
-              <span className="mono" style={{ fontSize: 26 }}>
+              <span className="num" style={{ fontSize: 26 }}>
                 {stamp(next.startsAt)}
               </span>
               <span style={{ fontSize: 17, fontWeight: 600 }}>{next.title}</span>
               <div className="row" style={{ gap: 10 }}>
                 <TallySquares tally={next.tally} />
-                <span className="mono" style={{ fontSize: 13 }}>
+                <span className="num" style={{ fontSize: 13 }}>
                   {next.tally.in} / {next.rosterSize}
                 </span>
                 <span className={`pill ${statusOf(next).tone}`}>{statusOf(next).label}</span>
@@ -59,8 +59,8 @@ export function Home() {
 
       <section className="stack">
         <div className="section-head">
-          <h2 className="label" style={{ fontSize: 12 }}>
-            {signedIn && shown.some((g) => g.mine) ? "Your games and the rest" : "The games"} · {games.length}
+          <h2 className="label">
+            {signedIn && shown.some((g) => g.mine) ? "Your games and the rest" : "The games"}
           </h2>
           <Link to="/games" style={{ fontSize: 13 }}>
             See every game
@@ -80,7 +80,7 @@ export function Home() {
       {agenda.length > 0 ? (
         <section className="stack">
           <div className="section-head">
-            <h2 className="label" style={{ fontSize: 12 }}>
+            <h2 className="label">
               Coming up
             </h2>
             <Link to="/agenda" style={{ fontSize: 13 }}>
@@ -90,7 +90,7 @@ export function Home() {
           <div className="panel">
             {agenda.slice(0, 5).map((row) => (
               <div key={row.sessionId} className={`panel-row${row.inJeopardy ? " jeopardy" : ""}`} style={{ minHeight: 48 }}>
-                <span className="mono" style={{ width: 170, fontSize: 13 }}>
+                <span className="num" style={{ width: 170, fontSize: 13 }}>
                   {stamp(row.startsAt)}
                 </span>
                 <span style={{ flex: "1 1 240px", fontWeight: 500 }}>{row.title}</span>

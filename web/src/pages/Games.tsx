@@ -58,8 +58,8 @@ export function Games() {
       {groups.map(([title, list]) =>
         list.length === 0 ? null : (
           <section key={title} className="stack" style={{ gap: 16 }}>
-            <h2 className="label" style={{ fontSize: 12 }}>
-              {title} · {list.length}
+            <h2 className="label">
+              {title}
             </h2>
             <div className="grid">
               {list.map((game) => (
@@ -83,8 +83,8 @@ function Catalog() {
   if (games.length === 0) return null;
   return (
     <section className="stack" style={{ gap: 16 }}>
-      <h2 className="label" style={{ fontSize: 12 }}>
-        Catalog · organisers · {games.length}
+      <h2 className="label">
+        Catalog, for organisers
       </h2>
       <div className="panel">
         {games.map((game) => (
@@ -156,8 +156,8 @@ export function GameCard({ game }: { game: GameSummary }) {
           </p>
         ) : null}
         {game.next ? (
-          <p className="mono" style={{ fontSize: 12 }}>
-            NEXT {stamp(game.next)} · {inDays(game.next).toUpperCase()}
+          <p className="num" style={{ fontSize: 12 }}>
+            Next game {inDays(game.next)}, {stamp(game.next)}
           </p>
         ) : null}
         {game.lead ? (
@@ -169,13 +169,13 @@ export function GameCard({ game }: { game: GameSummary }) {
           {game.open ? (
             <>
               <SeatSquares capacity={game.capacity} taken={game.players} />
-              <span className="mono" style={{ fontSize: 13 }}>
+              <span className="num" style={{ fontSize: 13 }}>
                 {game.capacity === null ? `${game.players} in` : `${game.players} / ${game.capacity}`}
               </span>
             </>
           ) : game.players > 0 ? (
-            <span className="mono" style={{ fontSize: 13 }}>
-              {game.players} {game.players === 1 ? "PLAYER" : "PLAYERS"}
+            <span className="num" style={{ fontSize: 13 }}>
+              {game.players} {game.players === 1 ? "player" : "players"}
             </span>
           ) : null}
           {game.mine ? <span className="pill in">Yours</span> : null}
