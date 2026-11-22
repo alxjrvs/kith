@@ -143,7 +143,7 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
       <header>
         <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
           <img src="/mark.svg" alt="" width="26" height="26" />
-          Kith
+          Kith.town
         </Link>
         <div className="row" style={{ gap: 10 }}>
           <SoundButton url={listing.soundUrl} />

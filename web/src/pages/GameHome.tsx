@@ -83,7 +83,7 @@ function BaseHero({
         <div className="row" style={{ gap: 24 }}>
           <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
             <img src="/mark.svg" alt="" width="26" height="26" />
-            Kith
+            Kith.town
           </Link>
           <nav aria-label="Main" className="site-nav">
             <Link to="/games">Games</Link>
