@@ -258,7 +258,7 @@ function BoardBase({ home }: { home: BoardHome }) {
         tagline={game.summary}
         heroUrl={next?.heroUrl ?? game.coverUrl}
         soundUrl={next?.soundUrl ?? null}
-        chips={[players, length].filter((c): c is string => Boolean(c))}
+        chips={[players, length, played > 0 ? `Played ${played}×` : null].filter((c): c is string => Boolean(c))}
       >
         {next ? (
           <div className="next-up">
