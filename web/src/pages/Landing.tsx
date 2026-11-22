@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useHomes, type GameSummary } from "../api.ts";
 import { inDays, stamp } from "../format.ts";
+import { Markdown } from "../markdown.tsx";
 import { signInHref } from "../signin.ts";
 
 /** How long each game holds the screen before the next one comes in. */
@@ -209,6 +210,11 @@ function Slide({
         {game.label ? <span className="chip system show-system">{game.label}</span> : null}
         <h1>{still || game.state === "CONCLUDED" ? game.name : <GameLink game={game}>{game.name}</GameLink>}</h1>
         {game.tagline ? <p className="show-tagline">{game.tagline}</p> : null}
+        {game.pitch ? (
+          <div className="show-pitch">
+            <Markdown source={game.pitch} />
+          </div>
+        ) : null}
         {still ? null : (
         <div className="row" style={{ gap: "8px 18px", fontSize: 14 }}>
           {game.next ? (

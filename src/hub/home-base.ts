@@ -94,6 +94,8 @@ export interface GameSummary {
   /** "Daggerheart", or "Board game". */
   label: string | null;
   tagline: string | null;
+  /** The longer description, in Markdown: what the slideshow shows under the tagline. */
+  pitch: string | null;
   imageUrl: string | null;
   /** A campaign's logo, worn on its card over the image. */
   logoUrl: string | null;
@@ -333,6 +335,7 @@ export async function gamesFor(env: Env, viewer: Viewer, now = new Date()): Prom
       state: listing.state,
       label: listing.system ?? listing.game?.name ?? null,
       tagline: listing.tagline,
+      pitch: listing.pitch,
       imageUrl: listing.heroUrl ?? listing.logoUrl,
       logoUrl: listing.heroUrl ? listing.logoUrl : null,
       lead: listing.lead,
@@ -358,6 +361,7 @@ export async function gamesFor(env: Env, viewer: Viewer, now = new Date()): Prom
       state: days.some((l) => l.open) ? "SEATING" : (next?.state ?? "IDLE"),
       label: "Board game",
       tagline: game.summary,
+      pitch: null,
       imageUrl: game.coverUrl,
       logoUrl: null,
       lead: next?.lead ?? null,
@@ -386,6 +390,7 @@ export async function gamesFor(env: Env, viewer: Viewer, now = new Date()): Prom
       state: day.state,
       label: day.game?.name ?? "Game day",
       tagline: day.tagline,
+      pitch: day.pitch,
       imageUrl: day.heroUrl,
       logoUrl: null,
       lead: day.lead,

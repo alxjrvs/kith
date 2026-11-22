@@ -393,6 +393,9 @@ describe("each game's home base", () => {
       expect(home.listing?.tagline).toBe("From the CMS");
       expect(home.listing).toMatchObject({ system: "Daggerheart", logoUrl: "/media/01AB.01CD.png" });
       expect(home.listing?.pitch).toBe("Fog on the moor.");
+      // The slideshow's list carries the description too.
+      const { games } = (await (await call("GET", "/api/hub/homes")).json()) as { games: { slug: string; pitch: string | null }[] };
+      expect(games.find((g) => g.slug === "hollowmere")?.pitch).toBe("Fog on the moor.");
       expect(home.roster?.[1]).toMatchObject({ character: "Vess", sheetUrl: "https://sheets.example/vess" });
       expect(home.links?.map((l) => l.label)).toContain("Foundry");
       expect(home.pages?.map((p) => p.slug)).toContain("house-rules");

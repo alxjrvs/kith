@@ -303,6 +303,8 @@ export interface GameSummary {
   state: string;
   label: string | null;
   tagline: string | null;
+  /** Markdown. */
+  pitch: string | null;
   imageUrl: string | null;
   logoUrl: string | null;
   lead: Person | null;
