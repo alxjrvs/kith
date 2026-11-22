@@ -43,7 +43,7 @@ export const SETTING_KEYS = {
    */
   gameDayLockLeadHours: "gameday.lock_lead_hours",
   /**
-   * The open push channel on Kith calendar: its id, resource id, shared
+   * The open push channel on the Kith calendar: its id, resource id, shared
    * token and expiry.
    *
    * One row because there is exactly one calendar. The token is the channel's
@@ -52,7 +52,7 @@ export const SETTING_KEYS = {
    */
   googleWatch: "google.watch",
   /**
-   * Google's own cursor into Kith calendar.
+   * Google's own cursor into the Kith calendar.
    *
    * Absent means "list everything next time", which is the honest starting
    * state and also the recovery: Google expires these on its own schedule, and

@@ -3,7 +3,7 @@ import { SETTING_KEYS, getSetting, setSetting } from "../db/settings.ts";
 import { GoogleError, accessToken, watchCalendarId } from "./calendar.ts";
 
 /**
- * The push channel on Kith calendar.
+ * The push channel on the Kith calendar.
  *
  * Google's `events.watch` channels have a TTL of about a week and do not renew
  * themselves, so the whole of this file is "open one when there is none, replace

@@ -15,7 +15,7 @@ import { enqueueProjection, enqueueUnprojection, type ProjectionSurface } from "
  * deliberate: phase 4 mints a replacement every time a lapsed session moves.
  *
  * Google has no such limit and no such disposability, so there is no reason to
- * keep the calendar short. Somebody subscribing to Kith calendar wants to
+ * keep the calendar short. Somebody subscribing to the Kith calendar wants to
  * see October.
  */
 export const DISCORD_EVENT_HORIZON = 2;
