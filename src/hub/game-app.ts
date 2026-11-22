@@ -1,5 +1,6 @@
 import type { Env } from "../env.ts";
 import { MEDIA_KEY } from "../cms/client.ts";
+import { cmsGame } from "../cms/content.ts";
 import { catalog } from "./catalog.ts";
 import { listingFor } from "./listings.ts";
 import type { Viewer } from "./visibility.ts";
@@ -30,9 +31,9 @@ export interface GameApp {
   name: string;
   description: string | null;
   /**
-   * The media key of the art the icon is cut from: the game's logo, else its
-   * hero, else its board game's cover. Null when there is none, or when it is
-   * an outside URL Kith cannot crop, and the app wears Kith's own icon.
+   * The media key of the game's hero image, which its icon is cut from. Null
+   * when it has none, or when it is an outside URL Kith cannot crop, and the
+   * app wears Kith's own icon.
    */
   iconKey: string | null;
 }
@@ -55,11 +56,14 @@ export async function gameApp(env: Env, slug: string, viewer: Viewer): Promise<G
       slug,
       name: campaign.name,
       description: campaign.tagline,
-      iconKey: mediaKeyOf(campaign.logoUrl) ?? mediaKeyOf(campaign.heroUrl),
+      iconKey: mediaKeyOf(campaign.heroUrl),
     };
   }
   const game = (await catalog(env, viewer)).find((g) => g.id === slug && g.category === "board");
-  if (game) return { slug, name: game.name, description: game.summary, iconKey: mediaKeyOf(game.coverUrl) };
+  if (game) {
+    const hero = (await cmsGame(env, slug))?.heroUrl;
+    return { slug, name: game.name, description: game.summary, iconKey: mediaKeyOf(hero) };
+  }
   return undefined;
 }
 

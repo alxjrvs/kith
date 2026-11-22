@@ -30,7 +30,11 @@ const fakeCms = {
     const collection = url.pathname.split("/").pop()!;
     const items =
       collection === "games"
-        ? [{ id: "e0", status: "published", slug: "umbra", data: { title: "The Age of Umbra", tagline: "Shadows fall.", cover: { id: "m", src: "/_emdash/api/media/file/01AB.01CD.png" } } }]
+        ? [
+            // The logo (cover) is not the icon; the hero is.
+            { id: "e0", status: "published", slug: "umbra", data: { title: "The Age of Umbra", tagline: "Shadows fall.", hero: { id: "h", src: "/_emdash/api/media/file/01AB.01CD.png" }, cover: { id: "m", src: "/_emdash/api/media/file/01AB.LOGO.png" } } },
+            { id: "e1", status: "published", slug: "arcs", data: { title: "Arcs", hero: { id: "h2", src: "/_emdash/api/media/file/01AB.ARCS.png" }, cover: { id: "m2", src: "/_emdash/api/media/file/01AB.BOX.png" } } },
+          ]
         : [];
     return Response.json({ success: true, data: { items } });
   },
@@ -85,6 +89,7 @@ beforeEach(async () => {
   await env.DB.batch([
     env.DB.prepare("INSERT INTO games (id, name, category, staging) VALUES ('arcs', 'Arcs', 'board', 0)"),
     env.DB.prepare("INSERT INTO games (id, name, category, staging) VALUES ('test-ti', 'Test TI', 'board', 1)"),
+    env.DB.prepare("INSERT INTO games (id, name, category, staging) VALUES ('ti', 'Twilight Imperium', 'board', 0)"),
     env.DB.prepare("INSERT INTO campaigns (id, name, kind, state, visibility, staging) VALUES ('umbra', 'The Age of Umbra', 'run', 'RUNNING', 'public', 0)"),
     env.DB.prepare("INSERT INTO campaigns (id, name, kind, state, visibility, staging) VALUES ('test-rpg', 'Test RPG', 'run', 'RUNNING', 'public', 1)"),
     env.DB.prepare("INSERT INTO campaigns (id, name, kind, state, visibility, staging) VALUES ('secret', 'Secret table', 'run', 'RUNNING', 'members', 0)"),
@@ -119,10 +124,12 @@ describe("a game's manifest", () => {
     });
   });
 
-  it("gives a board game one too, wearing Kith's icon when it has no art", async () => {
-    const manifest = (await (await get("/games/arcs/manifest.webmanifest")).json()) as { scope: string; icons: { src: string }[] };
-    expect(manifest.scope).toBe("/games/arcs");
-    expect(manifest.icons.map((i) => i.src)).toEqual(["/icon-192.png", "/icon-512.png"]);
+  it("gives a board game one too, its icon cut from its hero, or Kith's icon with no hero", async () => {
+    const arcs = (await (await get("/games/arcs/manifest.webmanifest")).json()) as { scope: string; icons: { src: string }[] };
+    expect(arcs.scope).toBe("/games/arcs");
+    expect(arcs.icons.map((i) => i.src)).toEqual(["/media/01AB.ARCS.png/icon/192", "/media/01AB.ARCS.png/icon/512"]);
+    const ti = (await (await get("/games/ti/manifest.webmanifest")).json()) as { icons: { src: string }[] };
+    expect(ti.icons.map((i) => i.src)).toEqual(["/icon-192.png", "/icon-512.png"]);
   });
 
   it("has none for a test game, or a hidden one, except for whoever may see it", async () => {
