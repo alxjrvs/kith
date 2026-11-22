@@ -140,7 +140,6 @@ export function useSignup(listing: Pick<Listing, "kind" | "id">) {
         asOf: old?.asOf ?? Math.floor(Date.now() / 1000),
         listing: data.listing,
       }));
-      void client.invalidateQueries({ queryKey: ["listings"] });
       void client.invalidateQueries({ queryKey: ["agenda"] });
       void client.invalidateQueries({ queryKey: ["table", listing.kind, listing.id] });
       void client.invalidateQueries({ queryKey: ["home"] });
@@ -171,7 +170,6 @@ export function useListingEdit(listing: Pick<Listing, "kind" | "id">) {
       ),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ["listing", listing.kind, listing.id] });
-      void client.invalidateQueries({ queryKey: ["listings"] });
       void client.invalidateQueries({ queryKey: ["table", listing.kind, listing.id] });
       void client.invalidateQueries({ queryKey: ["home"] });
       void client.invalidateQueries({ queryKey: ["homes"] });
@@ -278,7 +276,7 @@ export interface Seat {
 
 /** A card on the games hub. Mirrors src/hub/home-base.ts. */
 export interface GameSummary {
-  kind: "campaign" | "board";
+  kind: "campaign" | "board" | "day";
   slug: string;
   name: string;
   state: string;

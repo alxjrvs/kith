@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { useHomes, useMe, type GameSummary } from "../api.ts";
+import { useState } from "react";
+import { useGames, useHomes, useMe, type CatalogEntry, type GameSummary } from "../api.ts";
+import { CatalogEditor } from "../components/CatalogEditor.tsx";
 import { inDays, stamp } from "../format.ts";
 import { signInHref } from "../signin.ts";
 import { SeatSquares } from "../components/Squares.tsx";
@@ -24,6 +26,7 @@ export function Games() {
   const groups: [string, GameSummary[]][] = [
     ["Campaigns", live.filter((g) => g.kind === "campaign")],
     ["Board games", live.filter((g) => g.kind === "board")],
+    ["Other game days", live.filter((g) => g.kind === "day")],
     ["Concluded", all.filter((g) => g.state === "CONCLUDED")],
   ];
 
@@ -58,7 +61,59 @@ export function Games() {
           </section>
         ),
       )}
+      {me?.signedIn && me.organiser ? <Catalog /> : null}
     </main>
+  );
+}
+
+/**
+ * Organisers only: every system and board game Kith knows, home base or not,
+ * so a summary or cover can be set before the first day is on the calendar.
+ */
+function Catalog() {
+  const games = useGames().data?.games ?? [];
+  if (games.length === 0) return null;
+  return (
+    <section className="stack" style={{ gap: 16 }}>
+      <h2 className="label" style={{ fontSize: 12 }}>
+        Catalog · organisers · {games.length}
+      </h2>
+      <div className="panel">
+        {games.map((game) => (
+          <CatalogRow key={game.id} game={game} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CatalogRow({ game }: { game: CatalogEntry }) {
+  const [editing, setEditing] = useState(false);
+  return (
+    <div className="panel-row" style={{ flexWrap: "wrap" }}>
+      <span className="label" style={{ width: 90 }}>
+        {game.category === "board" ? "Board game" : "TTRPG"}
+      </span>
+      <span style={{ flex: "1 1 200px", fontWeight: 600 }}>
+        {game.category === "board" ? (
+          <Link to="/games/$slug" params={{ slug: game.id }} style={{ color: "var(--text)" }}>
+            {game.name}
+          </Link>
+        ) : (
+          game.name
+        )}
+      </span>
+      {editing ? null : (
+        <button type="button" className="btn" style={{ minHeight: 32, padding: "0 10px" }} onClick={() => setEditing(true)}>
+          Edit
+        </button>
+      )}
+      {editing ? (
+        <div style={{ flex: "1 1 100%" }}>
+          <CatalogEditor game={game} done={() => setEditing(false)} />
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -74,9 +129,15 @@ export function GameCard({ game }: { game: GameSummary }) {
       </div>
       <div className="panel-body" style={{ flexGrow: 1 }}>
         <h3 style={{ fontSize: 20, fontWeight: 600 }}>
-          <Link to="/games/$slug" params={{ slug: game.slug }} style={{ color: "var(--text)" }}>
-            {game.name}
-          </Link>
+          {game.kind === "day" ? (
+            <Link to="/table/$kind/$id" params={{ kind: "game-day", id: game.slug }} style={{ color: "var(--text)" }}>
+              {game.name}
+            </Link>
+          ) : (
+            <Link to="/games/$slug" params={{ slug: game.slug }} style={{ color: "var(--text)" }}>
+              {game.name}
+            </Link>
+          )}
         </h3>
         {game.tagline ? (
           <p className="muted" style={{ fontSize: 13 }}>

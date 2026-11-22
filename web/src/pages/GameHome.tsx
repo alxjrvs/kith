@@ -271,7 +271,7 @@ function SeatList({ seats, empty, characters = true }: { seats: Seat[]; empty: s
                     ? "Runs the table"
                     : seat.person
                       ? `Played by ${seat.person.name}`
-                      : "Sign in to see who plays whom"}
+                      : "Shown to the table"}
                 </span>
               </>
             ) : (
@@ -279,7 +279,7 @@ function SeatList({ seats, empty, characters = true }: { seats: Seat[]; empty: s
                 <span style={{ fontWeight: 600 }}>{seat.person?.name ?? "Seat taken"}</span>
                 {seat.person ? null : (
                   <span className="muted" style={{ fontSize: 12 }}>
-                    Sign in to see who
+                    Shown to the table
                   </span>
                 )}
               </>

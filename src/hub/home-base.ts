@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, count, eq, gt, inArray, isNull, lte, ne, or } from "drizzle-orm";
 import type { Env } from "../env.ts";
 import { db, schema } from "../db/index.ts";
 import { signupsForDay } from "../game-days/signups.ts";
@@ -31,7 +31,11 @@ const HORIZON_DAYS = 120;
 
 /** One seat at a table: a person (when the viewer may see who) and who they play. */
 export interface Seat {
-  /** Null when the viewer is not signed in: a public page shows characters, not people. */
+  /**
+   * Null unless the viewer is on the table or an organiser: anyone else sees the
+   * characters, not the people. A campaign's GM is always shown, as the listing's
+   * lead already is.
+   */
   person: Person | null;
   character: string | null;
   role: "gm" | "player";
@@ -69,9 +73,13 @@ export interface BoardHome {
 
 export type HomeBase = CampaignHome | BoardHome;
 
-/** A card on the `/games` hub. */
+/**
+ * A card on the `/games` hub. `day` is a game day with no board game to hang
+ * off (a multi-table day, a one-shot): it has no home base, so its card goes to
+ * the day's own page.
+ */
 export interface GameSummary {
-  kind: "campaign" | "board";
+  kind: "campaign" | "board" | "day";
   slug: string;
   name: string;
   /** A campaign's state; for a board game, SEATING when a day is taking seats. */
@@ -109,16 +117,15 @@ async function campaignHome(env: Env, listing: Listing, viewer: Viewer, now: Dat
     listing,
     member,
     canEdit: viewer.organiser,
-    roster: await campaignRoster(env, listing, viewer),
+    roster: await campaignRoster(env, listing, viewer.organiser || member),
     upcoming: agenda.rows.filter((row) => row.campaignId === listing.id),
     links: await linksFor(env, "campaign", listing.id, viewer, member),
     pages: await pagesFor(env, "campaign", listing.id, viewer, member),
   };
 }
 
-async function campaignRoster(env: Env, listing: Listing, viewer: Viewer): Promise<Seat[]> {
+async function campaignRoster(env: Env, listing: Listing, showPeople: boolean): Promise<Seat[]> {
   const d = db(env);
-  const showPeople = viewer.userId !== undefined;
   const members = await d
     .select({ member: schema.campaignMembers, user: schema.users })
     .from(schema.campaignMembers)
@@ -127,7 +134,6 @@ async function campaignRoster(env: Env, listing: Listing, viewer: Viewer): Promi
     .orderBy(asc(schema.campaignMembers.joinedAt))
     .all();
   const seats: Seat[] = members.map(({ member, user }) => ({
-    // The GM is already public on the listing as its lead; the players are not.
     person: showPeople || member.role === "gm" ? personFrom(user) : null,
     character: member.characterName,
     role: member.role,
@@ -166,56 +172,85 @@ async function campaignRoster(env: Env, listing: Listing, viewer: Viewer): Promi
   return seats.sort((a, b) => rank(a) - rank(b));
 }
 
-async function boardHome(env: Env, game: CatalogEntry, viewer: Viewer, now: Date): Promise<BoardHome> {
+/**
+ * The days still to come for one game (or, with `null`, for no board game at
+ * all), oldest first, as the viewer may see them. Past days are never loaded:
+ * history only grows, and this runs on every hub load.
+ */
+async function upcomingDays(env: Env, gameId: string | null, viewer: Viewer, now: Date): Promise<Listing[]> {
   const nowUnix = Math.floor(now.getTime() / 1000);
-  const horizon = nowUnix + HORIZON_DAYS * 86_400;
   const days = await db(env)
-    .select({ id: schema.gameDays.id, state: schema.gameDays.state, endsAt: schema.gameDays.endsAt, startsAt: schema.gameDays.startsAt })
+    .select({ id: schema.gameDays.id })
     .from(schema.gameDays)
-    .where(and(eq(schema.gameDays.gameId, game.id), ne(schema.gameDays.state, "CANCELLED")))
+    .where(
+      and(
+        gameId === null ? isNull(schema.gameDays.gameId) : eq(schema.gameDays.gameId, gameId),
+        inArray(schema.gameDays.state, ["PROPOSED", "SEATING", "LOCKED"]),
+        gt(schema.gameDays.endsAt, nowUnix),
+        lte(schema.gameDays.startsAt, nowUnix + HORIZON_DAYS * 86_400),
+      ),
+    )
     .orderBy(asc(schema.gameDays.startsAt))
     .all();
-
-  const upcoming: BoardDay[] = [];
-  let played = 0;
+  const out: Listing[] = [];
   for (const day of days) {
     const listing = await listingFor(env, "game-day", day.id, viewer);
-    if (!listing) continue;
-    if (day.state === "PLAYED" || day.endsAt <= nowUnix) {
-      played += 1;
-      continue;
-    }
-    if (day.startsAt >= horizon) continue;
-    upcoming.push({ listing, seats: await daySeats(env, day.id, viewer) });
+    if (listing) out.push(listing);
   }
-  return { kind: "board", slug: game.id, game, canEdit: viewer.organiser, upcoming, played };
+  return out;
 }
 
-async function daySeats(env: Env, dayId: string, viewer: Viewer): Promise<Seat[]> {
-  const showPeople = viewer.userId !== undefined;
-  const signups = await signupsForDay(env, dayId);
+/** How many days of a game have been played: a line of history, so a count, not rows. */
+async function playedCount(env: Env, gameId: string, now: Date): Promise<number> {
+  const nowUnix = Math.floor(now.getTime() / 1000);
+  const row = await db(env)
+    .select({ n: count() })
+    .from(schema.gameDays)
+    .where(
+      and(
+        eq(schema.gameDays.gameId, gameId),
+        ne(schema.gameDays.state, "CANCELLED"),
+        or(eq(schema.gameDays.state, "PLAYED"), lte(schema.gameDays.endsAt, nowUnix)),
+      ),
+    )
+    .get();
+  return row?.n ?? 0;
+}
+
+async function boardHome(env: Env, game: CatalogEntry, viewer: Viewer, now: Date): Promise<BoardHome> {
+  const upcoming: BoardDay[] = [];
+  for (const listing of await upcomingDays(env, game.id, viewer, now)) {
+    upcoming.push({ listing, seats: await daySeats(env, listing, viewer) });
+  }
+  return { kind: "board", slug: game.id, game, canEdit: viewer.organiser, upcoming, played: await playedCount(env, game.id, now) };
+}
+
+async function daySeats(env: Env, listing: Listing, viewer: Viewer): Promise<Seat[]> {
+  const signups = (await signupsForDay(env, listing.id)).filter((s) => s.state === "in" || s.state === "waitlisted");
+  // On the table is a live claim or hosting, as `isMemberOf` says; a listing's
+  // `mine` is the first, and the host is its lead.
+  const showPeople = viewer.organiser || listing.mine !== null || (viewer.userId !== undefined && listing.lead?.id === viewer.userId);
   const ids = signups.map((s) => s.userId);
-  const users = ids.length
+  const users = showPeople && ids.length
     ? await db(env).select().from(schema.users).where(inArray(schema.users.discordId, ids)).all()
     : [];
   const byId = new Map(users.map((u) => [u.discordId, u]));
-  return signups
-    .filter((s) => s.state === "in" || s.state === "waitlisted")
-    .map((s) => {
-      const user = byId.get(s.userId);
-      return {
-        person: showPeople && user ? personFrom(user) : null,
-        character: s.characterName ?? null,
-        role: "player" as const,
-        state: s.state as Seat["state"],
-      };
-    });
+  return signups.map((s) => {
+    const user = byId.get(s.userId);
+    return {
+      person: user ? personFrom(user) : null,
+      character: s.characterName ?? null,
+      role: "player" as const,
+      state: s.state as Seat["state"],
+    };
+  });
 }
 
 /**
- * The hub: every campaign the viewer may see that has not concluded, then every
- * board game with a day the viewer may see. Concluded campaigns come last so
- * their pages are still one click away.
+ * The hub: every campaign the viewer may see, then every board game with a day
+ * coming up the viewer may see or a day already played, then any day with no
+ * board game to hang off. Concluded campaigns come last so their pages are
+ * still one click away.
  */
 export async function gamesFor(env: Env, viewer: Viewer, now = new Date()): Promise<GameSummary[]> {
   const d = db(env);
@@ -249,29 +284,18 @@ export async function gamesFor(env: Env, viewer: Viewer, now = new Date()): Prom
     });
   }
 
-  const nowUnix = Math.floor(now.getTime() / 1000);
-  for (const game of (await catalog(env)).filter((g) => g.category === "board")) {
-    const days = await d
-      .select({ id: schema.gameDays.id, endsAt: schema.gameDays.endsAt, state: schema.gameDays.state })
-      .from(schema.gameDays)
-      .where(and(eq(schema.gameDays.gameId, game.id), ne(schema.gameDays.state, "CANCELLED")))
-      .orderBy(asc(schema.gameDays.startsAt))
-      .all();
-    let seen = false;
-    let next: Listing | undefined;
-    for (const day of days) {
-      const listing = await listingFor(env, "game-day", day.id, viewer);
-      if (!listing) continue;
-      seen = true;
-      if (!next && day.state !== "PLAYED" && day.endsAt > nowUnix) next = listing;
-    }
-    // A board game nobody can see a day of is a catalog entry, not a game here yet.
-    if (!seen) continue;
+  const games = await catalog(env);
+  for (const game of games.filter((g) => g.category === "board")) {
+    const days = await upcomingDays(env, game.id, viewer, now);
+    // A board game with nothing coming and nothing played is a catalog entry, not a game here yet.
+    if (days.length === 0 && (await playedCount(env, game.id, now)) === 0) continue;
+    const next = days[0];
+    const isMine = (l: Listing) => l.mine !== null || (viewer.userId !== undefined && l.lead?.id === viewer.userId);
     out.push({
       kind: "board",
       slug: game.id,
       name: game.name,
-      state: next?.state ?? "IDLE",
+      state: days.some((l) => l.open) ? "SEATING" : (next?.state ?? "IDLE"),
       label: "Board game",
       tagline: game.summary,
       imageUrl: game.coverUrl,
@@ -279,8 +303,35 @@ export async function gamesFor(env: Env, viewer: Viewer, now = new Date()): Prom
       players: next?.taken ?? 0,
       capacity: next?.capacity ?? game.maxPlayers,
       next: next?.when.startsAt ?? null,
-      mine: next?.mine !== null && next?.mine !== undefined,
-      open: next?.open ?? false,
+      mine: days.some(isMine),
+      open: days.some((l) => l.open),
+    });
+  }
+
+  // Days with no home base of their own: a multi-table day, or a single day of
+  // a game that is not a board game. They still need to be findable.
+  const boards = new Set(games.filter((g) => g.category === "board").map((g) => g.id));
+  const loose = [
+    ...(await upcomingDays(env, null, viewer, now)),
+    ...(
+      await Promise.all(games.filter((g) => !boards.has(g.id)).map((g) => upcomingDays(env, g.id, viewer, now)))
+    ).flat(),
+  ].sort((a, b) => (a.when.startsAt ?? 0) - (b.when.startsAt ?? 0));
+  for (const day of loose) {
+    out.push({
+      kind: "day",
+      slug: day.id,
+      name: day.name,
+      state: day.state,
+      label: day.game?.name ?? "Game day",
+      tagline: day.tagline,
+      imageUrl: day.heroUrl,
+      lead: day.lead,
+      players: day.taken,
+      capacity: day.capacity,
+      next: day.when.startsAt,
+      mine: day.mine !== null || (viewer.userId !== undefined && day.lead?.id === viewer.userId),
+      open: day.open,
     });
   }
 

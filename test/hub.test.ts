@@ -353,7 +353,7 @@ describe("each game's home base", () => {
 
   it("maps players to characters, GM first, and lists the next sessions", async () => {
     await runHollowmere();
-    const res = await call("GET", "/api/hub/homes/hollowmere", await as("1002"));
+    const res = await call("GET", "/api/hub/homes/hollowmere", await as("1001"));
     expect(res.status).toBe(200);
     const { home } = (await res.json()) as { home: Home };
     expect(home.kind).toBe("campaign");
@@ -364,14 +364,16 @@ describe("each game's home base", () => {
     expect(home.upcoming.map((r) => r.sessionId)).toEqual(["s1"]);
   });
 
-  it("shows a signed-out visitor the characters but not the people", async () => {
+  it("shows anyone off the table the characters but not the people", async () => {
     await runHollowmere();
-    const { home } = (await (await call("GET", "/api/hub/homes/hollowmere")).json()) as { home: Home };
-    // The GM is public already, as the listing's lead; the players are not.
-    expect(home.roster?.map((s) => [s.person?.name ?? null, s.character])).toEqual([
-      ["Rowan", null],
-      [null, "Wren Ashdown"],
-    ]);
+    for (const cookie of [undefined, await as("1002")]) {
+      const { home } = (await (await call("GET", "/api/hub/homes/hollowmere", cookie)).json()) as { home: Home };
+      // The GM is public already, as the listing's lead; the players are not.
+      expect(home.roster?.map((s) => [s.person?.name ?? null, s.character])).toEqual([
+        ["Rowan", null],
+        [null, "Wren Ashdown"],
+      ]);
+    }
   });
 
   it("answers a hidden game exactly like a missing one", async () => {
@@ -385,10 +387,12 @@ describe("each game's home base", () => {
 
   it("gives a board game its upcoming days and who has a seat", async () => {
     await db(env).insert(schema.signups).values({ targetType: "game_day", targetId: "arcs-afternoon", userId: "1002", state: "in", position: 1 });
-    const { home } = (await (await call("GET", "/api/hub/homes/arcs", await as("1001"))).json()) as { home: Home };
-    expect(home.kind).toBe("board");
-    expect(home.upcoming.map((d) => d.listing?.id)).toEqual(["arcs-afternoon"]);
-    expect(home.upcoming[0]!.seats?.map((s) => s.person?.name)).toEqual(["Grace"]);
+    const seated = (await (await call("GET", "/api/hub/homes/arcs", await as("1002"))).json()) as { home: Home };
+    expect(seated.home.kind).toBe("board");
+    expect(seated.home.upcoming.map((d) => d.listing?.id)).toEqual(["arcs-afternoon"]);
+    expect(seated.home.upcoming[0]!.seats?.map((s) => s.person?.name)).toEqual(["Grace"]);
+    const stranger = (await (await call("GET", "/api/hub/homes/arcs", await as("1001"))).json()) as { home: Home };
+    expect(stranger.home.upcoming[0]!.seats?.map((s) => s.person)).toEqual([null]);
   });
 
   it("lists every game the viewer may see on the hub, and nothing else", async () => {
@@ -401,5 +405,21 @@ describe("each game's home base", () => {
     roles["1003"] = [ORGANISER_ROLE];
     const boss = (await (await call("GET", "/api/hub/homes", await as("1003"))).json()) as { games: { slug: string }[] };
     expect(boss.games.map((g) => g.slug)).toEqual(["hollowmere", "secret", "arcs"]);
+  });
+});
+
+describe("the hub's loose ends", () => {
+  it("keeps a day with no board game findable, and marks a board game open when any day is", async () => {
+    await db(env).insert(schema.gameDays).values([
+      { id: "big-day", kind: "multi", title: "Big day", state: "SEATING", startsAt: later, endsAt: later + 3600, visibility: "public" },
+      { id: "arcs-locked", kind: "single", gameId: "arcs", state: "LOCKED", startsAt: later - 3600 * 24, endsAt: later - 3600 * 20, visibility: "public" },
+    ]);
+    await env.DB.prepare(`UPDATE game_days SET state = 'SEATING' WHERE id = 'arcs-afternoon'`).run();
+    await db(env).insert(schema.signups).values({ targetType: "game_day", targetId: "arcs-afternoon", userId: "1002", state: "in", position: 1 });
+    const { games } = (await (await call("GET", "/api/hub/homes", await as("1002"))).json()) as {
+      games: { kind: string; slug: string; open: boolean; mine: boolean; state: string }[];
+    };
+    expect(games.find((g) => g.slug === "big-day")).toMatchObject({ kind: "day", open: true });
+    expect(games.find((g) => g.slug === "arcs")).toMatchObject({ kind: "board", open: true, mine: true, state: "SEATING" });
   });
 });
