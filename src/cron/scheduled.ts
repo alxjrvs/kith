@@ -3,6 +3,7 @@ import { drainJobs } from "../jobs/drain.ts";
 import { materialiseHorizon } from "../campaigns/materialise.ts";
 import { renewWatchIfDue } from "../google/watch.ts";
 import { reconcile } from "../google/sync.ts";
+import { syncGamesFromCms } from "../cms/sync.ts";
 
 /**
  * The clock. One cron expression, every minute, and the four logical schedules
@@ -10,13 +11,13 @@ import { reconcile } from "../google/sync.ts";
  * five cron triggers and this account has other Workers holding most of them.
  * Dispatching by time costs nothing: the minute tick runs anyway.
  */
-export type Tick = "drain" | "horizon" | "watch-renew" | "reconcile";
+export type Tick = "drain" | "cms" | "horizon" | "watch-renew" | "reconcile";
 
 /** Which schedules fire for a minute, in the order they should run. UTC. */
 export function ticksDueAt(when: Date): Tick[] {
   const minute = when.getUTCMinutes();
   const hour = when.getUTCHours();
-  const ticks: Tick[] = ["drain"];
+  const ticks: Tick[] = ["drain", "cms"];
   if (minute === 0) ticks.push("horizon");
   if (hour === 4 && minute === 0) ticks.push("watch-renew");
   if (hour === 5 && minute === 30) ticks.push("reconcile");
@@ -28,6 +29,18 @@ export async function handleScheduled(event: ScheduledController, env: Env): Pro
     switch (tick) {
       case "drain":
         await drainJobs(env);
+        break;
+
+      case "cms":
+        // A game published in kith-cms gets its D1 row (src/cms/sync.ts). It
+        // only inserts, so a minute that fails is caught up by the next. A
+        // broken CMS reads as empty and does nothing.
+        // It must never cost the minute its other schedules.
+        try {
+          await syncGamesFromCms(env);
+        } catch (error) {
+          console.error("kith-cms: game sync failed", error);
+        }
         break;
 
       case "horizon":

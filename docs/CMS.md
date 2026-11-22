@@ -23,13 +23,25 @@ The rule of thumb: if a rule reads it (attendance, quorum, who sees a table),
 it is D1. If a person reads it, it is EmDash.
 
 **A game is born in EmDash.** Publishing a new entry in Games creates its row
-in Kith. Its slug is its address, `kith.alxjrvs.com/games/<slug>`. Its
-schedule and Discord wiring are then set in Organise, as before.
+in Kith within a minute, with the entry's name and visibility. Its slug is its
+address, `kith.alxjrvs.com/games/<slug>`. From then on its name, visibility,
+schedule and Discord wiring are set in Organise, as before: the sync only
+ever creates, so the two never undo each other.
 
 **A character belongs to a game and a player.** `game` is the game's slug and
-`player` is the player's Discord username. Kith shows the character beside the
+`player` is the player's Discord username or Discord user id (an id survives
+a rename). Kith shows the character beside the
 player on that game's roster, linking to `sheet`. Whether the player is on the
 roster at all is still D1's answer.
+
+**Where Kith reads it** (`src/cms/`): a campaign's tagline, pitch, hero and
+sound (`src/hub/listings.ts`); a board game's summary and cover, and its art on
+its game days (`src/hub/catalog.ts`); characters and sheet links on rosters
+(`src/hub/home-base.ts`); a campaign's pages and links (`src/hub/knowledge.ts`);
+uploaded files at `/media/<key>`. Where a game has no entry in EmDash yet, its
+words still come from D1, and a campaign's pages and links from D1 are listed
+after EmDash's, until they are moved over. A game day's own words stay in D1.
+Published changes show within 30 seconds (`CMS_TTL_MS`).
 
 The content model is `cms/seed/seed.json`. The setup wizard applies it to a
 fresh database; after that, collections and fields are edited in the admin

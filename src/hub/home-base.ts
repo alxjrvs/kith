@@ -9,6 +9,7 @@ import { listingFor, type Listing } from "./listings.ts";
 import { isMemberOf } from "./membership.ts";
 import { personFrom, type Person } from "./people.ts";
 import type { Viewer } from "./visibility.ts";
+import { charactersFor, type CmsCharacter } from "../cms/content.ts";
 
 /**
  * Every game's home base, at `/games/<slug>`.
@@ -38,6 +39,8 @@ export interface Seat {
    */
   person: Person | null;
   character: string | null;
+  /** The character's sheet, from kith-cms. */
+  sheetUrl: string | null;
   role: "gm" | "player";
   /** `in` is on the table; `waitlisted` is queued behind capacity. */
   state: "in" | "waitlisted";
@@ -170,9 +173,17 @@ async function campaignRoster(env: Env, listing: Listing, showPeople: boolean): 
     .where(eq(schema.campaignMembers.campaignId, listing.id))
     .orderBy(asc(schema.campaignMembers.joinedAt))
     .all();
+  // Characters are written in kith-cms, per game and player (docs/CMS.md);
+  // one written there wins over the name given at signup.
+  const characters = await charactersFor(env, listing.id);
+  const characterOf = (user: { discordId: string; username: string | null }, fallback: string | null) => {
+    const c: CmsCharacter | undefined =
+      characters.get(user.discordId) ?? (user.username ? characters.get(user.username.toLowerCase()) : undefined);
+    return { character: c?.name ?? fallback, sheetUrl: c?.sheetUrl ?? null };
+  };
   const seats: Seat[] = members.map(({ member, user }) => ({
     person: showPeople || member.role === "gm" ? personFrom(user) : null,
-    character: member.characterName,
+    ...characterOf(user, member.characterName),
     role: member.role,
     state: "in",
   }));
@@ -197,7 +208,7 @@ async function campaignRoster(env: Env, listing: Listing, showPeople: boolean): 
       if (onRoster.has(signup.userId)) continue;
       seats.push({
         person: showPeople ? personFrom(user) : null,
-        character: signup.characterName,
+        ...characterOf(user, signup.characterName),
         role: "player",
         state: signup.state as Seat["state"],
       });
@@ -285,6 +296,7 @@ async function daySeats(env: Env, listing: Listing, viewer: Viewer): Promise<Sea
     return {
       person: user ? personFrom(user) : null,
       character: s.characterName ?? null,
+      sheetUrl: null,
       role: "player" as const,
       state: s.state as Seat["state"],
     };

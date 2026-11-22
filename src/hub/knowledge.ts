@@ -5,6 +5,7 @@ import type { Visibility } from "../db/schema.ts";
 import { personFrom, type Person } from "./people.ts";
 import { canSee, isVisibility, type Viewer } from "./visibility.ts";
 import { targetType } from "./membership.ts";
+import { linksForGame, pagesForGame, toMarkdown } from "../cms/content.ts";
 
 /**
  * A table's links and knowledge pages: reads for the site, writes for
@@ -40,16 +41,33 @@ export class InvalidKnowledge extends Error {
   }
 }
 
+/**
+ * A campaign's links and pages are written in kith-cms (docs/CMS.md), under the
+ * campaign's id as their `game`. Ones still in D1 from before are shown after
+ * them, until they are moved over; a D1 page whose slug EmDash also has is
+ * hidden by EmDash's. A game day's stay in D1.
+ */
+async function cmsLinks(env: Env, kind: Kind, id: string): Promise<TableLink[]> {
+  if (kind !== "campaign") return [];
+  return (await linksForGame(env, id)).map(({ id: linkId, label, url, kind: linkKind, visibility }) => ({
+    id: `cms:${linkId}`,
+    label,
+    url,
+    kind: linkKind,
+    visibility,
+  }));
+}
+
 export async function linksFor(env: Env, kind: Kind, id: string, viewer: Viewer, member: boolean): Promise<TableLink[]> {
+  const fromCms = await cmsLinks(env, kind, id);
   const rows = await db(env)
     .select()
     .from(schema.links)
     .where(and(eq(schema.links.targetType, targetType(kind)), eq(schema.links.targetId, id)))
     .orderBy(asc(schema.links.position), asc(schema.links.createdAt))
     .all();
-  return rows
-    .filter((row) => canSee(row.visibility, viewer, member))
-    .map(({ id: linkId, label, url, kind: linkKind, visibility }) => ({ id: linkId, label, url, kind: linkKind, visibility }));
+  const fromD1 = rows.map(({ id: linkId, label, url, kind: linkKind, visibility }) => ({ id: linkId, label, url, kind: linkKind, visibility }));
+  return [...fromCms, ...fromD1].filter((link) => canSee(link.visibility, viewer, member));
 }
 
 export async function pagesFor(env: Env, kind: Kind, id: string, viewer: Viewer, member: boolean): Promise<PageSummary[]> {
@@ -64,7 +82,12 @@ export async function pagesFor(env: Env, kind: Kind, id: string, viewer: Viewer,
     .where(and(eq(schema.pages.targetType, targetType(kind)), eq(schema.pages.targetId, id)))
     .orderBy(asc(schema.pages.title))
     .all();
-  return rows.filter((row) => canSee(row.visibility, viewer, member));
+  const fromCms: PageSummary[] =
+    kind === "campaign"
+      ? (await pagesForGame(env, id)).map(({ slug, title, visibility, updatedAt }) => ({ slug, title, visibility, updatedAt }))
+      : [];
+  const taken = new Set(fromCms.map((p) => p.slug));
+  return [...fromCms, ...rows.filter((row) => !taken.has(row.slug))].filter((row) => canSee(row.visibility, viewer, member));
 }
 
 export async function pageFor(
@@ -75,6 +98,20 @@ export async function pageFor(
   viewer: Viewer,
   member: boolean,
 ): Promise<Page | undefined> {
+  if (kind === "campaign") {
+    const cms = (await pagesForGame(env, id)).find((p) => p.slug === slug);
+    if (cms) {
+      if (!canSee(cms.visibility, viewer, member)) return undefined;
+      return {
+        slug: cms.slug,
+        title: cms.title,
+        visibility: cms.visibility,
+        updatedAt: cms.updatedAt,
+        body: toMarkdown(cms.content),
+        updatedBy: null,
+      };
+    }
+  }
   const row = await db(env)
     .select({ page: schema.pages, user: schema.users })
     .from(schema.pages)
@@ -130,6 +167,7 @@ export async function addLink(env: Env, kind: Kind, id: string, input: Record<st
 }
 
 export async function removeLink(env: Env, linkId: string, actor: string): Promise<boolean> {
+  if (linkId.startsWith("cms:")) throw new InvalidKnowledge("this link is written in kith-cms: remove it at cms.kith.alxjrvs.com");
   const d = db(env);
   const before = await d.select().from(schema.links).where(eq(schema.links.id, linkId)).get();
   if (!before) return false;

@@ -39,6 +39,7 @@
       "/ics/*",
       "/google/*",
       "/healthz",
+      "/media/*",
       "/privacy",
       "/me"
     ]
@@ -55,6 +56,10 @@
 
   // Outbound projection only: Google Calendar and Discord *scheduled events*.
   // Discord messages are send-only and never queued for reconciliation.
+  // kith-cms (cms/, EmDash): every word on the site is read from it
+  // (src/cms/client.ts, docs/CMS.md). bin/deploy deploys it first.
+  "services": [{ "binding": "CMS", "service": "kith-cms" }],
+
   "queues": {
     "producers": [{ "binding": "OUTBOX", "queue": "orrey-outbox" }],
     "consumers": [
