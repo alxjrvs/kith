@@ -205,7 +205,7 @@ export async function linksForGame(env: Env, game: string): Promise<CmsLink[]> {
 
 export interface CmsSection {
   slug: string;
-  title: string;
+  title?: string | undefined;
   kicker?: string | undefined;
   body: PortableText;
 }
@@ -213,8 +213,8 @@ export interface CmsSection {
 export async function cmsSections(env: Env): Promise<Record<string, CmsSection>> {
   const out: Record<string, CmsSection> = {};
   for (const e of await published(env, "sections")) {
-    const title = str(e.data.title);
-    if (title) out[e.slug] = { slug: e.slug, title, kicker: str(e.data.kicker), body: pt(e.data.body) };
+    // Each field stands alone: the site falls back to its own wording field by field.
+    out[e.slug] = { slug: e.slug, title: str(e.data.title), kicker: str(e.data.kicker), body: pt(e.data.body) };
   }
   return out;
 }
@@ -264,7 +264,8 @@ export function toMarkdown(blocks: PortableText): string {
     listKind = null;
     const style = typeof block.style === "string" ? block.style : "normal";
     const heading = /^h([1-6])$/.exec(style);
-    if (heading) out.push(`${"#".repeat(Number(heading[1]))} ${text}`, "");
+    // The site's renderer (web/src/markdown.tsx) knows # to ###.
+    if (heading) out.push(`${"#".repeat(Math.min(Number(heading[1]), 3))} ${text}`, "");
     else if (style === "blockquote") out.push(`> ${text}`, "");
     else out.push(text, "");
   }

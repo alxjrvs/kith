@@ -16,6 +16,7 @@ import { joinForming, leaveForming } from "../campaigns/forming-signup.ts";
 import { loadProjectionTarget } from "../projection/target.ts";
 import { takesIntent } from "../sessions/lifecycle.ts";
 import type { InteractionUser } from "../discord/types.ts";
+import { cmsSections, toMarkdown } from "../cms/content.ts";
 
 /**
  * `/api/hub/*`: the site's API, for everybody.
@@ -99,6 +100,15 @@ export function hubRoutes() {
   });
 
   hub.get("/games", async (c) => c.json({ games: await catalog(c.env) }));
+
+  /** The site's own copy, written in kith-cms's Site copy (docs/CMS.md), by slug. */
+  hub.get("/copy", async (c) => {
+    const sections = await cmsSections(c.env);
+    const copy = Object.fromEntries(
+      Object.values(sections).map((s) => [s.slug, { title: s.title ?? null, kicker: s.kicker ?? null, body: toMarkdown(s.body) || null }]),
+    );
+    return c.json({ copy });
+  });
 
   /** The hub: one card per game the viewer may see. */
   hub.get("/homes", async (c) => c.json({ asOf: unixNow(), games: await gamesFor(c.env, c.get("viewer")) }));

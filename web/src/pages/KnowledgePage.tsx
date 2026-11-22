@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { ApiError, usePage, useTable, useTableEdits, type Visibility } from "../api.ts";
 import { Markdown } from "../markdown.tsx";
 import { ToTable } from "../components/To.tsx";
+import { CMS_ADMIN } from "../components/EditInCms.tsx";
 
 /** A campaign's page, under its game's home base. */
 export function GameKnowledgePage() {
@@ -27,11 +28,14 @@ function KnowledgePage({ kind, id, slug, title }: { kind: string; id: string; sl
   // Only a 404 is a page that does not exist yet. Any other failure must never
   // open an empty editor over a page that is really there.
   const missing = page.error instanceof ApiError && page.error.status === 404;
+  // A campaign's pages are written in kith-cms (docs/CMS.md), new ones too; a
+  // game day's here, and so is a campaign page not moved over yet.
+  const inCms = page.data ? page.data.page.source === "cms" : kind === "campaign";
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
-    if (missing && canEdit) setEditing(true);
-  }, [missing, canEdit]);
+    if (missing && canEdit && !inCms) setEditing(true);
+  }, [missing, canEdit, inCms]);
 
   const back = (
     <ToTable kind={kind} id={id} style={{ fontSize: 13 }}>
@@ -83,7 +87,11 @@ function KnowledgePage({ kind, id, slug, title }: { kind: string; id: string; sl
             {data.updatedBy ? ` by ${data.updatedBy.name}` : ""}
           </span>
         </div>
-        {canEdit ? (
+        {canEdit && inCms ? (
+          <a className="btn" href={`${CMS_ADMIN}/content/pages`} target="_blank" rel="noopener noreferrer">
+            Edit in the CMS ↗
+          </a>
+        ) : canEdit ? (
           <button type="button" className="btn" onClick={() => setEditing(true)}>
             Edit
           </button>

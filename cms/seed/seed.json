@@ -253,7 +253,7 @@
       "label": "Site copy",
       "labelSingular": "Section",
       "sortOrder": 5,
-      "description": "The site's own words, by slug: home (the front page), games (the Games hub), agenda, signin, not-found.",
+      "description": "The site's own words, by slug: home (the front page's heading, kicker and line) and games (the Games hub's heading and line). A missing one falls back to the site's built-in words.",
       "supports": [
         "drafts",
         "revisions"
@@ -285,8 +285,24 @@
         "slug": "home",
         "status": "published",
         "data": {
-          "title": "Your games",
-          "kicker": "Kith"
+          "title": "Every game we run, in one place.",
+          "kicker": "The Orrey of Worlds",
+          "body": [
+            {
+              "_type": "block",
+              "_key": "b1",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_type": "span",
+                  "_key": "s1",
+                  "text": "Each game has a home base: who plays whom, when it meets next, its links and what the table knows.",
+                  "marks": []
+                }
+              ]
+            }
+          ]
         }
       },
       {
@@ -294,15 +310,23 @@
         "slug": "games",
         "status": "published",
         "data": {
-          "title": "Games"
-        }
-      },
-      {
-        "id": "agenda",
-        "slug": "agenda",
-        "status": "published",
-        "data": {
-          "title": "Agenda"
+          "title": "Games",
+          "body": [
+            {
+              "_type": "block",
+              "_key": "b1",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_type": "span",
+                  "_key": "s1",
+                  "text": "Every table we run. Each one has a home base with who plays whom and when it meets next.",
+                  "marks": []
+                }
+              ]
+            }
+          ]
         }
       }
     ]

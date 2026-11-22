@@ -32,6 +32,8 @@ export interface PageSummary {
 export interface Page extends PageSummary {
   body: string;
   updatedBy: Person | null;
+  /** Where it is written: kith-cms, or Kith's own editor (a game day, or a campaign page not moved over yet). */
+  source: "cms" | "kith";
 }
 
 export class InvalidKnowledge extends Error {
@@ -109,6 +111,7 @@ export async function pageFor(
         updatedAt: cms.updatedAt,
         body: toMarkdown(cms.content),
         updatedBy: null,
+        source: "cms",
       };
     }
   }
@@ -126,6 +129,7 @@ export async function pageFor(
     updatedAt: row.page.updatedAt,
     body: row.page.body,
     updatedBy: row.user ? personFrom(row.user) : null,
+    source: "kith",
   };
 }
 

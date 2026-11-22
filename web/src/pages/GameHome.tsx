@@ -7,7 +7,9 @@ import { SeatSquares, seatLine } from "../components/Squares.tsx";
 import { SignupButtons } from "../components/SignupButtons.tsx";
 import { ToPage } from "../components/To.tsx";
 import { cadence, inDays, stamp } from "../format.ts";
-import { LinkRow, NewLink, NewPage, VIS_LABEL } from "./Table.tsx";
+import { LinkRow, VIS_LABEL } from "./Table.tsx";
+import { EditInCms } from "../components/EditInCms.tsx";
+import { Markdown } from "../markdown.tsx";
 import { SoundButton, TableMotif } from "./Splash.tsx";
 import { Header } from "../components/Header.tsx";
 import { signInHref } from "../signin.ts";
@@ -194,9 +196,9 @@ function CampaignBase({ home }: { home: CampaignHome }) {
               <h2 className="label" style={{ fontSize: 12 }}>
                 The pitch
               </h2>
-              <p className="prose" style={{ whiteSpace: "pre-line" }}>
-                {listing.pitch}
-              </p>
+              <div className="prose">
+                <Markdown source={listing.pitch} />
+              </div>
             </section>
           ) : null}
 
@@ -218,7 +220,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
                 </div>
               ))
             )}
-            {canEdit ? <NewPage kind={kind} id={id} /> : null}
+            {canEdit ? <EditInCms collection="pages">Add or edit pages in the CMS</EditInCms> : null}
           </section>
         </div>
 
@@ -232,9 +234,9 @@ function CampaignBase({ home }: { home: CampaignHome }) {
             <h2 className="panel-head label">Links · {links.length}</h2>
             {links.length === 0 ? <p className="panel-body muted">No links yet.</p> : null}
             {links.map((link) => (
-              <LinkRow key={link.id} link={link} canEdit={canEdit} kind={kind} id={id} />
+              <LinkRow key={link.id} link={link} canEdit={canEdit} removable={!link.id.startsWith("cms:")} kind={kind} id={id} />
             ))}
-            {canEdit ? <NewLink kind={kind} id={id} /> : null}
+            {canEdit ? <EditInCms collection="links">Add or edit links in the CMS</EditInCms> : null}
           </section>
         </aside>
       </div>

@@ -146,7 +146,8 @@ async function campaignListing(
     open: campaign.state === "FORMING",
     game: gameOf(game),
     tagline: words?.tagline ?? campaign.tagline,
-    pitch: (words && toMarkdown(words.pitch)) || campaign.pitch,
+    // D1's pitch is plain text: each line stays its own line under Markdown.
+    pitch: (words && toMarkdown(words.pitch)) || (campaign.pitch?.replace(/\n+/g, "\n\n") ?? null),
     heroUrl: words?.heroUrl ?? campaign.heroUrl,
     soundUrl: words?.soundUrl ?? campaign.soundUrl,
     lead: gm ? personFrom(gm.user) : null,

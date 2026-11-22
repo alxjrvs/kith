@@ -112,6 +112,22 @@ export const useListing = (kind: string, id: string) =>
     retry: false,
   });
 
+/** One section of the site's own copy, from kith-cms. */
+export interface Copy {
+  title: string | null;
+  kicker: string | null;
+  body: string | null;
+}
+
+/** The site's own copy by slug; a page falls back to its built-in words for anything missing. */
+export const useCopy = () =>
+  useQuery({
+    queryKey: ["copy"],
+    queryFn: () => api<{ copy: Record<string, Copy> }>("/api/hub/copy"),
+    staleTime: 60_000,
+    select: (data) => data.copy,
+  });
+
 export const useGames = () =>
   useQuery({ queryKey: ["games"], queryFn: () => api<{ games: CatalogEntry[] }>("/api/hub/games") });
 
@@ -208,6 +224,7 @@ export interface PageSummary {
 export interface Page extends PageSummary {
   body: string;
   updatedBy: Person | null;
+  source: "cms" | "kith";
 }
 
 export interface Table {

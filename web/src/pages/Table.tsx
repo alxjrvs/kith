@@ -124,7 +124,20 @@ function DayTable({ kind, id }: { kind: string; id: string }) {
   );
 }
 
-export function LinkRow({ link, canEdit, kind, id }: { link: TableData["links"][number]; canEdit: boolean; kind: string; id: string }) {
+export function LinkRow({
+  link,
+  canEdit,
+  removable = canEdit,
+  kind,
+  id,
+}: {
+  link: TableData["links"][number];
+  canEdit: boolean;
+  /** False for a link written in kith-cms: it is removed there. */
+  removable?: boolean;
+  kind: string;
+  id: string;
+}) {
   const edits = useTableEdits(kind, id);
   return (
     <div className="link-row">
@@ -137,9 +150,11 @@ export function LinkRow({ link, canEdit, kind, id }: { link: TableData["links"][
       {canEdit ? (
         <>
           <span className="pill">{VIS_LABEL[link.visibility]}</span>
-          <button type="button" className="btn" style={{ minHeight: 32, padding: "0 10px" }} onClick={() => edits.removeLink.mutate(link.id)}>
-            Remove
-          </button>
+          {removable ? (
+            <button type="button" className="btn" style={{ minHeight: 32, padding: "0 10px" }} onClick={() => edits.removeLink.mutate(link.id)}>
+              Remove
+            </button>
+          ) : null}
         </>
       ) : null}
     </div>
