@@ -155,10 +155,18 @@ export function GameCard({ game }: { game: GameSummary }) {
           </p>
         ) : null}
         <div className="row" style={{ marginTop: "auto", gap: 10 }}>
-          <SeatSquares capacity={game.capacity} taken={game.players} />
-          <span className="mono" style={{ fontSize: 13 }}>
-            {game.capacity === null ? `${game.players} playing` : `${game.players} / ${game.capacity}`}
-          </span>
+          {game.open ? (
+            <>
+              <SeatSquares capacity={game.capacity} taken={game.players} />
+              <span className="mono" style={{ fontSize: 13 }}>
+                {game.capacity === null ? `${game.players} in` : `${game.players} / ${game.capacity}`}
+              </span>
+            </>
+          ) : game.players > 0 ? (
+            <span className="mono" style={{ fontSize: 13 }}>
+              {game.players} {game.players === 1 ? "PLAYER" : "PLAYERS"}
+            </span>
+          ) : null}
           {game.mine ? <span className="pill in">Yours</span> : null}
           {game.open ? <span className="pill accent">Signing up</span> : null}
         </div>

@@ -423,3 +423,29 @@ describe("the hub's loose ends", () => {
     expect(games.find((g) => g.slug === "arcs")).toMatchObject({ kind: "board", open: true, mine: true, state: "SEATING" });
   });
 });
+
+describe("each game's calendar", () => {
+  it("hands a signed-in viewer their own feed of the game, and nobody else one", async () => {
+    await db(env).insert(schema.sessions).values({ id: "d1", kind: "one_off", gameDayId: "arcs-afternoon", startsAt: later, endsAt: later + 3600 });
+
+    const signedOut = (await (await call("GET", "/api/hub/homes/arcs")).json()) as { home: { calendarUrl: string | null } };
+    expect(signedOut.home.calendarUrl).toBeNull();
+
+    const { home } = (await (await call("GET", "/api/hub/homes/arcs", await as("1001"))).json()) as { home: { calendarUrl: string } };
+    expect(home.calendarUrl).toBe("https://orrey.test/ics/t-1001/game/arcs.ics");
+    const feed = await call("GET", "/ics/t-1001/game/arcs.ics");
+    expect(feed.status).toBe(200);
+    expect(await feed.text()).toContain("BEGIN:VEVENT");
+
+    // A TTRPG system is not a board game, and a wrong token is nobody.
+    expect((await call("GET", "/ics/t-1001/game/daggerheart.ics")).status).toBe(404);
+    expect((await call("GET", "/ics/nope/game/arcs.ics")).status).toBe(404);
+  });
+
+  it("gives a public campaign's feed to anyone signed in, and a members-only one to its roster only", async () => {
+    expect((await call("GET", "/ics/t-1002/campaign/hollowmere.ics")).status).toBe(200);
+    expect((await call("GET", "/ics/t-1002/campaign/secret.ics")).status).toBe(404);
+    await db(env).insert(schema.campaignMembers).values({ campaignId: "secret", userId: "1002" });
+    expect((await call("GET", "/ics/t-1002/campaign/secret.ics")).status).toBe(200);
+  });
+});

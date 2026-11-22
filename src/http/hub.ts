@@ -105,7 +105,7 @@ export function hubRoutes() {
 
   /** One game's home base: a campaign's roster and sessions, or a board game's days. */
   hub.get("/homes/:slug", async (c) => {
-    const home = await homeBase(c.env, c.req.param("slug"), c.get("viewer"));
+    const home = await homeBase(c.env, c.req.param("slug"), c.get("viewer"), new URL(c.req.url).origin);
     return home
       ? c.json({ asOf: unixNow(), home })
       : c.json({ error: "Kith has no game here, or it is not yours to see." }, 404);

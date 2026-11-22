@@ -52,6 +52,8 @@ export interface CampaignHome {
   /** The roster once it runs; the signups while it forms. GMs first. */
   roster: Seat[];
   upcoming: HubAgendaRow[];
+  /** The viewer's own subscribable feed of this game; null signed out, or when the feed would refuse them. */
+  calendarUrl: string | null;
   links: TableLink[];
   pages: PageSummary[];
 }
@@ -67,6 +69,8 @@ export interface BoardHome {
   game: CatalogEntry;
   canEdit: boolean;
   upcoming: BoardDay[];
+  /** The viewer's own subscribable feed of this game's days; null signed out. */
+  calendarUrl: string | null;
   /** How many days of it have been played, for a line of history. */
   played: number;
 }
@@ -100,15 +104,47 @@ export interface GameSummary {
   open: boolean;
 }
 
-export async function homeBase(env: Env, slug: string, viewer: Viewer, now = new Date()): Promise<HomeBase | undefined> {
+export async function homeBase(
+  env: Env,
+  slug: string,
+  viewer: Viewer,
+  origin: string,
+  now = new Date(),
+): Promise<HomeBase | undefined> {
   const campaign = await listingFor(env, "campaign", slug, viewer);
-  if (campaign) return campaignHome(env, campaign, viewer, now);
+  if (campaign) return campaignHome(env, campaign, viewer, origin, now);
   const game = (await catalog(env)).find((g) => g.id === slug && g.category === "board");
-  if (game) return boardHome(env, game, viewer, now);
+  if (game) return boardHome(env, game, viewer, origin, now);
   return undefined;
 }
 
-async function campaignHome(env: Env, listing: Listing, viewer: Viewer, now: Date): Promise<CampaignHome> {
+/**
+ * The viewer's own feed URL for one game, from their feed token. The feed reads
+ * a token as a plain member, never an organiser, so an organiser looking at a
+ * table they are not on gets no link rather than one that 404s.
+ */
+async function calendarUrlFor(
+  env: Env,
+  viewer: Viewer,
+  origin: string,
+  path: "campaign" | "game",
+  id: string,
+): Promise<string | null> {
+  if (!viewer.userId) return null;
+  if (path === "campaign") {
+    const asMember = await listingFor(env, "campaign", id, { userId: viewer.userId, organiser: false });
+    if (!asMember) return null;
+  }
+  const holder = await db(env)
+    .select({ feedToken: schema.users.feedToken })
+    .from(schema.users)
+    .where(eq(schema.users.discordId, viewer.userId))
+    .get();
+  if (!holder) return null;
+  return `${origin}/ics/${encodeURIComponent(holder.feedToken)}/${path}/${encodeURIComponent(id)}.ics`;
+}
+
+async function campaignHome(env: Env, listing: Listing, viewer: Viewer, origin: string, now: Date): Promise<CampaignHome> {
   const member = await isMemberOf(env, "campaign", listing.id, viewer.userId);
   const agenda = await agendaFor(env, viewer, "public", now, HORIZON_DAYS);
   return {
@@ -119,6 +155,7 @@ async function campaignHome(env: Env, listing: Listing, viewer: Viewer, now: Dat
     canEdit: viewer.organiser,
     roster: await campaignRoster(env, listing, viewer.organiser || member),
     upcoming: agenda.rows.filter((row) => row.campaignId === listing.id),
+    calendarUrl: await calendarUrlFor(env, viewer, origin, "campaign", listing.id),
     links: await linksFor(env, "campaign", listing.id, viewer, member),
     pages: await pagesFor(env, "campaign", listing.id, viewer, member),
   };
@@ -217,12 +254,20 @@ async function playedCount(env: Env, gameId: string, now: Date): Promise<number>
   return row?.n ?? 0;
 }
 
-async function boardHome(env: Env, game: CatalogEntry, viewer: Viewer, now: Date): Promise<BoardHome> {
+async function boardHome(env: Env, game: CatalogEntry, viewer: Viewer, origin: string, now: Date): Promise<BoardHome> {
   const upcoming: BoardDay[] = [];
   for (const listing of await upcomingDays(env, game.id, viewer, now)) {
     upcoming.push({ listing, seats: await daySeats(env, listing, viewer) });
   }
-  return { kind: "board", slug: game.id, game, canEdit: viewer.organiser, upcoming, played: await playedCount(env, game.id, now) };
+  return {
+    kind: "board",
+    slug: game.id,
+    game,
+    canEdit: viewer.organiser,
+    upcoming,
+    calendarUrl: await calendarUrlFor(env, viewer, origin, "game", game.id),
+    played: await playedCount(env, game.id, now),
+  };
 }
 
 async function daySeats(env: Env, listing: Listing, viewer: Viewer): Promise<Seat[]> {

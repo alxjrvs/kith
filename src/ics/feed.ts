@@ -4,6 +4,7 @@ import { db, schema } from "../db/index.ts";
 import { loadProjectionTarget } from "../projection/target.ts";
 import { feedZone, icsEventFor } from "./event.ts";
 import { serialise, type IcsEvent } from "./serialise.ts";
+import { listingFor } from "../hub/listings.ts";
 
 /**
  * What one person's feed contains.
@@ -41,7 +42,13 @@ export async function feedFor(
     .all()
     .then((rows) => rows.map((row) => row.id));
 
-  if (campaignId !== undefined && !campaigns.includes(campaignId)) return undefined;
+  // One campaign's feed is for whoever the site would show the campaign to:
+  // its roster, or anybody at all once it is public. Read as a plain member,
+  // never an organiser: a token is not a session and carries no role.
+  if (campaignId !== undefined && !campaigns.includes(campaignId)) {
+    const listing = await listingFor(env, "campaign", campaignId, { userId: holder.discordId, organiser: false });
+    if (!listing) return undefined;
+  }
 
   const mine = campaignId === undefined ? campaigns : [campaignId];
 
@@ -71,6 +78,51 @@ export async function feedFor(
     name: campaignId === undefined ? "Kith" : `Kith — ${campaignId}`,
     events,
   };
+}
+
+/**
+ * One board game's feed: every day of it the holder may see, seat or no seat,
+ * so a calendar shows the next Twilight Imperium before anybody has signed up.
+ * Cancelled days drop out because their sessions project as cancelled.
+ */
+export async function gameFeedFor(env: Env, feedToken: string, gameId: string): Promise<Feed | undefined> {
+  const holder = await db(env)
+    .select({ discordId: schema.users.discordId })
+    .from(schema.users)
+    .where(eq(schema.users.feedToken, feedToken))
+    .get();
+  if (!holder) return undefined;
+  const game = await db(env).select().from(schema.games).where(eq(schema.games.id, gameId)).get();
+  if (!game || game.category !== "board") return undefined;
+
+  const viewer = { userId: holder.discordId, organiser: false };
+  const days = await db(env)
+    .select({ id: schema.gameDays.id })
+    .from(schema.gameDays)
+    .where(eq(schema.gameDays.gameId, gameId))
+    .all();
+  const visible: string[] = [];
+  for (const day of days) {
+    if (await listingFor(env, "game-day", day.id, viewer)) visible.push(day.id);
+  }
+
+  const sessionIds =
+    visible.length === 0
+      ? []
+      : await db(env)
+          .select({ id: schema.sessions.id })
+          .from(schema.sessions)
+          .where(inArray(schema.sessions.gameDayId, visible))
+          .orderBy(asc(schema.sessions.startsAt))
+          .all()
+          .then((rows) => rows.map((row) => row.id));
+
+  const events: IcsEvent[] = [];
+  for (const id of sessionIds) {
+    const target = await loadProjectionTarget(env, id);
+    if (target) events.push(await icsEventFor(target));
+  }
+  return { name: `Kith — ${game.name}`, events };
 }
 
 /** The sessions of the game days this person holds a live claim on. */

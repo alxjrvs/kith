@@ -21,7 +21,7 @@ import {
 import { authorizeUrl, exchangeCode, identify, storeTokens } from "../console/oauth.ts";
 import { sessionFrom } from "../console/session.ts";
 import { deleteUserData, describeReceipt } from "../privacy/delete.ts";
-import { feedFor, icsResponse } from "../ics/feed.ts";
+import { feedFor, gameFeedFor, icsResponse } from "../ics/feed.ts";
 import { feedsPanel, rotateFeedToken } from "../ics/feeds-panel.ts";
 import { NotConfigured, isOrganiser } from "../console/roles.ts";
 import { campaignSummaries, gameDaySummaries, gameSummaries } from "../console/api.ts";
@@ -126,6 +126,14 @@ export function createApp() {
     const file = c.req.param("file");
     if (!file.endsWith(".ics")) return c.body(null, 404);
     return ics(c, c.req.param("feedToken"), file.slice(0, -".ics".length));
+  });
+  app.get("/ics/:feedToken/game/:file", async (c) => {
+    const file = c.req.param("file");
+    if (!file.endsWith(".ics")) return c.body(null, 404);
+    const feed = await gameFeedFor(c.env, c.req.param("feedToken"), file.slice(0, -".ics".length));
+    if (!feed) return c.body(null, 404);
+    const { body, headers } = await icsResponse(c.env, feed, Math.floor(Date.now() / 1000));
+    return c.text(body, 200, headers);
   });
 
   app.get("/console/login", async (c) => {

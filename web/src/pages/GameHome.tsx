@@ -1,12 +1,12 @@
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "@tanstack/react-router";
-import { useHome, useMe, type BoardHome, type CampaignHome, type AgendaRow as Row, type Seat } from "../api.ts";
+import { useCancelSession, useHome, useMe, type BoardHome, type CampaignHome, type AgendaRow as Row, type Seat } from "../api.ts";
 import { AgendaRow } from "../components/AgendaRow.tsx";
 import { CatalogEditor } from "../components/CatalogEditor.tsx";
 import { SeatSquares, seatLine } from "../components/Squares.tsx";
 import { SignupButtons } from "../components/SignupButtons.tsx";
 import { ToPage } from "../components/To.tsx";
-import { cadence, inDays, initials, stamp } from "../format.ts";
+import { cadence, inDays, stamp } from "../format.ts";
 import { LinkRow, NewLink, NewPage, VIS_LABEL } from "./Table.tsx";
 import { SoundButton, TableMotif } from "./Splash.tsx";
 import { Header } from "../components/Header.tsx";
@@ -143,7 +143,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
         {upcoming[0] ? <NextUp row={upcoming[0]} /> : null}
         <div className="row" style={{ gap: "16px 24px" }}>
           {listing.open ? <SignupButtons listing={listing} big /> : null}
-          <a href="#cast">Meet the table</a>
+          <CalendarLink url={home.calendarUrl} />
           {listing.open || canEdit ? (
             <Link to="/join/$kind/$id" params={{ kind, id }}>
               Splash page
@@ -152,11 +152,6 @@ function CampaignBase({ home }: { home: CampaignHome }) {
         </div>
       </BaseHero>
     <main className="page">
-
-      <section id="cast" className="stack" style={{ gap: 16 }}>
-        <h2 className="section-title">{listing.state === "FORMING" ? "Signed up so far" : "The table"}</h2>
-        <Cast seats={roster} empty={listing.state === "FORMING" ? "Nobody has signed up yet." : "No roster yet."} />
-      </section>
 
       <div className="split">
         <div className="main">
@@ -178,7 +173,10 @@ function CampaignBase({ home }: { home: CampaignHome }) {
                     {list[0]!.dayLabel} · {inDays(list[0]!.startsAt)}
                   </div>
                   {list.map((row) => (
-                    <AgendaRow key={row.sessionId} row={row} />
+                    <div key={row.sessionId}>
+                      <AgendaRow row={row} />
+                      {canEdit ? <CancelSession row={row} /> : null}
+                    </div>
                   ))}
                 </div>
               ))
@@ -220,6 +218,11 @@ function CampaignBase({ home }: { home: CampaignHome }) {
         </div>
 
         <aside>
+          <Roster
+            seats={roster}
+            title={listing.state === "FORMING" ? "Signed up so far" : "The table"}
+            empty={listing.state === "FORMING" ? "Nobody has signed up yet." : "No roster yet."}
+          />
           <section className="panel">
             <h2 className="panel-head label">Links · {links.length}</h2>
             {links.length === 0 ? <p className="panel-body muted">No links yet.</p> : null}
@@ -238,12 +241,14 @@ function CampaignBase({ home }: { home: CampaignHome }) {
               ) : null}
               {listing.where === "voice" ? <span className="muted">On voice</span> : null}
               {listing.lead ? <span className="muted">GM {listing.lead.name}</span> : null}
-              <div className="row">
-                <SeatSquares capacity={listing.capacity} taken={listing.taken} />
-                <span className="mono" style={{ fontSize: 13 }}>
-                  {seatLine(listing)}
-                </span>
-              </div>
+              {listing.open ? (
+                <div className="row">
+                  <SeatSquares capacity={listing.capacity} taken={listing.taken} />
+                  <span className="mono" style={{ fontSize: 13 }}>
+                    {seatLine(listing)}
+                  </span>
+                </div>
+              ) : null}
             </div>
           </section>
         </aside>
@@ -279,17 +284,19 @@ function BoardBase({ home }: { home: BoardHome }) {
           <div className="next-up">
             <span className="label">Next game day · {next.when.startsAt ? inDays(next.when.startsAt) : "date to come"}</span>
             {next.when.startsAt ? <span className="mono next-stamp">{stamp(next.when.startsAt)}</span> : null}
-            <div className="row">
-              <SeatSquares capacity={next.capacity} taken={next.taken} big />
-              <span className="mono" style={{ fontSize: 13 }}>
-                {seatLine(next)}
-              </span>
-            </div>
+            {next.open ? (
+              <div className="row">
+                <SeatSquares capacity={next.capacity} taken={next.taken} big />
+                <span className="mono" style={{ fontSize: 13 }}>
+                  {seatLine(next)}
+                </span>
+              </div>
+            ) : null}
           </div>
         ) : null}
         <div className="row" style={{ gap: "16px 24px" }}>
           {next?.open ? <SignupButtons listing={next} big /> : null}
-          <a href="#days">Every day coming up</a>
+          <CalendarLink url={home.calendarUrl} />
           {canEdit && !editing ? (
             <button type="button" className="btn" onClick={() => setEditing(true)}>
               Edit the game
@@ -324,15 +331,17 @@ function BoardBase({ home }: { home: BoardHome }) {
                     {[listing.where, listing.lead ? `Host ${listing.lead.name}` : null].filter(Boolean).join(" · ")}
                   </span>
                 ) : null}
-                <div className="row">
-                  <SeatSquares capacity={listing.capacity} taken={listing.taken} />
-                  <span className="mono" style={{ fontSize: 13 }}>
-                    {seatLine(listing)}
-                  </span>
-                </div>
+                {listing.open ? (
+                  <div className="row">
+                    <SeatSquares capacity={listing.capacity} taken={listing.taken} />
+                    <span className="mono" style={{ fontSize: 13 }}>
+                      {seatLine(listing)}
+                    </span>
+                  </div>
+                ) : null}
                 {listing.open ? <SignupButtons listing={listing} /> : null}
               </div>
-              <SeatList seats={seats} empty="No seats taken yet." characters={false} />
+              <RosterRows seats={seats} empty="No seats taken yet." characters={false} />
             </section>
           ))}
         </div>
@@ -354,74 +363,132 @@ function BoardBase({ home }: { home: BoardHome }) {
   );
 }
 
-/** Who plays whom. Signed out, it is the characters without the people. */
-function SeatList({ seats, empty, characters = true }: { seats: Seat[]; empty: string; characters?: boolean }) {
+/** The roster as a table in the sidebar: Discord faces, characters, the GM lit. */
+function Roster({ seats, title, empty }: { seats: Seat[]; title: string; empty: string }) {
+  return (
+    <section className="panel" id="roster">
+      <h2 className="panel-head label">
+        {title} · {seats.length}
+      </h2>
+      <RosterRows seats={seats} empty={empty} />
+    </section>
+  );
+}
+
+/** Discord's own default face, for a seat whose person is kept to the table. */
+const ANONYMOUS_AVATAR = "https://cdn.discordapp.com/embed/avatars/0.png";
+
+function RosterRows({ seats, empty, characters = true }: { seats: Seat[]; empty: string; characters?: boolean }) {
   if (seats.length === 0) return <p className="panel-body muted">{empty}</p>;
   return (
-    <div>
-      {seats.map((seat, i) => (
-        <div key={seat.person?.id ?? `seat-${i}`} className="panel-row" style={{ minHeight: 52 }}>
-          <span className="avatar" style={{ width: 32, height: 32 }} aria-hidden="true">
-            {seat.person?.avatarUrl ? <img src={seat.person.avatarUrl} alt="" /> : seat.person ? initials(seat.person.name) : "?"}
-          </span>
-          <div style={{ flex: "1 1 200px", display: "flex", flexDirection: "column" }}>
-            {characters ? (
-              <>
-                <span style={{ fontWeight: 600 }}>
-                  {seat.role === "gm" && !seat.character ? (seat.person?.name ?? "Game master") : (seat.character ?? "Character to come")}
-                </span>
-                <span className="muted" style={{ fontSize: 12 }}>
-                  {seat.role === "gm" && !seat.character
-                    ? "Runs the table"
-                    : seat.person
-                      ? `Played by ${seat.person.name}`
-                      : "Shown to the table"}
-                </span>
-              </>
-            ) : (
-              <>
-                <span style={{ fontWeight: 600 }}>{seat.person?.name ?? "Seat taken"}</span>
-                {seat.person ? null : (
-                  <span className="muted" style={{ fontSize: 12 }}>
-                    Shown to the table
-                  </span>
-                )}
-              </>
-            )}
-          </div>
-          {seat.role === "gm" ? <span className="pill accent">GM</span> : null}
-          {seat.state === "waitlisted" ? <span className="pill maybe">Waitlist</span> : null}
-        </div>
-      ))}
-    </div>
+    <table className="roster">
+      <tbody>
+        {seats.map((seat, i) => {
+          const gmOnly = seat.role === "gm" && !seat.character;
+          const main = !characters
+            ? (seat.person?.name ?? "Seat taken")
+            : gmOnly
+              ? (seat.person?.name ?? "Game master")
+              : (seat.character ?? "Character to come");
+          const sub = !characters
+            ? seat.person
+              ? null
+              : "Shown to the table"
+            : gmOnly
+              ? "Game master"
+              : seat.person
+                ? seat.person.name
+                : "Shown to the table";
+          return (
+            <tr key={`${seat.role}-${seat.person?.id ?? i}`} className={seat.role === "gm" ? "gm" : undefined}>
+              <td style={{ width: 44 }}>
+                <img
+                  className="discord-avatar"
+                  src={seat.person?.avatarUrl ?? ANONYMOUS_AVATAR}
+                  alt=""
+                  width="32"
+                  height="32"
+                  // A blocked CDN leaves the round placeholder, not a broken-image glyph.
+                  onError={(e) => {
+                    e.currentTarget.style.visibility = "hidden";
+                  }}
+                />
+              </td>
+              <td>
+                <span className="roster-main">{main}</span>
+                {sub ? <span className="roster-sub">{sub}</span> : null}
+              </td>
+              <td style={{ textAlign: "right" }}>
+                {seat.role === "gm" ? <span className="pill accent">GM</span> : null}
+                {seat.state === "waitlisted" ? <span className="pill maybe">Waitlist</span> : null}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }
 
 /**
- * The campaign's cast, the way the splash would show it: each character as a
- * card with its name big, and the person who plays it underneath.
+ * Subscribe to this one game. `webcal:` hands the feed to the calendar app;
+ * the copy is for Google, which wants the https URL pasted in.
  */
-function Cast({ seats, empty }: { seats: Seat[]; empty: string }) {
-  if (seats.length === 0) return <p className="empty">{empty}</p>;
+function CalendarLink({ url }: { url: string | null }) {
+  const me = useMe().data;
+  const [copied, setCopied] = useState(false);
+  if (!url) {
+    return me && !me.signedIn ? <a href={signInHref()}>Sign in to subscribe in your calendar</a> : null;
+  }
   return (
-    <div className="cast">
-      {seats.map((seat, i) => {
-        const gmOnly = seat.role === "gm" && !seat.character;
-        return (
-          <article key={`${seat.role}-${seat.person?.id ?? i}`} className={`cast-card${seat.role === "gm" ? " gm" : ""}`}>
-            <span className="label">{seat.role === "gm" ? "Game master" : seat.state === "waitlisted" ? "Waitlist" : "Player"}</span>
-            <span className="cast-name">{gmOnly ? (seat.person?.name ?? "Game master") : (seat.character ?? "Character to come")}</span>
-            <div className="row" style={{ gap: 10 }}>
-              <span className="avatar" style={{ width: 28, height: 28, fontSize: 11 }} aria-hidden="true">
-                {seat.person?.avatarUrl ? <img src={seat.person.avatarUrl} alt="" /> : seat.person ? initials(seat.person.name) : "?"}
-              </span>
-              <span className="muted" style={{ fontSize: 13 }}>
-                {gmOnly ? "Runs the table" : seat.person ? `Played by ${seat.person.name}` : "Shown to the table"}
-              </span>
-            </div>
-          </article>
-        );
-      })}
+    <span className="row" style={{ gap: 12 }}>
+      <a className="btn" href={url.replace(/^https?:/, "webcal:")}>
+        Subscribe in your calendar
+      </a>
+      <button
+        type="button"
+        className="btn"
+        onClick={() => {
+          void navigator.clipboard?.writeText(url).then(() => setCopied(true));
+        }}
+      >
+        {copied ? "Copied" : "Copy feed link"}
+      </button>
+    </span>
+  );
+}
+
+/** Organisers only: call off one session, the same cancel the console makes. */
+function CancelSession({ row }: { row: Row }) {
+  const cancel = useCancelSession();
+  const [asking, setAsking] = useState(false);
+  if (row.state === "CANCELLED" || row.state === "PLAYED") return null;
+  return (
+    <div className="row" style={{ gap: 10, padding: "0 16px 12px", justifyContent: "flex-end" }}>
+      {asking ? (
+        <>
+          <span className="muted" style={{ fontSize: 13 }}>
+            Call off {stamp(row.startsAt)}? Discord and calendars are told.
+          </span>
+          <button
+            type="button"
+            className="btn"
+            style={{ minHeight: 32, padding: "0 10px", borderColor: "var(--out)" }}
+            disabled={cancel.isPending}
+            onClick={() => cancel.mutate(row.sessionId, { onSuccess: () => setAsking(false) })}
+          >
+            Yes, cancel it
+          </button>
+          <button type="button" className="btn" style={{ minHeight: 32, padding: "0 10px" }} onClick={() => setAsking(false)}>
+            Keep it
+          </button>
+        </>
+      ) : (
+        <button type="button" className="btn" style={{ minHeight: 32, padding: "0 10px" }} onClick={() => setAsking(true)}>
+          Cancel this session
+        </button>
+      )}
+      {cancel.error ? <p className="notice error" style={{ flex: "1 1 100%" }}>{cancel.error.message}</p> : null}
     </div>
   );
 }

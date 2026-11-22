@@ -185,10 +185,15 @@ img { max-width: 100%; }
 .next-up { display: flex; flex-direction: column; gap: 6px; max-width: 640px; }
 .next-stamp { font-size: clamp(22px, 4vw, 32px); }
 .section-title { font-family: var(--font-head); font-size: clamp(26px, 4vw, 36px); font-weight: 700; letter-spacing: -0.02em; }
-.cast { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-.cast-card { display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); }
-.cast-card.gm { border-color: var(--accent); }
-.cast-name { font-family: var(--font-head); font-size: 26px; font-weight: 700; line-height: 1.05; letter-spacing: -0.02em; }
+.roster { width: 100%; border-collapse: collapse; }
+.roster td { padding: 10px 14px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+.roster tr:last-child td { border-bottom: 0; }
+.roster td + td { padding-left: 0; }
+.roster tr.gm td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.roster tr.gm td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.roster-main { display: block; font-weight: 600; }
+.roster-sub { display: block; color: var(--muted); font-size: 12px; }
+.discord-avatar { display: block; width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--raised); }
 .chip { padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; }
 
 /* Prose (knowledge pages) */

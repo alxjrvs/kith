@@ -299,6 +299,7 @@ export interface CampaignHome {
   canEdit: boolean;
   roster: Seat[];
   upcoming: AgendaRow[];
+  calendarUrl: string | null;
   links: TableLink[];
   pages: PageSummary[];
 }
@@ -309,6 +310,7 @@ export interface BoardHome {
   game: CatalogEntry;
   canEdit: boolean;
   upcoming: { listing: Listing; seats: Seat[] }[];
+  calendarUrl: string | null;
   played: number;
 }
 
@@ -326,3 +328,16 @@ export const useHome = (slug: string) =>
     queryFn: () => api<{ asOf: number; home: HomeBase }>(`/api/hub/homes/${encodeURIComponent(slug)}`),
     retry: false,
   });
+
+/** Organisers: call off one session. The console's own cancel, so Discord and calendars follow. */
+export function useCancelSession() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => api(`/api/sessions/${encodeURIComponent(sessionId)}/cancel`, { method: "POST", body: {} }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["home"] });
+      void client.invalidateQueries({ queryKey: ["homes"] });
+      void client.invalidateQueries({ queryKey: ["agenda"] });
+    },
+  });
+}
