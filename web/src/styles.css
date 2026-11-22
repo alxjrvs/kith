@@ -187,14 +187,11 @@ img { max-width: 100%; }
  * full strength on the right. A mask rather than an overlay, so the image is
  * never greyed where it shows.
  */
-.splash .hero {
-  position: absolute; inset: 0;
-  background-size: cover; background-position: center right;
-  /* Nothing behind the left half; the picture fades in over the next tenth. */
-  -webkit-mask-image: linear-gradient(90deg, transparent 50%, #000 60%);
-  mask-image: linear-gradient(90deg, transparent 50%, #000 60%);
-}
-.splash .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, var(--deep), transparent 40%); }
+.splash .hero { position: absolute; inset: 0; background-size: cover; background-position: center right; }
+.splash header, .splash main { text-shadow: 0 1px 3px #000c, 0 2px 18px #000a, 0 0 42px #0008; }
+/* The picture is shown whole, so the words carry their own soft shadow, and controls keep their own faces. */
+.splash .btn, .splash .chip, .splash .pill, .splash .panel { text-shadow: none; }
+.splash main > .label { color: var(--text); }
 /* No picture: the Kith mark, big, in the right half. */
 .splash .logo-art { position: absolute; right: 8%; top: 50%; transform: translateY(-50%); width: min(40vw, 72vh, 620px); height: auto; opacity: 0.9; pointer-events: none; }
 .splash header { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 32px; }
@@ -235,7 +232,6 @@ img { max-width: 100%; }
 @media (max-width: 640px) {
   .splash .logo-art { right: -15%; top: 30%; width: 90vw; opacity: 0.2; }
   /* On a phone the words run the full width, so the picture steps back behind them. */
-  .splash .hero { inset: 0; opacity: 0.35; -webkit-mask-image: linear-gradient(0deg, transparent 0%, #000 60%); mask-image: linear-gradient(0deg, transparent 0%, #000 60%); }
 }
 
 .prose blockquote { margin: 0 0 0.9em; padding-left: 12px; border-left: 2px solid var(--accent); color: var(--muted); }
@@ -262,11 +258,15 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
 .show-slide[data-current] { opacity: 1; visibility: visible; transition: opacity 900ms ease, visibility 0s; }
 .show-art { position: absolute; inset: 0; background-size: cover; background-position: center; transform: scale(1.04); }
 .show-slide[data-current] .show-art { animation: show-drift 14s ease-out both; }
+/* A game's own page is its slide holding still: no drift. */
+.show-slide[data-still] .show-art { animation: none; transform: none; }
 /* Darkest where the words are: under them and to their left. */
 .show-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--deep) 60%, transparent), transparent 18%), linear-gradient(0deg, var(--deep) 4%, color-mix(in srgb, var(--deep) 55%, transparent) 38%, transparent 70%), linear-gradient(90deg, color-mix(in srgb, var(--deep) 70%, transparent), transparent 60%); }
 .show-mark { position: absolute; right: 8%; top: 50%; transform: translateY(-50%); width: min(40vw, 62vh, 560px); height: auto; opacity: 0.9; pointer-events: none; }
 .show-slide-words { position: relative; display: flex; flex-direction: column; gap: 14px; max-width: 760px; padding: 0 32px 112px; }
 .show-slide-words h1 { font-size: clamp(44px, 9vw, 88px); line-height: 0.95; font-weight: 800; letter-spacing: -0.035em; }
+.show-slide-words h1 a { color: inherit; text-decoration: none; }
+.show-slide-words h1 a:hover { text-decoration: underline; text-decoration-thickness: 4px; text-underline-offset: 8px; text-decoration-color: var(--accent); }
 .show-tagline { font-size: clamp(17px, 2.4vw, 22px); line-height: 1.3; max-width: 46ch; }
 .show-system { align-self: flex-start; padding: 4px 10px; border-radius: 999px; font-size: 12px; background: color-mix(in srgb, var(--deep) 60%, transparent); }
 .show-bottom { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 20px 32px 28px; }

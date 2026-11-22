@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "@tanstack/react-router";
-import { useCancelSession, useHome, useMe, type BoardHome, type CampaignHome, type AgendaRow as Row, type Seat } from "../api.ts";
+import { useCancelSession, useHome, useMe, type BoardHome, type CampaignHome, type GameSummary, type HomeBase, type AgendaRow as Row, type Seat } from "../api.ts";
 import { AgendaRow } from "../components/AgendaRow.tsx";
 import { CatalogEditor } from "../components/CatalogEditor.tsx";
 import { SeatSquares, seatLine } from "../components/Squares.tsx";
@@ -11,6 +11,7 @@ import { LinkRow, VIS_LABEL } from "./Table.tsx";
 import { EditInCms } from "../components/EditInCms.tsx";
 import { Markdown } from "../markdown.tsx";
 import { SoundButton, TableMotif } from "./Splash.tsx";
+import { StillSlide } from "./Landing.tsx";
 import { Header } from "../components/Header.tsx";
 import { signInHref } from "../signin.ts";
 import { useGameApp } from "../pwa.ts";
@@ -26,9 +27,12 @@ const STATE_EYEBROW: Record<string, string> = {
 export function GameHome() {
   const { slug } = useParams({ from: "/games/$slug" });
   const home = useHome(slug);
+  const me = useMe();
+  const signedIn = me.data?.signedIn === true;
   useGameApp(home.data ? slug : undefined);
 
-  if (home.isPending) return <div className="splash base" aria-busy="true" />;
+  // Wait for both: which page this is depends on who is looking.
+  if (home.isPending || me.isPending) return <div className={signedIn ? "splash base" : "show"} aria-busy="true" />;
   if (home.isError) {
     return (
       <>
@@ -36,14 +40,58 @@ export function GameHome() {
         <main className="page">
           <h1>Nothing here</h1>
           <p className="muted">
-            {home.error.message} <Link to="/games">See every game</Link>
+            {home.error.message} {signedIn ? <Link to="/games">See every game</Link> : <Link to="/">Back to the front page</Link>}
           </p>
         </main>
       </>
     );
   }
   const data = home.data.home;
+  if (!signedIn) return <PublicGame home={data} />;
   return data.kind === "campaign" ? <CampaignBase home={data} /> : <BoardBase home={data} />;
+}
+
+/**
+ * Signed out, a home base is the game's slide from the front page, standing
+ * still: what the game is and the way in, nothing about who plays or when.
+ */
+function PublicGame({ home }: { home: HomeBase }) {
+  const listing = home.kind === "campaign" ? home.listing : home.upcoming[0]?.listing;
+  const game: GameSummary =
+    home.kind === "campaign"
+      ? {
+          kind: "campaign",
+          slug: home.slug,
+          name: home.listing.name,
+          state: home.listing.state,
+          label: home.listing.system ?? home.listing.game?.name ?? null,
+          tagline: home.listing.tagline,
+          imageUrl: home.listing.heroUrl ?? home.listing.logoUrl,
+          logoUrl: null,
+          lead: null,
+          players: 0,
+          capacity: null,
+          next: null,
+          mine: false,
+          open: home.listing.open,
+        }
+      : {
+          kind: "board",
+          slug: home.slug,
+          name: home.game.name,
+          state: "IDLE",
+          label: "Board game",
+          tagline: home.game.summary,
+          imageUrl: listing?.heroUrl ?? home.game.coverUrl,
+          logoUrl: null,
+          lead: null,
+          players: 0,
+          capacity: null,
+          next: null,
+          mine: false,
+          open: listing?.open === true,
+        };
+  return <StillSlide game={game} action={listing?.open ? <SignupButtons listing={listing} /> : undefined} />;
 }
 
 /**
