@@ -61,7 +61,7 @@ export function Agenda() {
           {[...days.entries()].map(([day, list]) => (
             <section key={day} className="panel">
               <h2 className="panel-head label">
-                {list[0]!.dayLabel} · {inDays(list[0]!.startsAt)}
+                {list[0]!.dayLabel}, {inDays(list[0]!.startsAt)}
               </h2>
               {list.map((row) => (
                 <AgendaRow key={row.sessionId} row={row} />
@@ -72,10 +72,10 @@ export function Agenda() {
         <aside>
           {signedIn && waiting.length > 0 ? (
             <section className="panel">
-              <h2 className="panel-head label">Waiting on you · {waiting.length}</h2>
+              <h2 className="panel-head label">Waiting on you</h2>
               {waiting.map((row) => (
                 <div key={row.sessionId} className="panel-row" style={{ flexDirection: "column", alignItems: "flex-start", gap: 2 }}>
-                  <span style={{ fontWeight: 600 }}>No reply · {row.title}</span>
+                  <span style={{ fontWeight: 600 }}>{row.title}: no reply yet</span>
                   <span className="num muted" style={{ fontSize: 12 }}>
                     {row.dayLabel.toLowerCase()}
                   </span>

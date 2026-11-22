@@ -44,7 +44,7 @@ export function Profile() {
         </span>
         <div className="stack" style={{ gap: 4 }}>
           <h1 style={{ fontSize: 28 }}>{user.name}</h1>
-          <span className="label">{me.data.organiser ? "Organiser" : "Player"} · signed in with Discord</span>
+          <span className="label">Signed in with Discord as {me.data.organiser ? "an organiser" : "a player"}</span>
         </div>
       </div>
 

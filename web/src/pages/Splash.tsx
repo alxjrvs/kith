@@ -66,7 +66,7 @@ export function Splash() {
                   <SeatSquares capacity={listing.capacity} taken={listing.taken} />
                   <span className="num" style={{ fontSize: 13 }}>
                     {listing.capacity === null ? `${listing.taken} in` : `${listing.taken} / ${listing.capacity}`}
-                    {listing.waitlist > 0 ? ` · waitlist ${listing.waitlist}` : ""}
+                    {listing.waitlist > 0 ? `, ${listing.waitlist} waiting` : ""}
                   </span>
                 </div>
               </div>
@@ -132,12 +132,9 @@ export function SoundButton({ url }: { url: string | null }) {
 function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean }) {
   const left = listing.capacity === null ? null : Math.max(listing.capacity - listing.taken, 0);
   // The system is a chip of its own below the title, where people look for it.
-  const eyebrow = [
-    listing.kind === "campaign" ? "New campaign" : "Game day",
-    listing.lead ? `${listing.kind === "campaign" ? "GM" : "Host"} ${listing.lead.name}` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const eyebrow = `${listing.kind === "campaign" ? "New campaign" : "Game day"}${
+    listing.lead ? ` ${listing.kind === "campaign" ? "run" : "hosted"} by ${listing.lead.name}` : ""
+  }`;
 
   return (
     <div className="splash">
@@ -179,7 +176,7 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
             <SeatSquares capacity={listing.capacity} taken={listing.taken} big />
             <span className="num" style={{ fontSize: 13 }}>
               {listing.capacity === null ? `${listing.taken} in` : `${listing.taken} / ${listing.capacity}`}
-              {left !== null ? ` · ${left === 0 ? "full" : `${left} ${left === 1 ? "seat" : "seats"} left`}` : ""}
+              {left !== null ? `, ${left === 0 ? "full" : `${left} ${left === 1 ? "seat" : "seats"} left`}` : ""}
             </span>
           </div>
         </div>

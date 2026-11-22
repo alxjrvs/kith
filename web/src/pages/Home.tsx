@@ -39,7 +39,7 @@ export function Home() {
         </div>
         {next ? (
           <div className="panel" style={{ flex: "1 1 340px" }}>
-            <div className="panel-head label">Next up · {inDays(next.startsAt)}</div>
+            <div className="panel-head label">Next up {inDays(next.startsAt)}</div>
             <div className="panel-body">
               <span className="num" style={{ fontSize: 26 }}>
                 {stamp(next.startsAt)}
@@ -60,7 +60,7 @@ export function Home() {
       <section className="stack">
         <div className="section-head">
           <h2 className="label">
-            {signedIn && shown.some((g) => g.mine) ? "Your games and the rest" : "The games"} · {games.length}
+            {signedIn && shown.some((g) => g.mine) ? "Your games and the rest" : "The games"}
           </h2>
           <Link to="/games" style={{ fontSize: 13 }}>
             See every game

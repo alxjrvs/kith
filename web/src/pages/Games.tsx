@@ -59,7 +59,7 @@ export function Games() {
         list.length === 0 ? null : (
           <section key={title} className="stack" style={{ gap: 16 }}>
             <h2 className="label">
-              {title} · {list.length}
+              {title}
             </h2>
             <div className="grid">
               {list.map((game) => (
@@ -84,7 +84,7 @@ function Catalog() {
   return (
     <section className="stack" style={{ gap: 16 }}>
       <h2 className="label">
-        Catalog · organisers · {games.length}
+        Catalog, for organisers
       </h2>
       <div className="panel">
         {games.map((game) => (
@@ -157,7 +157,7 @@ export function GameCard({ game }: { game: GameSummary }) {
         ) : null}
         {game.next ? (
           <p className="num" style={{ fontSize: 12 }}>
-            Next {stamp(game.next)} · {inDays(game.next)}
+            Next game {inDays(game.next)}, {stamp(game.next)}
           </p>
         ) : null}
         {game.lead ? (

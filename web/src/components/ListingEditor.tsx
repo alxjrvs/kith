@@ -23,7 +23,7 @@ function VisibilityEditor({ listing }: { listing: Listing }) {
       }}
     >
       <div className="panel-head label">
-        <span>Organisers · who can see it</span>
+        <span>Who can see it</span>
         <span>{edit.isSuccess ? "Saved" : ""}</span>
       </div>
       <div className="panel-body">
@@ -63,7 +63,7 @@ function DayListingEditor({ listing }: { listing: Listing }) {
   return (
     <form className="panel" onSubmit={save}>
       <div className="panel-head label">
-        <span>Organisers · the listing</span>
+        <span>The listing</span>
         <span>{edit.isSuccess ? "Saved" : ""}</span>
       </div>
       <div className="panel-body">
