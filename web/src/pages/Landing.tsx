@@ -171,7 +171,7 @@ function Slide({ game, current, position, still = false }: { game: GameSummary; 
       )}
       <div className="show-slide-words">
         {game.label ? <span className="chip system show-system">{game.label}</span> : null}
-        <h1>{game.name}</h1>
+        <h1>{still || game.state === "CONCLUDED" ? game.name : <GameLink game={game}>{game.name}</GameLink>}</h1>
         {game.tagline ? <p className="show-tagline">{game.tagline}</p> : null}
         {still ? null : (
         <div className="row" style={{ gap: "8px 18px", fontSize: 14 }}>
@@ -181,7 +181,6 @@ function Slide({ game, current, position, still = false }: { game: GameSummary; 
             </span>
           ) : null}
           {game.open ? <span className="pill accent">Signing up</span> : null}
-          {game.state === "CONCLUDED" ? null : <GameLink game={game}>{game.kind === "day" ? "See the game day" : "Visit its home base"}</GameLink>}
         </div>
         )}
       </div>
