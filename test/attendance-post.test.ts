@@ -130,7 +130,7 @@ describe("rendering the post", () => {
     expect(payload.allowed_mentions).toEqual({ parse: [], roles: ["role-1"] });
   });
 
-  it("carries five buttons whose ids Orrey can read back", async () => {
+  it("carries five buttons whose ids Kith can read back", async () => {
     const payload = await render([])();
     const buttons = (payload.components[0] as { components: { label: string; custom_id: string }[] })
       .components;

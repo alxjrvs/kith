@@ -3,7 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Orrey console</title>
+    <script>
+      // Kith moved from orrey.alxjrvs.com. Static pages never reach the Worker, so they hop here.
+      if (location.hostname === "orrey.alxjrvs.com") location.replace("https://kith.alxjrvs.com" + location.pathname + location.search + location.hash);
+    </script>
+    <title>Kith console</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <!--
       The design system lives in `design/` and is not shipped: `public/` is what
@@ -22,7 +26,7 @@
   </head>
   <body>
     <header class="bar">
-      <span class="mark">Orrey</span>
+      <span class="mark">Kith</span>
       <span class="who" id="who"></span>
     </header>
 

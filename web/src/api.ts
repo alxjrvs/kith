@@ -97,7 +97,7 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
     const message =
       parsed && typeof parsed === "object" && "error" in parsed && typeof parsed.error === "string"
         ? parsed.error
-        : `Orrey answered ${response.status}.`;
+        : `Kith answered ${response.status}.`;
     throw new ApiError(response.status, message);
   }
   return parsed as T;

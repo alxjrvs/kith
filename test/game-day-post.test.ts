@@ -203,7 +203,7 @@ describe("what it says", () => {
   it("mentions nobody at all", async () => {
     await day();
     // A game day is open to the room, so there is no role to ping — and
-    // `parse: []` turns off the ones Orrey never means to fire.
+    // `parse: []` turns off the ones Kith never means to fire.
     expect(renderSignupPost(await view()).allowed_mentions).toEqual({ parse: [], roles: [] });
   });
 
@@ -390,7 +390,7 @@ describe("the thread", () => {
   it("names it in the guild's day, not the server's", async () => {
     const row = { ...(await day().then(dayRow))! };
     // 23:30 UTC on 7 November is already the 8th in Auckland. A thread name is
-    // plain text, so this is one of the few places Orrey has to pick a zone.
+    // plain text, so this is one of the few places Kith has to pick a zone.
     row.startsAt = Date.parse("2026-11-07T23:30:00Z") / 1000;
     const game = { name: "Blades in the Dark" } as typeof schema.games.$inferSelect;
 

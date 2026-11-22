@@ -15,7 +15,7 @@ import { db, schema } from "../db/index.ts";
  * worse than no number because it looks like a number.
  *
  * It is **information for the organiser and never an automatic consequence.**
- * Nothing in Orrey reads this to decide anything — no seat is lost, no reminder
+ * Nothing in Kith reads this to decide anything — no seat is lost, no reminder
  * is skipped, no waitlist moves. It is shown in `/whos-in` and on the console
  * roster, where a person can weigh it.
  */
@@ -23,7 +23,7 @@ export interface Flake {
   userId: string;
   /**
    * Played sessions of this campaign, since they joined, that the register was
-   * actually written for. A session Orrey holds no answer about is not one they
+   * actually written for. A session Kith holds no answer about is not one they
    * failed to come to.
    */
   played: number;
@@ -89,7 +89,7 @@ export async function flakeFor(
   let streakOpen = true;
 
   for (const row of rows) {
-    // A session with no register row for this person is one Orrey knows nothing
+    // A session with no register row for this person is one Kith knows nothing
     // about — a session played before the register existed, or before the assume
     // job ran. Counting it as a miss turns missing data into an accusation, and
     // "came to 0 of 4" about somebody nobody ever ticked off is the worst thing

@@ -20,7 +20,7 @@ import {
  *
  * **The list carries no `timeMin`, no `q` and no `privateExtendedProperty`.**
  * `syncToken` is incompatible with all three — Google rejects the combination —
- * and that incompatibility is the platform constraint that made Orrey own a
+ * and that incompatibility is the platform constraint that made Kith own a
  * calendar in the first place. Listing everything is the design, not a shortcut,
  * and anybody reaching for a filter here should read this paragraph first: the
  * filter is what the separate calendar buys.
@@ -161,7 +161,7 @@ export async function runSync(env: Env): Promise<Classified[]> {
 /**
  * Every verdict, handled.
  *
- * `echo` is Orrey reading its own handwriting and `foreign` is somebody else's
+ * `echo` is Kith reading its own handwriting and `foreign` is somebody else's
  * evening. Both are left exactly alone — which is most of what a quiet calendar
  * produces, and is why a nightly pass over one costs nothing.
  */
@@ -209,7 +209,7 @@ export async function reconcile(env: Env): Promise<void> {
 /**
  * Links naming an event the calendar does not have.
  *
- * The full list is the whole calendar, so anything Orrey has a link for and did
+ * The full list is the whole calendar, so anything Kith has a link for and did
  * not see is gone — including the deletions Google never pushed about.
  */
 async function reinsertMissing(env: Env, seen: Set<string>): Promise<void> {

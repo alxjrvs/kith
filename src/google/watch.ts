@@ -3,7 +3,7 @@ import { SETTING_KEYS, getSetting, setSetting } from "../db/settings.ts";
 import { GoogleError, accessToken, watchCalendarId } from "./calendar.ts";
 
 /**
- * The push channel on the Orrey calendar.
+ * The push channel on the Kith calendar.
  *
  * Google's `events.watch` channels have a TTL of about a week and do not renew
  * themselves, so the whole of this file is "open one when there is none, replace
@@ -26,7 +26,7 @@ const API = "https://www.googleapis.com/calendar/v3";
  *
  * Two days against the roughly seven Google is understood to issue, so a renewal
  * tick that fails has two more before anything lapses. Exported because it is an
- * assumption about somebody else's service rather than a choice of Orrey's, and
+ * assumption about somebody else's service rather than a choice of Kith's, and
  * `scripts/probe-watch.ts` is what settles it: if the measured TTL is shorter
  * than `ASSUMED_TTL_SECONDS`, this number shrinks and the test that names both
  * is what says so.

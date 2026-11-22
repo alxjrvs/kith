@@ -144,14 +144,14 @@ export function isUnknownMember(error: unknown): boolean {
 }
 
 /**
- * Scheduled events are the only Discord objects Orrey reconciles, so these are
+ * Scheduled events are the only Discord objects Kith reconciles, so these are
  * the only Discord writes that ever happen twice for the same thing.
  */
 export interface ScheduledEvent {
   id: string;
   name: string;
   status: number;
-  /** Carries Orrey's marker, which is how an event is recognised as a session's. */
+  /** Carries Kith's marker, which is how an event is recognised as a session's. */
   description?: string | null;
 }
 
@@ -194,7 +194,7 @@ export function deleteScheduledEvent(env: BotAuth, guildId: string, eventId: str
  * closest thing to idempotency this endpoint offers.
  *
  * `auto_archive_duration` is minutes, and the thread archiving itself is the
- * point: Orrey never unarchives one and never edits anything in it.
+ * point: Kith never unarchives one and never edits anything in it.
  */
 export function startThreadFromMessage(
   env: BotAuth,
@@ -232,7 +232,7 @@ export function openDm(env: BotAuth, userId: string) {
 
 /**
  * 50007 — cannot send messages to this user. The only way to learn somebody's
- * DMs were never open to Orrey, and it arrives after the attempt rather than
+ * DMs were never open to Kith, and it arrives after the attempt rather than
  * before it. Treated as permanent: it is a setting they chose, not a blip.
  */
 export function isClosedDm(error: unknown): boolean {

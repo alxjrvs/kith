@@ -134,7 +134,7 @@ export function renderWhosIn(answer: WhosIn, asOf: Date): string {
     ["Not heard from", null],
   ];
 
-  const asOfLine = `-# Read from Orrey as of <t:${Math.floor(asOf.getTime() / 1000)}:t>, not from any post.`;
+  const asOfLine = `-# Read from Kith as of <t:${Math.floor(asOf.getTime() / 1000)}:t>, not from any post.`;
 
   // Longest first: the whole table with notes, then without, then counts only.
   // An interaction response over Discord's ceiling is not a shortened answer, it
@@ -172,8 +172,8 @@ const LIMIT = 1900;
 
 /**
  * A name, a character name and a note are all somebody else's text, on a message
- * Orrey can never edit. Unescaped, a note reading `**Out (4)** — Bob` renders as
- * a heading of Orrey's own shape and the rest of the roster reflows under it —
+ * Kith can never edit. Unescaped, a note reading `**Out (4)** — Bob` renders as
+ * a heading of Kith's own shape and the rest of the roster reflows under it —
  * which on the command that exists to be *authoritative* is the worst place in
  * the repo for it.
  */

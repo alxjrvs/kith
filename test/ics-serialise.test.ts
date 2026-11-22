@@ -40,7 +40,7 @@ function event(over: Partial<IcsEvent> = {}): IcsEvent {
 }
 
 function calendar(events: IcsEvent[], timeZone = "Europe/London") {
-  return serialise({ name: "Orrey", timeZone, events, stampedAt: STAMP });
+  return serialise({ name: "Kith", timeZone, events, stampedAt: STAMP });
 }
 
 /** Every content line, unfolded, the way a client reads them. */

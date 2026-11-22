@@ -3,7 +3,7 @@ import type { Env } from "../env.ts";
 import { db, schema } from "./index.ts";
 
 /**
- * Single-guild key/value. Orrey adopts the Discord objects Hermuz created
+ * Single-guild key/value. Kith adopts the Discord objects Hermuz created
  * rather than making a parallel set, so these ids arrive at cutover and are
  * read from here afterwards — never guessed, never hardcoded.
  */
@@ -27,7 +27,7 @@ export const SETTING_KEYS = {
    * console never asks for the `guilds` scope.
    */
   organiserRoleId: "discord.organiser_role_id",
-  /** How long before a session starts Orrey asks whether it still runs, in hours. */
+  /** How long before a session starts Kith asks whether it still runs, in hours. */
   jeopardyLeadHours: "jeopardy.lead_hours",
   /** How many hours before a session each reminder goes out. Descending. */
   reminderStepsHours: "reminder.steps_hours",
@@ -43,7 +43,7 @@ export const SETTING_KEYS = {
    */
   gameDayLockLeadHours: "gameday.lock_lead_hours",
   /**
-   * The open push channel on the Orrey calendar: its id, resource id, shared
+   * The open push channel on the Kith calendar: its id, resource id, shared
    * token and expiry.
    *
    * One row because there is exactly one calendar. The token is the channel's
@@ -52,7 +52,7 @@ export const SETTING_KEYS = {
    */
   googleWatch: "google.watch",
   /**
-   * Google's own cursor into the Orrey calendar.
+   * Google's own cursor into the Kith calendar.
    *
    * Absent means "list everything next time", which is the honest starting
    * state and also the recovery: Google expires these on its own schedule, and

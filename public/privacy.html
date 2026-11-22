@@ -3,7 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>The Orrey — privacy</title>
+    <script>
+      // Kith moved from orrey.alxjrvs.com. Static pages never reach the Worker, so they hop here.
+      if (location.hostname === "orrey.alxjrvs.com") location.replace("https://kith.alxjrvs.com" + location.pathname + location.search + location.hash);
+    </script>
+    <title>Kith — privacy</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <style>
       :root { color-scheme: light dark; }
@@ -27,36 +31,36 @@
   </head>
   <body>
     <main>
-      <h1>What the Orrey knows about you</h1>
+      <h1>What Kith knows about you</h1>
       <p class="as-of">Last updated 13 September 2026.</p>
 
       <p>
-        The Orrey schedules games for one Discord server. It is run by the server's own
+        Kith schedules games for one Discord server. It is run by the server's own
         organiser, for that server, and for nothing else. There is no analytics, no
         advertising, and nothing is sold or shared.
       </p>
 
       <h2>What it stores</h2>
       <ul>
-        <li><strong>Your Discord user id.</strong> This is how Orrey knows who you are. It is the only identity Orrey uses.</li>
-        <li><strong>Your username, display name and avatar</strong> (the avatar as Discord's short id for the picture, not the image), cached so posts can name you without asking Discord every time. Orrey treats these as a copy, never as the truth.</li>
+        <li><strong>Your Discord user id.</strong> This is how Kith knows who you are. It is the only identity Kith uses.</li>
+        <li><strong>Your username, display name and avatar</strong> (the avatar as Discord's short id for the picture, not the image), cached so posts can name you without asking Discord every time. Kith treats these as a copy, never as the truth.</li>
         <li><strong>What you said about sessions</strong> — in, out, maybe, any note you attached, and afterwards whether you came.</li>
         <li><strong>A calendar feed token</strong>, a random string that lets a calendar app subscribe to your games. Anyone holding it can read that feed, which is why it is not shown publicly.</li>
-        <li><strong>Whether Orrey can DM you.</strong> Discord only reveals this by refusing, so Orrey records the refusal and uses the channel instead.</li>
+        <li><strong>Whether Kith can DM you.</strong> Discord only reveals this by refusing, so Kith records the refusal and uses the channel instead.</li>
       </ul>
 
       <h2>What it does not store</h2>
       <ul>
-        <li>No message content, beyond what you type into Orrey's own buttons and forms.</li>
-        <li>No email address, no password. Sign-in is Discord's <code>identify</code> scope alone — Orrey never asks Discord for the list of servers you are in.</li>
-        <li>No payment details. Orrey takes no money.</li>
+        <li>No message content, beyond what you type into Kith's own buttons and forms.</li>
+        <li>No email address, no password. Sign-in is Discord's <code>identify</code> scope alone — Kith never asks Discord for the list of servers you are in.</li>
+        <li>No payment details. Kith takes no money.</li>
       </ul>
 
       <h2>Where it lives</h2>
       <p>
-        In a Cloudflare D1 database owned by the server's organiser. Orrey's database is the
+        In a Cloudflare D1 database owned by the server's organiser. Kith's database is the
         source of truth for scheduling: what you see in Discord and in Google Calendar are
-        copies Orrey writes outward. Orrey writes to its own Google calendar only, never to
+        copies Kith writes outward. Kith writes to its own Google calendar only, never to
         a personal one.
       </p>
 
@@ -69,13 +73,13 @@
       </p>
       <p>
         Deleting your data does not remove you from the Discord server, and it does not undo
-        posts Orrey already sent — those are ordinary Discord messages and can be deleted by
-        a moderator. If you use Orrey again afterwards, it starts over knowing nothing.
+        posts Kith already sent — those are ordinary Discord messages and can be deleted by
+        a moderator. If you use Kith again afterwards, it starts over knowing nothing.
       </p>
 
       <h2>Asking a person</h2>
       <p>
-        Orrey is small enough that the answer to anything not covered here is: ask the server's
+        Kith is small enough that the answer to anything not covered here is: ask the server's
         organiser. They run it and hold the database.
       </p>
     </main>

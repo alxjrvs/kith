@@ -185,7 +185,7 @@ describe("who comes across", () => {
     // answer is the one that is about this date now.
     expect(intentOf(rows, "ada")).toBe("in");
     // Bo said in about the old date and nothing about the poll. Carrying that
-    // over would be Orrey putting words in their mouth.
+    // over would be Kith putting words in their mouth.
     expect(intentOf(rows, "bo")).toBeNull();
   });
 
@@ -222,7 +222,7 @@ describe("the fresh post", () => {
       await db(env).select().from(schema.sessions).where(eq(schema.sessions.id, SESSION)).get(),
     ).toMatchObject({ discordMessageId: null });
 
-    // A deliberate forget, not a reconcile: Orrey is not tracking two posts, it
+    // A deliberate forget, not a reconcile: Kith is not tracking two posts, it
     // is tracking the newest one.
     expect(
       await find(env, { surface: "discord", kind: "message", targetId: SESSION }),

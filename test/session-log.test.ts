@@ -98,7 +98,7 @@ describe("the order they come back in", () => {
 
 describe("what a recap keeps", () => {
   it("keeps its newlines, where a note would not", async () => {
-    // A note is rendered inline on a post Orrey can never edit, so a newline
+    // A note is rendered inline on a post Kith can never edit, so a newline
     // there breaks that post's layout permanently. A recap is a message of its
     // own, and a paragraph break is part of what somebody wrote.
     expect(normaliseLogBody("They took the Wreck.\n\nThen the tide came in.")).toBe(

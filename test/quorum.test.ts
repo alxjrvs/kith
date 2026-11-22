@@ -146,7 +146,7 @@ describe("the rule", () => {
 
     const line = quorumLine(quorum)!;
     // Whether a confirmed session is still on once somebody drops out is the
-    // organiser's call. The post surfaces it; Orrey does not act on it.
+    // organiser's call. The post surfaces it; Kith does not act on it.
     expect(line).toContain("Confirmed");
     expect(line).toContain("1 of 3");
     expect(line).toContain("unless the GM says otherwise");
@@ -231,7 +231,7 @@ describe("the click that crosses it", () => {
 
     await lock().setIntent({ sessionId: SESSION_ID, actor: actor("2"), intent: "out" });
 
-    // Orrey surfaces it and does not decide it.
+    // Kith surfaces it and does not decide it.
     expect(await stateOf()).toBe("CONFIRMED");
   });
 
@@ -356,7 +356,7 @@ describe("the veto rule", () => {
 
       // Their sessions are not published — `isProjectable` says so — but their
       // posts are still up and still clickable. A paused campaign whose post says
-      // "**On**" is Orrey asserting an evening nobody has planned.
+      // "**On**" is Kith asserting an evening nobody has planned.
       expect(quorumOf(await target(), [row("1", null)])).toMatchObject({ rule: "quorum" });
     }
   });

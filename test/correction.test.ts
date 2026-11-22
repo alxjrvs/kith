@@ -213,7 +213,7 @@ describe("the toggle", () => {
     await armAssume(env, SESSION_ID, Math.floor(Date.now() / 1000) - 60);
     await drainJobs(env);
 
-    // `gm` is the point of the flag: it is what stops a re-run putting Orrey's
+    // `gm` is the point of the flag: it is what stops a re-run putting Kith's
     // guess back over somebody's answer.
     expect(await register("p-1")).toMatchObject({ attended: 1, attendedSource: "gm" });
   });

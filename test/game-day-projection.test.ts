@@ -184,7 +184,7 @@ describe("where it is", () => {
   });
 });
 
-describe("whether Orrey publishes it", () => {
+describe("whether Kith publishes it", () => {
   it("publishes a day that is seating, locked or played", async () => {
     for (const state of ["SEATING", "LOCKED", "PLAYED"] as const) {
       const id = await day({ state });

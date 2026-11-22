@@ -106,7 +106,7 @@ describe("trying a DM", () => {
     expect(await dmStateOf()).toBe("unknown");
   });
 
-  it("tries somebody Orrey has never stored, rather than assuming", async () => {
+  it("tries somebody Kith has never stored, rather than assuming", async () => {
     expect(await tryDm(env, "9999", payload)).toBe("sent");
     expect(calls.map((call) => call.path)).toContain("/users/@me/channels");
   });

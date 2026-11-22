@@ -1,6 +1,6 @@
 /*
  * Lantern: Console's layout, density and mono labels, in Hearth's warm dark.
- * The tokens are the ones on the "Orrey in Lantern" canvas. Every colour on the
+ * The tokens are the ones on the "Kith in Lantern" canvas. Every colour on the
  * site comes from here; a page that needs a new one adds a token, not a hex.
  */
 :root {
@@ -73,7 +73,7 @@ img { max-width: 100%; }
 }
 .wordmark {
   display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.14em;
+  font-family: var(--font-head); font-size: 22px; font-weight: 800; letter-spacing: -0.02em;
   color: var(--text); text-decoration: none;
 }
 .site-nav { display: flex; flex-wrap: wrap; gap: 4px 22px; flex-grow: 1; font-size: 13px; }
@@ -174,7 +174,7 @@ img { max-width: 100%; }
 .splash { position: relative; overflow: hidden; min-height: 100vh; display: flex; flex-direction: column; background: var(--deep); }
 .splash .hero { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0.45; }
 .splash .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--deep) 15%, transparent 85%), linear-gradient(0deg, var(--deep), transparent 60%); }
-.splash .orbit { position: absolute; border-radius: 50%; border: 1px solid var(--border); pointer-events: none; }
+.splash .seat { position: absolute; border-radius: 50%; border: 1px solid var(--border); pointer-events: none; }
 .splash header { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 32px; }
 .splash main { position: relative; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 24px; padding: 32px 32px 48px; max-width: 760px; }
 .splash h1 { font-size: clamp(48px, 10vw, 88px); line-height: 0.95; font-weight: 700; letter-spacing: -0.03em; }
@@ -194,7 +194,7 @@ img { max-width: 100%; }
 
 /* On a phone the orrery sits behind the words, so it steps back. */
 @media (max-width: 640px) {
-  .splash .orbit { opacity: 0.3; }
+  .splash .seat { opacity: 0.3; }
 }
 
 .prose blockquote { margin: 0 0 0.9em; padding-left: 12px; border-left: 2px solid var(--accent); color: var(--muted); }

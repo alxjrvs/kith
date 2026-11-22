@@ -63,7 +63,7 @@ export class SessionLock extends DurableObject<Env> {
    * whether they are coming. An empty note clears it.
    *
    * The text is normalised on the way in rather than on the way out: it is
-   * rendered inline on a post Orrey can never edit, so a newline would break
+   * rendered inline on a post Kith can never edit, so a newline would break
    * that post's layout permanently.
    *
    * `updated_at` is deliberately left alone on an existing row. The post lists
@@ -122,7 +122,7 @@ export class SessionLock extends DurableObject<Env> {
         .onConflictDoUpdate({
           target: [schema.attendance.sessionId, schema.attendance.userId],
           // `gm` is the point: it is what stops a re-run of the assume job
-          // putting Orrey's guess back over somebody's answer.
+          // putting Kith's guess back over somebody's answer.
           set: { attended, attendedSource: "gm" },
         });
     });
@@ -231,7 +231,7 @@ export class SessionLock extends DurableObject<Env> {
    *
    * Dropping back below afterwards does **not** un-confirm. #28 is explicit:
    * whether a confirmed session is still on once somebody drops out is the
-   * organiser's call, so the post says what happened and Orrey decides nothing.
+   * organiser's call, so the post says what happened and Kith decides nothing.
    */
   private async settle(sessionId: string, actorId?: string): Promise<AttendanceRow[]> {
     const rows = await attendanceRows(this.env, sessionId);

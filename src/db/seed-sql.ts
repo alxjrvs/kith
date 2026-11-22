@@ -15,7 +15,7 @@
  * quietly blank the ids the operator pasted in the first time.
  */
 export interface CampaignSeed {
-  /** Defaults to the slug of the name — Orrey's own id, not a snowflake. */
+  /** Defaults to the slug of the name — Kith's own id, not a snowflake. */
   id?: string | undefined;
   name: string;
   kind?: "run" | "play" | "tracked" | undefined;
@@ -126,7 +126,7 @@ export function seedStatements(campaign: CampaignSeed, session: SessionSeed): st
     // every re-seed: the clock picks it up within the minute and it becomes the
     // outbox messages for Discord and Google. A job rather than a direct send
     // because the seed reaches D1 through wrangler and has no queue binding —
-    // and because time-based work Orrey can inspect and re-run lives in D1.
+    // and because time-based work Kith can inspect and re-run lives in D1.
     projectionJob("session.project", sessionId),
 
     // And post the attendance post. Guarded by the recorded message id rather

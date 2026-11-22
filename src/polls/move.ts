@@ -107,7 +107,7 @@ export async function moveSession(
     .insert(schema.auditLog)
     .values({
       id: crypto.randomUUID(),
-      // Null is the clock. A move Orrey made on nobody's behalf says so.
+      // Null is the clock. A move Kith made on nobody's behalf says so.
       actorUserId: null,
       action: SESSION_MOVED,
       targetType: "session",

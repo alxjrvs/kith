@@ -5,7 +5,7 @@ import { rememberUser } from "../db/users.ts";
 import type { InteractionUser } from "../discord/types.ts";
 
 /**
- * Console login. Discord is the only identity Orrey has, and this is the only
+ * Console login. Discord is the only identity Kith has, and this is the only
  * place that fact is at risk of quietly stopping being true.
  *
  * **`identify` and nothing else.** Not `guilds`, not `guilds.members.read`. The
@@ -14,7 +14,7 @@ import type { InteractionUser } from "../discord/types.ts";
  * token, from the guild member endpoint, which is a different PR and a different
  * file.
  *
- * **No PKCE.** Orrey is a confidential client — it has a client secret — so a
+ * **No PKCE.** Kith is a confidential client — it has a client secret — so a
  * verifier adds nothing, and whether Discord's token endpoint accepts one is
  * undocumented. Relying on an undocumented acceptance is how a login breaks
  * silently on somebody else's deploy.

@@ -18,12 +18,12 @@ import { serviceAccountToken, type AccessToken } from "./auth.ts";
 import { eventIdFor } from "./event-id.ts";
 
 /**
- * The Google projection. Writes go to **the Orrey calendar and nowhere else** —
+ * The Google projection. Writes go to **Kith calendar and nowhere else** —
  * every request in this file is built from `GOOGLE_CALENDAR_ID`, and there is
  * no code path that takes a calendar id from anywhere but the environment. The
- * user's own Social calendar is read by people, never written by Orrey.
+ * user's own Social calendar is read by people, never written by Kith.
  *
- * The upsert is `insert`, and on `409` `update`, against an id Orrey mints from
+ * The upsert is `insert`, and on `409` `update`, against an id Kith mints from
  * the session id — so a redelivered queue message lands on the same event and
  * there is no lookup to get wrong.
  */
@@ -85,7 +85,7 @@ export async function projectGoogleEvent(
   }
 }
 
-/** This session's entry in the ledger of what Orrey has put into the world. */
+/** This session's entry in the ledger of what Kith has put into the world. */
 function refFor(sessionId: string): PublicationRef {
   return { surface: "google", kind: "event", targetId: sessionId };
 }
@@ -101,7 +101,7 @@ async function upsert(env: Env, target: ProjectionTarget, eventId: string): Prom
     .get();
 
   // Unchanged since the last successful write: skip. Google's `updated` moves
-  // on every write, and phase 7's return path has to tell Orrey's own echo from
+  // on every write, and phase 7's return path has to tell Kith's own echo from
   // a person's edit — so a pointless write is worse here than a wasted call.
   //
   // The *write* is skippable; the record of it is not. Every session linked
@@ -164,9 +164,9 @@ async function unproject(env: Env, target: ProjectionTarget, eventId: string): P
 }
 
 /**
- * `extendedProperties.private` is how phase 7 finds Orrey's own events again —
+ * `extendedProperties.private` is how phase 7 finds Kith's own events again —
  * and the fingerprint stored beside the session id is what lets it tell an echo
- * of Orrey's own write from a human moving the event in Google.
+ * of Kith's own write from a human moving the event in Google.
  */
 export function eventBody(
   target: ProjectionTarget,
@@ -232,17 +232,17 @@ async function googleFetch(
 }
 
 /**
- * The one calendar Orrey watches, which is the one calendar it writes to.
+ * The one calendar Kith watches, which is the one calendar it writes to.
  *
  * Exported so `src/google/watch.ts` opens its channel under the same rule
- * instead of restating it — one place that knows which calendar is Orrey's, and
+ * instead of restating it — one place that knows which calendar is Kith's, and
  * therefore one place that could ever get it wrong.
  */
 export function watchCalendarId(env: Env): string {
   return calendarId(env);
 }
 
-/** The one calendar Orrey writes to. Never a calendar id from anywhere else. */
+/** The one calendar Kith writes to. Never a calendar id from anywhere else. */
 function calendarId(env: Env): string {
   if (!env.GOOGLE_CALENDAR_ID) throw new Error("GOOGLE_CALENDAR_ID is not set");
   return encodeURIComponent(env.GOOGLE_CALENDAR_ID);
@@ -256,7 +256,7 @@ function isoOf(unixSeconds: number): string {
  * The Google half of retracting without the session row. Google's id is derived
  * from the session id, so this could be done from the id alone — but reading the
  * ledger is what keeps the two surfaces answering the same question, and it is
- * what stops Orrey issuing a DELETE for an event it never actually published.
+ * what stops Kith issuing a DELETE for an event it never actually published.
  */
 export async function unprojectOrphanedEvent(env: Env, sessionId: string): Promise<void> {
   for (const row of await standing(env, sessionId)) {

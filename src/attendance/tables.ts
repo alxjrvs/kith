@@ -5,7 +5,7 @@ import { db, schema } from "../db/index.ts";
 /**
  * What somebody played on a multi game day.
  *
- * #7 asked whether Orrey should model tables — a `tables` table, seats per
+ * #7 asked whether Kith should model tables — a `tables` table, seats per
  * table, people assigned to one. The answer settled here is no: **one optional
  * free-text column on `attendance`**, filled in by whoever ran the day, and
  * nothing reads it but the correction post and the console.
@@ -89,7 +89,7 @@ export async function tablesPlayedFor(
  * Store it, or clear it.
  *
  * Normalised on the way in rather than on the way out, exactly like a note: it
- * is rendered inline on a post Orrey can never edit, so a newline would break
+ * is rendered inline on a post Kith can never edit, so a newline would break
  * that post's layout permanently. An empty box means "clear it".
  *
  * It only ever updates an existing register row. Somebody with no row was not on

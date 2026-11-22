@@ -3,14 +3,14 @@
  *
  * Discord's weekly recurrence means exactly one weekday, and `count` and `end`
  * cannot be set externally at all — so a fortnightly game with twelve sessions
- * left is not expressible there. Orrey holds the rule and Discord holds two
+ * left is not expressible there. Kith holds the rule and Discord holds two
  * events at a time.
  *
  * The rule is an **anchor plus an interval**, carried over from Hermuz as an
  * idea, and the anchor is usually in the *past* — commonly the first session
  * ever played. That is what makes "session 47" arithmetic rather than a counter
  * somebody has to maintain: the number is `first_session_number` plus the number
- * of intervals since the anchor, and it stays right however long Orrey was down.
+ * of intervals since the anchor, and it stays right however long Kith was down.
  *
  * Pure on purpose. `from` and `timezone` are arguments, there is no `Env` and no
  * D1, so the materialiser above can be tested at a fixed instant.

@@ -740,7 +740,7 @@ describe("the denominator", () => {
 
     const history = await campaignHistory(env, "umbra");
 
-    // Two answers, not three. A session Orrey holds no answer about is not one
+    // Two answers, not three. A session Kith holds no answer about is not one
     // she failed to come to, and putting it in the denominator turns missing
     // data into an accusation.
     expect(record("ada", history)?.played).toBe(2);

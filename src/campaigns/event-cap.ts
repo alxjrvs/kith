@@ -8,14 +8,14 @@ import { enqueueProjection, enqueueUnprojection, type ProjectionSurface } from "
  * far ahead as `horizon.sessions` says.
  *
  * The reason is a platform limit and a design decision that agree with each
- * other. Discord allows a hundred scheduled events per guild, and Orrey treats
+ * other. Discord allows a hundred scheduled events per guild, and Kith treats
  * them as disposable — a session whose event has lapsed needs a *new* event,
  * because COMPLETED and CANCELED are terminal and fire on their own. Four
  * campaigns times two is eight against a cap of a hundred, and the headroom is
  * deliberate: phase 4 mints a replacement every time a lapsed session moves.
  *
  * Google has no such limit and no such disposability, so there is no reason to
- * keep the calendar short. Somebody subscribing to the Orrey calendar wants to
+ * keep the calendar short. Somebody subscribing to the Kith calendar wants to
  * see October.
  */
 export const DISCORD_EVENT_HORIZON = 2;

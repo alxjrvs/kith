@@ -93,7 +93,7 @@ afterEach(() => {
 });
 
 describe("the roster", () => {
-  it("adds somebody Orrey has never seen, and learns nothing it was not told", async () => {
+  it("adds somebody Kith has never seen, and learns nothing it was not told", async () => {
     const response = await send("PUT", `/api/campaigns/${CAMPAIGN}/members`, {
       userId: "2002",
       role: "gm",
@@ -106,7 +106,7 @@ describe("the roster", () => {
     ]);
 
     // A person can be put on a roster before they have clicked anything. The row
-    // is made with no names in it — those are a cache Orrey fills in when they
+    // is made with no names in it — those are a cache Kith fills in when they
     // first speak to it.
     const user = await db(env)
       .select()

@@ -5,11 +5,11 @@ import { rosterOf } from "../campaigns/roster.ts";
 
 /**
  * What the console reads. Every field comes from D1 — nothing here asks Discord
- * what it holds, because Orrey's database is the source of truth and a console
+ * what it holds, because Kith's database is the source of truth and a console
  * that read Discord back would be showing a projection as though it were the
  * thing projected.
  *
- * The ids are shown rather than resolved to names for the same reason: Orrey
+ * The ids are shown rather than resolved to names for the same reason: Kith
  * adopts Discord objects it did not create, and a name it cached could be wrong
  * in a way that matters when somebody is pasting an id into a form.
  */
@@ -136,7 +136,7 @@ async function sessionCounts(env: Env): Promise<Map<string, number>> {
  * What the console shows about a game day.
  *
  * Seated and waitlisted are counted here rather than being read off the signup
- * post, for the reason every read in this file exists: Orrey's database is the
+ * post, for the reason every read in this file exists: Kith's database is the
  * source of truth and the post is a projection of it. The post may be an hour
  * stale; this never is.
  */

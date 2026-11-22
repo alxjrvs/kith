@@ -15,7 +15,7 @@ import { fakeDiscord } from "./discord.ts";
 /**
  * The optional field on the correction post.
  *
- * #7 asked whether Orrey should model tables. The answer is one free-text
+ * #7 asked whether Kith should model tables. The answer is one free-text
  * column, filled in by whoever ran the day — so what is worth testing is the
  * guard, the escaping, and that the chain never rewrites the post it started
  * from.
@@ -218,7 +218,7 @@ describe("what the post shows", () => {
     expect(payload.content).toContain("Player p0 — Blades, then Fiasco");
   });
 
-  it("escapes it, because it is somebody else's text on a post Orrey cannot edit", async () => {
+  it("escapes it, because it is somebody else's text on a post Kith cannot edit", async () => {
     await day();
     await session();
     await came("p0", true, "**Blades** `and` _Fiasco_");

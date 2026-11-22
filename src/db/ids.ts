@@ -1,5 +1,5 @@
 /**
- * Ids Orrey mints for its own rows.
+ * Ids Kith mints for its own rows.
  *
  * A poll id and a poll-date id ride inside a component `custom_id`, and
  * `encodeCustomId` throws past 100 characters. So the length of an id is a

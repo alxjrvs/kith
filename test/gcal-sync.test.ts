@@ -12,7 +12,7 @@ import { drainJobs } from "../src/jobs/drain.ts";
  * Two things this file pins. The cursor is stored only when the last page
  * arrives, because storing one mid-pagination skips everything not yet read. And
  * the request carries none of the three parameters `syncToken` is incompatible
- * with — that incompatibility is why Orrey owns a calendar at all, and a filter
+ * with — that incompatibility is why Kith owns a calendar at all, and a filter
  * creeping in here would take the whole argument with it.
  */
 const realFetch = globalThis.fetch;
@@ -132,7 +132,7 @@ describe("the parameters it must never send", () => {
     await listCalendar(syncEnv());
 
     // `syncToken` is incompatible with all three. That incompatibility is why
-    // Orrey owns a calendar rather than filtering somebody else's.
+    // Kith owns a calendar rather than filtering somebody else's.
     expect(urls[0]).not.toContain("timeMin");
     expect(urls[0]).not.toContain("q=");
     expect(urls[0]).not.toContain("privateExtendedProperty");
@@ -146,7 +146,7 @@ describe("the parameters it must never send", () => {
     expect(urls[0]).toContain("showDeleted=true");
   });
 
-  it("lists the Orrey calendar and nothing else", async () => {
+  it("lists Kith calendar and nothing else", async () => {
     reply({ items: [], nextSyncToken: "cursor" });
 
     await listCalendar(syncEnv());

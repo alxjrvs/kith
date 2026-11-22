@@ -278,7 +278,7 @@ describe("the notice", () => {
     );
 
     // A stray backtick opens a code span that never closes, swallowing the
-    // timestamp, the venue and the instruction line — on a message Orrey can
+    // timestamp, the venue and the instruction line — on a message Kith can
     // never edit. Every other renderer in the repo escapes these two values.
     expect(payload.content).toContain("Gloomhaven \\`night\\`");
     expect(payload.content).toContain("The \\*\\*Wreck\\*\\*, back room");

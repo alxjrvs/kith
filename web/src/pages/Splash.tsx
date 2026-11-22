@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import { useListing, useMe, type Listing } from "../api.ts";
 import { SeatSquares } from "../components/Squares.tsx";
@@ -115,11 +115,11 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
   return (
     <div className="splash">
       {listing.heroUrl ? <div className="hero" style={{ backgroundImage: `url("${encodeURI(listing.heroUrl)}")` }} /> : null}
-      <Orbits />
+      <Table />
       <header>
-        <Link to="/" className="wordmark" style={{ fontSize: 14 }}>
+        <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
           <img src="/mark.svg" alt="" width="26" height="26" />
-          ORREY
+          kith
         </Link>
         <div className="row" style={{ gap: 10 }}>
           {listing.soundUrl ? (
@@ -187,22 +187,24 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
 }
 
 /** The Lantern splash's orrery: three rings, the ember sun and two worlds. */
-function Orbits() {
-  const ring = (size: number, color = "var(--border)") => (
+/** The mark, at room scale: a round table seen from above, six seats, the top one lit. */
+function Table() {
+  const at = (size: number, style: CSSProperties, dx = 0, dy = 0) => (
     <div
       aria-hidden="true"
-      className="orbit"
-      style={{ left: "68%", top: "46%", width: size, height: size, margin: `${-size / 2}px 0 0 ${-size / 2}px`, borderColor: color }}
+      className="seat"
+      style={{ left: "68%", top: "46%", width: size, height: size, margin: `${dy - size / 2}px 0 0 ${dx - size / 2}px`, ...style }}
     />
   );
+  const seats = Array.from({ length: 6 }, (_, i) => {
+    const t = (i / 6) * Math.PI * 2 - Math.PI / 2;
+    return at(56, { background: i === 0 ? "var(--accent)" : "var(--border)", border: 0, opacity: i === 0 ? 0.85 : 0.5 }, 300 * Math.cos(t), 300 * Math.sin(t));
+  });
   return (
     <>
-      {ring(1100, "var(--rule)")}
-      {ring(760)}
-      {ring(440)}
-      <div aria-hidden="true" className="orbit" style={{ left: "68%", top: "46%", width: 150, height: 150, margin: "-75px 0 0 -75px", background: "var(--accent)", border: 0, opacity: 0.9 }} />
-      <div aria-hidden="true" className="orbit" style={{ left: "68%", top: "46%", width: 22, height: 22, margin: "-231px 0 0 60px", background: "var(--text)", border: 0 }} />
-      <div aria-hidden="true" className="orbit" style={{ left: "68%", top: "46%", width: 14, height: 14, margin: "120px 0 0 -366px", background: "var(--maybe)", border: 0 }} />
+      {at(1100, { borderColor: "var(--rule)" })}
+      {at(400, { background: "var(--panel)", border: "2px solid var(--accent)", opacity: 0.55 })}
+      {seats}
     </>
   );
 }

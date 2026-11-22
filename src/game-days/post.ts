@@ -170,7 +170,7 @@ export async function startDayThread(env: Env, gameDayId: string): Promise<strin
  * `Blades in the Dark — 7 November`, in the **guild's** zone.
  *
  * A thread name is plain text — Discord renders no `<t:…>` in one — so this is
- * one of the few places Orrey has to pick a zone, and picking the server's would
+ * one of the few places Kith has to pick a zone, and picking the server's would
  * name a Friday-evening day after Saturday for anybody far enough east.
  */
 export function dayThreadName(

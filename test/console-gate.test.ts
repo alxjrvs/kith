@@ -153,7 +153,7 @@ describe("the gate", () => {
     // Everybody being one is wrong in a way nobody notices until it matters.
     const response = await api("/api/me", await cookieFor("1001"));
 
-    // 503, not 403: Orrey does not know which role administers, and saying so
+    // 503, not 403: Kith does not know which role administers, and saying so
     // beats sending somebody hunting for a permission they already have.
     expect(response.status).toBe(503);
     expect(await response.json()).toMatchObject({

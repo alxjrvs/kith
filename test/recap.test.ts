@@ -221,7 +221,7 @@ describe("submitting one", () => {
   it("escapes what somebody wrote", async () => {
     await send(await submit(GM, "**not bold** and `not code`"));
 
-    // Somebody else's free text on a post Orrey can never edit. A stray
+    // Somebody else's free text on a post Kith can never edit. A stray
     // backtick would break that post's layout permanently.
     expect(posts[0]?.body).toMatchObject({
       content: expect.stringContaining("\\*\\*not bold\\*\\*"),

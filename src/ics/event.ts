@@ -11,7 +11,7 @@ import type { IcsEvent } from "./serialise.ts";
  * The `UID` is `eventIdFor(session.id)` with an `@orrey` suffix, so the ICS
  * event and the Google event carry one identity and a support question about
  * either can be answered from the other. Whether a client merges two
- * subscriptions sharing a UID is the client's business; Orrey does not rely on
+ * subscriptions sharing a UID is the client's business; Kith does not rely on
  * that and does not promise it.
  */
 export async function icsEventFor(target: ProjectionTarget): Promise<IcsEvent> {

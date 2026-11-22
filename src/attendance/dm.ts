@@ -16,7 +16,7 @@ import type { MessagePayload } from "./render.ts";
  * rate-limit slot on a refusal Discord has already given.
  *
  * `users.dm_state` is that memory. `closed` is treated as permanent: it is a
- * setting somebody chose rather than a blip, and Orrey has no way to be told it
+ * setting somebody chose rather than a blip, and Kith has no way to be told it
  * changed. The cost of being wrong is that they get a mention instead of a DM,
  * which is the fallback anyway.
  */

@@ -142,7 +142,7 @@ describe("the win rule it gets", () => {
     expect((await polls())[0]).toMatchObject({ winRule: "organiser_picks" });
   });
 
-  it("refuses a rule Orrey does not have", async () => {
+  it("refuses a rule Kith does not have", async () => {
     await game("blades", "Blades in the Dark", 3);
 
     expect(

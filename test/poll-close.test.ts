@@ -13,7 +13,7 @@ import { armPollClose } from "../src/polls/schedule.ts";
 
 /**
  * A notice, and a post that stops answering. The second half is the interesting
- * one: the poll post is still sitting there with a live select and Orrey cannot
+ * one: the poll post is still sitting there with a live select and Kith cannot
  * disarm it, so the handler is where closing is enforced.
  */
 const realFetch = globalThis.fetch;
@@ -211,7 +211,7 @@ describe("the post that stops answering", () => {
     const res = await app.fetch(await click("select", [dates[0]!]), discord.env(env));
     const json = (await res.json()) as { type: number; data: { content: string } };
 
-    // Orrey cannot disarm the select, so the handler is the gate. The post is
+    // Kith cannot disarm the select, so the handler is the gate. The post is
     // left exactly as it is — the refusal is ephemeral.
     expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
     expect(json.data.content).toContain("closed");

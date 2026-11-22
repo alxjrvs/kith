@@ -2,7 +2,7 @@
  * The console, as one module and no build step.
  *
  * It reads and renders and does nothing else yet — the write half is the PR
- * above this one. Everything it shows comes from Orrey's own API, which reads
+ * above this one. Everything it shows comes from Kith's own API, which reads
  * D1: nothing here asks Discord what it holds.
  */
 const main = document.getElementById("main");
@@ -21,13 +21,13 @@ async function api(path, init) {
   if (response.status === 403) throw new Refusal("That is an organiser's to do.");
   if (response.status === 503) {
     const body = await response.json().catch(() => ({}));
-    throw new Refusal(body.error ?? "Orrey is not configured yet.");
+    throw new Refusal(body.error ?? "Kith is not configured yet.");
   }
   // 400 is the domain saying no to what was asked — a sentence meant to be read,
   // not a failure to log.
   if (response.status === 400) {
     const body = await response.json().catch(() => ({}));
-    throw new Refusal(body.error ?? "Orrey would not take that.");
+    throw new Refusal(body.error ?? "Kith would not take that.");
   }
   if (!response.ok) throw new Error(`${path} answered ${response.status}`);
 
@@ -902,7 +902,7 @@ async function act(work) {
     const p = document.createElement("p");
     p.className = error instanceof Refusal ? "note" : "error";
     p.textContent =
-      error instanceof Refusal ? error.message : "Orrey could not do that. Try again.";
+      error instanceof Refusal ? error.message : "Kith could not do that. Try again.";
     main.prepend(p);
     if (!(error instanceof Refusal)) console.error(error);
   }
@@ -1689,7 +1689,7 @@ function scalarOf(value) {
  * the only action in the console that destroys data and the only one that cannot
  * be undone by doing the opposite — there is no opposite.
  *
- * The receipt is shown table by table afterwards, in Orrey's own words, because
+ * The receipt is shown table by table afterwards, in Kith's own words, because
  * "done" is not an answer to "what did you hold about me".
  */
 function deleteMeSection() {
@@ -1698,7 +1698,7 @@ function deleteMeSection() {
   const warning = document.createElement("p");
   warning.className = "note";
   warning.textContent =
-    "Deletes everything Orrey holds that is keyed to your Discord account: what you said about sessions, your campaign memberships, your signups, and the tokens Orrey uses to recognise you. Your Discord account is untouched. It cannot be undone.";
+    "Deletes everything Kith holds that is keyed to your Discord account: what you said about sessions, your campaign memberships, your signups, and the tokens Kith uses to recognise you. Your Discord account is untouched. It cannot be undone.";
   section.append(warning);
 
   const receipt = document.createElement("p");
@@ -1707,20 +1707,20 @@ function deleteMeSection() {
   button.type = "button";
   button.textContent = "Delete my data";
   button.addEventListener("click", async () => {
-    if (!confirm("Delete everything Orrey holds about you? This cannot be undone.")) return;
+    if (!confirm("Delete everything Kith holds about you? This cannot be undone.")) return;
     if (prompt('Type "delete" to confirm.') !== "delete") return;
 
     button.disabled = true;
     try {
       const answer = await api("/console/me/delete", { method: "POST", body: "{}" });
-      // Table by table, in Orrey's own words. "Done" is not an answer to "what
+      // Table by table, in Kith's own words. "Done" is not an answer to "what
       // did you hold about me".
       receipt.textContent = answer.said;
       receipt.className = "note";
     } catch (error) {
       receipt.className = "error";
       receipt.textContent =
-        error instanceof Refusal ? error.message : "Orrey could not do that. Try again.";
+        error instanceof Refusal ? error.message : "Kith could not do that. Try again.";
     }
   });
 
@@ -1862,7 +1862,7 @@ async function load() {
     main.append(heading("Your data"), deleteMeSection());
   } catch (error) {
     const message =
-      error instanceof Refusal ? error.message : "Orrey could not load that. Try again.";
+      error instanceof Refusal ? error.message : "Kith could not load that. Try again.";
     const p = document.createElement("p");
     p.className = error instanceof Refusal ? "note" : "error";
     p.textContent = message;

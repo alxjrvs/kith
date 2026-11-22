@@ -166,7 +166,7 @@ describe("what counts", () => {
     await session("a", "umbra", START + DAY);
 
     // The same rule `isProjectable` applies: a console that lists a session
-    // Orrey is not putting on anybody's calendar shows a plan Discord does not
+    // Kith is not putting on anybody's calendar shows a plan Discord does not
     // have.
     expect((await agenda()).rows).toEqual([]);
   });
@@ -333,7 +333,7 @@ describe("what /upcoming gets from it", () => {
     await member("umbra", "1001");
     await session("s", "umbra", START + DAY);
 
-    // A session Orrey is not putting on anybody's calendar is not one to put on
+    // A session Kith is not putting on anybody's calendar is not one to put on
     // somebody's agenda either.
     expect((await upcomingWithTotal(env, "1001", NOW)).entries).toEqual([]);
   });

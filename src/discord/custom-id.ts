@@ -1,6 +1,6 @@
 /**
  * Component ids are namespaced and versioned so that Hermuz's old posts —
- * whose ids Orrey knows nothing about — fall through to the retired-post
+ * whose ids Kith knows nothing about — fall through to the retired-post
  * handler instead of showing "interaction failed".
  *
  *   o1:attend:in:<sessionId>
@@ -24,7 +24,7 @@ export function encodeCustomId({ action, arg, target }: CustomId): string {
   return id;
 }
 
-/** Returns undefined for anything Orrey did not mint — including every Hermuz id. */
+/** Returns undefined for anything Kith did not mint — including every Hermuz id. */
 export function decodeCustomId(raw: string): CustomId | undefined {
   const [ns, action, arg, target] = raw.split(":");
   if (ns !== NAMESPACE || !action) return undefined;

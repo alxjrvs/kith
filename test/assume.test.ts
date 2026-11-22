@@ -9,7 +9,7 @@ import { loadProjectionTarget } from "../src/projection/target.ts";
 import { armAssume, assumeAttendance, attendedFrom } from "../src/attendance/assume.ts";
 
 /**
- * Nobody ticks a register at a table, so Orrey assumes — and marks the
+ * Nobody ticks a register at a table, so Kith assumes — and marks the
  * assumption as one. What is worth testing is what it refuses to overwrite.
  */
 const realFetch = globalThis.fetch;
@@ -171,7 +171,7 @@ describe("what is assumed", () => {
 
     // A vetoed session whose poll never resolved still reaches this job at its
     // original end. Assuming from intent would write "one of two came" about a
-    // night Orrey's own post said could not go ahead, and hand it to flake memory
+    // night Kith's own post said could not go ahead, and hand it to flake memory
     // as played and attended. The correction post is how the GM says they played
     // anyway.
     expect(await register("silent")).toMatchObject({ attended: 0, attendedSource: "auto" });

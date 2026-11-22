@@ -68,7 +68,7 @@ export async function feedFor(
   }
 
   return {
-    name: campaignId === undefined ? "Orrey" : `Orrey — ${campaignId}`,
+    name: campaignId === undefined ? "Kith" : `Kith — ${campaignId}`,
     events,
   };
 }

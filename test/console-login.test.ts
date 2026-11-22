@@ -148,7 +148,7 @@ describe("the callback", () => {
       client_secret: "shh",
       redirect_uri: "https://orrey.test/console/callback",
     });
-    // No PKCE: Orrey is a confidential client and Discord's acceptance of a
+    // No PKCE: Kith is a confidential client and Discord's acceptance of a
     // verifier is undocumented.
     expect(tokenRequests[0]?.body).not.toHaveProperty("code_verifier");
 

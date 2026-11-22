@@ -60,10 +60,10 @@ export async function openPollFromConsole(
       ? (body.winRule as WinRule)
       : undefined;
 
-  // A rule the form does not know is a rule Orrey does not have. Storing it
+  // A rule the form does not know is a rule Kith does not have. Storing it
   // would mean a poll that can never be decided.
   if (body.winRule !== undefined && !winRule) {
-    return { ok: false, error: "that is not a win rule Orrey knows", status: 400 };
+    return { ok: false, error: "that is not a win rule Kith knows", status: 400 };
   }
   if (typeof body.dates !== "string" || body.dates.trim() === "") {
     return { ok: false, error: "say which days might work, one per line", status: 400 };

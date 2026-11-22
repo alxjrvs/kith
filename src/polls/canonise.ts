@@ -80,7 +80,7 @@ export async function proposal(env: Env, pollId: string): Promise<string[]> {
  *
  * The two-step needs somewhere to hold the choice between the select and the
  * Apply button, and there is exactly one legal place: **D1**. A Discord message
- * is not a place state can live — Orrey never reads one back — and a button
+ * is not a place state can live — Kith never reads one back — and a button
  * click carries no select values, so the message could not tell Apply what was
  * chosen even if reading it were allowed.
  *

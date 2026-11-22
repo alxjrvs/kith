@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { legacyRedirect } from "./legacy-host.ts";
 import type { Env } from "../env.ts";
 import { verifyDiscordRequest } from "../discord/verify.ts";
 import { handleInteraction } from "../discord/interactions.ts";
@@ -61,6 +62,12 @@ import {
 
 export function createApp() {
   const app = new Hono<{ Bindings: Env; Variables: { userId: string } }>();
+
+  app.use("*", async (c, next) => {
+    const to = legacyRedirect(c.req.method, new URL(c.req.url));
+    if (to) return c.redirect(to, 301);
+    await next();
+  });
 
   app.get("/healthz", (c) => c.json({ ok: true, environment: c.env.ENVIRONMENT }));
 
@@ -194,7 +201,7 @@ export function createApp() {
         return c.json({ error: "That is an organiser's to do." }, 403);
       }
     } catch (error) {
-      // Orrey does not know which role administers, so nobody does. A 503 says
+      // Kith does not know which role administers, so nobody does. A 503 says
       // that plainly rather than answering 403 and sending somebody hunting for
       // a permission they already have.
       if (!(error instanceof NotConfigured)) throw error;
@@ -206,7 +213,7 @@ export function createApp() {
     return undefined;
   });
 
-  /** Who Orrey thinks you are. The first thing the console asks. */
+  /** Who Kith thinks you are. The first thing the console asks. */
   app.get("/api/me", (c) => c.json({ userId: c.get("userId") }));
 
   // The read half of the console. Every field comes from D1: a console that read
@@ -229,21 +236,21 @@ export function createApp() {
   app.patch("/api/campaigns/:id/listing", async (c) =>
     refusable(c, async () => {
       const found = await updateListing(c.env, "campaign", c.req.param("id"), await c.req.json(), c.get("userId"));
-      return found ? c.json({ ok: true }) : c.json({ error: "Orrey does not know that campaign." }, 404);
+      return found ? c.json({ ok: true }) : c.json({ error: "Kith does not know that campaign." }, 404);
     }),
   );
 
   app.patch("/api/game-days/:id/listing", async (c) =>
     refusable(c, async () => {
       const found = await updateListing(c.env, "game-day", c.req.param("id"), await c.req.json(), c.get("userId"));
-      return found ? c.json({ ok: true }) : c.json({ error: "Orrey does not know that game day." }, 404);
+      return found ? c.json({ ok: true }) : c.json({ error: "Kith does not know that game day." }, 404);
     }),
   );
 
   app.patch("/api/games/:id/catalog", async (c) =>
     refusable(c, async () => {
       const found = await updateCatalogEntry(c.env, c.req.param("id"), await c.req.json(), c.get("userId"));
-      return found ? c.json({ ok: true }) : c.json({ error: "Orrey does not know that game." }, 404);
+      return found ? c.json({ ok: true }) : c.json({ error: "Kith does not know that game." }, 404);
     }),
   );
 
@@ -263,7 +270,7 @@ export function createApp() {
   app.delete("/api/links/:id", async (c) =>
     (await removeLink(c.env, c.req.param("id"), c.get("userId")))
       ? c.json({ ok: true })
-      : c.json({ error: "Orrey does not know that link." }, 404),
+      : c.json({ error: "Kith does not know that link." }, 404),
   );
 
   app.put("/api/tables/:kind/:id/pages/:slug", async (c) =>
@@ -280,7 +287,7 @@ export function createApp() {
     if (!kind) return c.json({ error: "No such table." }, 404);
     return (await removePage(c.env, kind, c.req.param("id"), c.req.param("slug"), c.get("userId")))
       ? c.json({ ok: true })
-      : c.json({ error: "Orrey does not know that page." }, 404);
+      : c.json({ error: "Kith does not know that page." }, 404);
   });
 
   app.get("/api/games/usage", async (c) => c.json({ games: await gameRows(c.env) }));
@@ -360,7 +367,7 @@ export function createApp() {
    */
   app.get("/api/sessions/:id", async (c) => {
     const detail = await sessionDetail(c.env, c.req.param("id"));
-    return detail ? c.json(detail) : c.json({ error: "Orrey does not know that session." }, 404);
+    return detail ? c.json(detail) : c.json({ error: "Kith does not know that session." }, 404);
   });
 
   /**
@@ -376,7 +383,7 @@ export function createApp() {
     const page = await campaignPage(c.env, c.req.param("id"), asOf);
     return page
       ? c.json({ asOf: Math.floor(asOf.getTime() / 1000), campaign: page })
-      : c.json({ error: "Orrey does not know that campaign." }, 404);
+      : c.json({ error: "Kith does not know that campaign." }, 404);
   });
 
   /**
@@ -402,7 +409,7 @@ export function createApp() {
     refusable(c, async () => {
       const outcome = await lockSession(c.env, c.req.param("id"), c.get("userId"));
       return outcome === "no-session"
-        ? c.json({ error: "Orrey does not know that session." }, 404)
+        ? c.json({ error: "Kith does not know that session." }, 404)
         : outcome === "too-late"
           ? c.json({ error: "That session is over, or already off." }, 400)
           : c.json({ outcome });
@@ -433,7 +440,7 @@ export function createApp() {
         case "nothing-written":
           return c.json({ error: "Nothing to write down." }, 400);
         case "no-session":
-          return c.json({ error: "Orrey does not know that session." }, 404);
+          return c.json({ error: "Kith does not know that session." }, 404);
         case "nobody-running-it":
           return c.json({ error: "Nobody is down as running that day." }, 403);
         default:
@@ -446,7 +453,7 @@ export function createApp() {
     refusable(c, async () => {
       const outcome = await cancelSession(c.env, c.req.param("id"), c.get("userId"));
       return outcome === "no-session"
-        ? c.json({ error: "Orrey does not know that session." }, 404)
+        ? c.json({ error: "Kith does not know that session." }, 404)
         : outcome === "too-late"
           ? c.json({ error: "That session has already been played." }, 400)
           : c.json({ outcome });
@@ -503,7 +510,7 @@ export function createApp() {
    */
   app.get("/api/game-days/:id/page", async (c) => {
     const page = await gameDayPage(c.env, c.req.param("id"));
-    return page ? c.json(page) : c.json({ error: "Orrey does not know that day." }, 404);
+    return page ? c.json(page) : c.json({ error: "Kith does not know that day." }, 404);
   });
 
   /**
@@ -636,7 +643,7 @@ export function createApp() {
    *
    * **Not under `/api/*`.** That gate is the organiser check, and this is the
    * one console action that belongs to everybody: a person who has never been
-   * given a role still has data Orrey holds, and Discord's terms are about them.
+   * given a role still has data Kith holds, and Discord's terms are about them.
    * So it takes the session cookie and asks nothing else of it.
    *
    * The deleted id is `session.userId` and comes from nowhere else. **The body
@@ -675,7 +682,7 @@ export function createApp() {
     // copied from. A hardcoded host is wrong everywhere but one place, and the
     // person copying it has no way to tell.
     const panel = await feedsPanel(c.env, session.userId, new URL(c.req.url).origin);
-    return panel ? c.json(panel) : c.json({ error: "Orrey does not know you yet." }, 404);
+    return panel ? c.json(panel) : c.json({ error: "Kith does not know you yet." }, 404);
   });
 
   app.post("/console/me/feeds/rotate", async (c) => {
@@ -683,7 +690,7 @@ export function createApp() {
     if (!session) return c.json({ error: "Not signed in. Sign in with Discord on the front page." }, 401);
 
     const rotated = await rotateFeedToken(c.env, session.userId);
-    if (!rotated) return c.json({ error: "Orrey does not know you yet." }, 404);
+    if (!rotated) return c.json({ error: "Kith does not know you yet." }, 404);
 
     // The panel is re-read rather than the new token returned on its own: what
     // somebody needs is the URLs, and handing back a bare credential invites it
@@ -704,7 +711,7 @@ export function createApp() {
   /**
    * Discord's terms require a stated privacy policy and a delete-my-data path.
    * The policy is a page; the delete path is a button on `/console`, because
-   * Discord is the only identity Orrey has — an unauthenticated HTTP DELETE
+   * Discord is the only identity Kith has — an unauthenticated HTTP DELETE
    * would be a way to erase someone else's data.
    */
   app.get("/privacy", (c) => c.env.ASSETS.fetch(new Request(new URL("/privacy.html", c.req.url), c.req.raw)));
@@ -723,7 +730,7 @@ export function createApp() {
    * A push that does not match the stored channel is **404, not 401**. A 401
    * confirms the channel exists to whoever guessed the URL, and the channel id
    * and token are the only things standing between a stranger and the ability
-   * to make Orrey call Google.
+   * to make Kith call Google.
    *
    * Nothing here reaches Google. A flood of pushes costs one D1 insert each and
    * cannot become a flood of API calls — the insert collapses by minute, so a

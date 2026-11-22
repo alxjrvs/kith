@@ -63,7 +63,7 @@ describe("the privacy policy page", () => {
     const res = await app.fetch(new Request("https://orrey.test/privacy"), env);
     expect(res.status).toBe(200);
     const html = await res.text();
-    expect(html).toMatch(/What the Orrey knows about you/);
+    expect(html).toMatch(/What Kith knows about you/);
     // The things Discord's terms require it to name.
     for (const stored of [/Discord user id/, /feed token/i, /Delete my data/]) {
       expect(html).toMatch(stored);
@@ -149,7 +149,7 @@ describe("delete-my-data", () => {
     expect(await userCount("2002")).toBe(1);
   });
 
-  it("is honest when Orrey held nothing", async () => {
+  it("is honest when Kith held nothing", async () => {
     const done = await click(
       encodeCustomId({ action: "privacy", arg: "confirm" }),
       "3003",
@@ -187,8 +187,8 @@ describe("delete-my-data", () => {
       "INSERT INTO signups (target_type, target_id, user_id, state) VALUES ('campaign_forming', 'age-of-umbra', '1001', 'in')",
     ).run();
 
-    // The console's token pair. The most sensitive row Orrey holds, and the one
-    // whose deletion has an effect outside Orrey.
+    // The console's token pair. The most sensitive row Kith holds, and the one
+    // whose deletion has an effect outside Kith.
     await env.DB.prepare(
       "INSERT INTO discord_tokens (user_id, access_token, refresh_token, expires_at) VALUES ('1001', 'a', 'r', 1)",
     ).run();
@@ -274,7 +274,7 @@ describe("delete my data, from the console", () => {
   /**
    * A signed-in person: the user row and the token pair the cookie is checked
    * against. `sessionFrom` asks both — the cookie says who, `discord_tokens`
-   * says whether Orrey can still act as them.
+   * says whether Kith can still act as them.
    */
   async function signedIn(discordId: string) {
     await seedUser(discordId);
@@ -338,11 +338,11 @@ describe("delete my data, from the console", () => {
     expect(body.said).toContain("users (1)");
   });
 
-  it("says Orrey held nothing rather than erroring, when there is nothing", async () => {
+  it("says Kith held nothing rather than erroring, when there is nothing", async () => {
     await signedIn("1001");
     await deleteMe("1001");
 
-    // The receipt for somebody Orrey holds nothing about is zeroes and a
+    // The receipt for somebody Kith holds nothing about is zeroes and a
     // sentence, not a failure. Reaching it through the console a second time is
     // not possible — the token pair the cookie is checked against went with
     // everything else — so this asks the function the route calls.
@@ -355,7 +355,7 @@ describe("delete my data, from the console", () => {
     await signedIn("1001");
     await deleteMe("1001");
 
-    // Not an error: a 401 here is Orrey correctly not knowing somebody it holds
+    // Not an error: a 401 here is Kith correctly not knowing somebody it holds
     // nothing about. The pair stopping working immediately is the point of
     // deleting it.
     expect((await deleteMe("1001")).status).toBe(401);

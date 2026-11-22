@@ -35,7 +35,7 @@ export interface Calendar {
   stampedAt: number;
 }
 
-const PRODID = "-//Orrey//Orrey Scheduling//EN";
+const PRODID = "-//Kith//Kith Scheduling//EN";
 
 export function serialise(calendar: Calendar): string {
   const years = yearsCovered(calendar.events, calendar.stampedAt);

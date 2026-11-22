@@ -116,7 +116,7 @@ export function discordProjectedContent(target: ProjectionTarget) {
     ...googleProjectedContent(target),
     /**
      * The event's description carries `orrey:session:<id>`, which is how an
-     * event Orrey already made is recognised when every record of its id has
+     * event Kith already made is recognised when every record of its id has
      * been lost (#73). It is in the fingerprint because it is in the body: the
      * fingerprint covers exactly what the remote object shows, and leaving it
      * out would mean every event that predates the marker keeps a matching
@@ -152,7 +152,7 @@ export function googleFingerprint(target: ProjectionTarget): Promise<string> {
 }
 
 /**
- * Whether Orrey should be publishing this outward at all.
+ * Whether Kith should be publishing this outward at all.
  *
  * A campaign that is not running has nothing to publish — a concluded
  * campaign's old sessions must not reappear on a calendar because a queue
