@@ -41,6 +41,8 @@ export interface SettingField {
   value: unknown;
   /** The value used when nothing is written, so a blank field is not a mystery. */
   fallback: unknown;
+  /** For a number: the largest value that means anything. */
+  max?: number;
   /**
    * False for `discord.guild_id`. Re-pointing the guild from a web form is not a
    * setting, it is a migration — `scripts/adopt-ids.ts` owns it, and every id in
@@ -93,7 +95,16 @@ const FIELDS: Omit<SettingField, "value" | "fallback">[] = [
     key: SETTING_KEYS.attendanceLeadDays,
     label: "Attendance post lead",
     kind: "number",
-    help: "How many days before a session its attendance post goes up.",
+    help: "How many days before a game day's session its attendance post goes up.",
+    writable: true,
+  },
+  {
+    key: SETTING_KEYS.dayOfHour,
+    label: "Day-of reminder hour",
+    kind: "number",
+    help: "The hour (1 to 23, guild time) a running campaign's reminder goes up in its channel on the day.",
+    max: 23,
+    caveat: "Changing it does not move reminders already scheduled.",
     writable: true,
   },
   {
@@ -195,6 +206,9 @@ function parse(field: Omit<SettingField, "value" | "fallback">, value: unknown):
       const n = typeof value === "number" ? value : Number(value);
       if (!Number.isInteger(n) || n <= 0) {
         throw new InvalidSetting(`${field.label} is a whole number of one or more`);
+      }
+      if (field.max !== undefined && n > field.max) {
+        throw new InvalidSetting(`${field.label} is at most ${field.max}`);
       }
       return n;
     }

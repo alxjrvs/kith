@@ -163,7 +163,7 @@ describe("arming the check", () => {
     expect(await checkJob()).toMatchObject({ state: "pending", attempts: 0, lastError: null });
   });
 
-  it("is armed for every session the materialiser makes", async () => {
+  it("is not armed for a running campaign's sessions, which are asked on the day", async () => {
     await env.DB.prepare("DELETE FROM sessions").run();
     await setSetting(env, SETTING_KEYS.horizonSessions, 2);
     await db(env)
@@ -183,7 +183,9 @@ describe("arming the check", () => {
       .orderBy(asc(schema.jobs.id))
       .all()
       .then((rows) => rows.filter((row) => row.kind === "jeopardy.check"));
-    expect(checks).toHaveLength(2);
+    // Nobody has been asked a day out, so there is no tally to be short of; a
+    // roster member's "I can't make it" on the day opens the poll itself.
+    expect(checks).toHaveLength(0);
   });
 });
 

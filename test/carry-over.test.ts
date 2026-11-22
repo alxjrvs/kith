@@ -228,7 +228,24 @@ describe("the fresh post", () => {
       await find(env, { surface: "discord", kind: "message", targetId: SESSION }),
     ).toBeUndefined();
 
+    // A running campaign's fresh post waits for the morning of the new date:
+    // the carry-over's job hands itself on to the day-of job rather than
+    // posting days early.
     calls = [];
+    await drainJobs(env);
+    expect(calls.filter((call) => call.path === "/channels/chan-1/messages")).toEqual([]);
+    const dayOf = await db(env)
+      .select()
+      .from(schema.jobs)
+      .where(eq(schema.jobs.id, `session.day-of:${SESSION}`))
+      .get();
+    expect(dayOf).toMatchObject({ state: "pending" });
+
+    // And on the morning, it goes up.
+    await db(env)
+      .update(schema.jobs)
+      .set({ runAt: Math.floor(Date.now() / 1000) - 1 })
+      .where(eq(schema.jobs.id, `session.day-of:${SESSION}`));
     await drainJobs(env);
     const posts = calls.filter((call) => call.path === "/channels/chan-1/messages");
     expect(posts.length).toBeGreaterThan(0);

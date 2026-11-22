@@ -165,6 +165,18 @@ describe("where a later post goes", () => {
 
 describe("the post job", () => {
   it("posts and then starts the thread, in that order", async () => {
+    // A running campaign's session: the post is the day-of reminder, on the day.
+    const now = Math.floor(Date.now() / 1000);
+    await env.DB.prepare("UPDATE sessions SET starts_at = ?, ends_at = ?")
+      .bind(now + 6 * 3600, now + 10 * 3600)
+      .run();
+    await env.DB.prepare("DELETE FROM jobs").run();
+    await env.DB.prepare(
+      "INSERT INTO jobs (id, kind, payload, idempotency_key, run_at) VALUES (?, 'session.day-of', ?, ?, ?)",
+    )
+      .bind("session.day-of:s", JSON.stringify({ sessionId: SESSION_ID }), "session.day-of:s", now - 1)
+      .run();
+
     await drainJobs(env);
 
     expect(calls.map((call) => call.path)).toEqual([

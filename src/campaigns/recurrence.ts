@@ -98,7 +98,7 @@ export interface WallClock {
   second: number;
 }
 
-function wallClockOf(unixSeconds: number, timeZone: string): WallClock {
+export function wallClockOf(unixSeconds: number, timeZone: string): WallClock {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
     hour12: false,

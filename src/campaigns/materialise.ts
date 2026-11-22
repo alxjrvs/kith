@@ -1,10 +1,9 @@
-import { and, count, eq, isNotNull, sql } from "drizzle-orm";
+import { and, count, eq, gt, isNotNull, notInArray, sql } from "drizzle-orm";
 import type { Env } from "../env.ts";
 import { db, schema } from "../db/index.ts";
 import { SETTING_DEFAULTS, SETTING_KEYS, settingOr } from "../db/settings.ts";
 import { armAssume } from "../attendance/assume.ts";
-import { armJeopardyCheck } from "../attendance/jeopardy.ts";
-import { armReminders } from "../attendance/reminders.ts";
+import { armDayOf, dayOfJob } from "../attendance/day-of.ts";
 import { enforceEventCap } from "./event-cap.ts";
 import { occurrencesFrom } from "./recurrence.ts";
 import { remainingSessions } from "./roster.ts";
@@ -41,18 +40,14 @@ export async function materialiseHorizon(env: Env, now: Date): Promise<Materiali
     SETTING_DEFAULTS["horizon.sessions"],
   );
   const timezone = await settingOr(env, SETTING_KEYS.timezone, SETTING_DEFAULTS.timezone);
-  const leadDays = await settingOr(
-    env,
-    SETTING_KEYS.attendanceLeadDays,
-    SETTING_DEFAULTS["attendance.lead_days"],
-  );
 
   const made: MaterialisedSession[] = [];
 
   for (const row of await runningWithCadence(env)) {
     // One campaign's bad cadence must not stop the others' from being made.
     try {
-      made.push(...(await materialiseOne(env, row, { now, horizon, timezone, leadDays })));
+      made.push(...(await materialiseOne(env, row, { now, horizon, timezone })));
+      await healDayOf(env, row.campaign.id, now);
       // Every running campaign, not only the ones that gained a session: the
       // Discord horizon moves when a session *passes*, not only when one is made.
       await enforceEventCap(env, row.campaign.id, now);
@@ -68,7 +63,6 @@ interface Settings {
   now: Date;
   horizon: number;
   timezone: string;
-  leadDays: number;
 }
 
 type CampaignRow = {
@@ -79,7 +73,7 @@ type CampaignRow = {
 async function materialiseOne(
   env: Env,
   { campaign, defaultDurationMinutes }: CampaignRow,
-  { now, horizon, timezone, leadDays }: Settings,
+  { now, horizon, timezone }: Settings,
 ): Promise<MaterialisedSession[]> {
   // A cadence is both columns or neither. The select guarantees it; this is what
   // makes that guarantee legible to the type checker.
@@ -127,7 +121,7 @@ async function materialiseOne(
 
     if (inserted.length === 0) continue;
 
-    await armJobs(env, sessionId, occurrence.startsAt, occurrence.endsAt, leadDays);
+    await armJobs(env, sessionId, occurrence.startsAt, occurrence.endsAt);
     made.push({
       campaignId: campaign.id,
       sessionId,
@@ -150,48 +144,67 @@ const DEFAULT_DURATION_MINUTES = 240;
 const PLACEHOLDER_LOCATION = "To be confirmed";
 
 /**
- * Two standing job rows per new session. The projection goes out now; the
- * attendance post waits for its lead time, which is why it is a job and not a
- * post made here — a post is the one thing that cannot be taken back.
+ * The standing jobs for a new session. The projection goes out now; the post
+ * waits for the morning of — a running campaign takes no signups ahead of time,
+ * so the only thing it is asked is whether tonight still stands, on the day, in
+ * its own channel (`src/attendance/day-of.ts`). It is a job and not a post made
+ * here because a post is the one thing that cannot be taken back.
+ *
+ * No reminder ladder: the day-of post *is* the reminder, and a DM three days out
+ * asking somebody to answer a post that does not exist yet would be nonsense.
  */
-async function armJobs(
-  env: Env,
-  sessionId: string,
-  startsAt: number,
-  endsAt: number,
-  leadDays: number,
-): Promise<void> {
-  const postAt = startsAt - leadDays * 86_400;
-
+async function armJobs(env: Env, sessionId: string, startsAt: number, endsAt: number): Promise<void> {
   await db(env)
     .insert(schema.jobs)
-    .values([
-      {
-        id: `session.project:${sessionId}`,
-        kind: "session.project",
-        payload: { sessionId },
-        idempotencyKey: `session.project:${sessionId}`,
-        runAt: sql`(unixepoch())`,
-      },
-      {
-        id: `session.post-attendance:${sessionId}`,
-        kind: "session.post-attendance",
-        payload: { sessionId },
-        idempotencyKey: `session.post-attendance:${sessionId}`,
-        // A session materialised inside its own lead time posts on the next
-        // drain rather than being skipped for having a run_at in the past.
-        runAt: postAt,
-      },
-    ])
+    .values({
+      id: `session.project:${sessionId}`,
+      kind: "session.project",
+      payload: { sessionId },
+      idempotencyKey: `session.project:${sessionId}`,
+      runAt: sql`(unixepoch())`,
+    })
     .onConflictDoNothing();
 
-  // And the question this phase is named after, a day before it matters. Armed
-  // separately because it is the one job whose time moves when the session does,
-  // so it upserts its `run_at` rather than being written once and forgotten.
-  await armJeopardyCheck(env, sessionId, startsAt);
-  await armReminders(env, sessionId, startsAt);
+  // Armed separately because these are the jobs whose time moves when the
+  // session does, so they upsert their `run_at` rather than being written once
+  // and forgotten. A session materialised on its own day posts on the next
+  // drain rather than being skipped for having a run_at in the past.
+  await armDayOf(env, sessionId, startsAt);
+  // No jeopardy check either: a day out, nobody has been asked yet, so there is
+  // no tally to be short of. A roster member's `I can't make it` opens the date
+  // poll from the click itself (`SessionLock.setIntent`).
   // And the register, when it is over.
   await armAssume(env, sessionId, endsAt);
+}
+
+/**
+ * Every upcoming session of a running campaign has its day-of job.
+ *
+ * The sessions materialised before the day-of reminder existed were armed with
+ * a signup post and a ladder instead, and some of those posts already went up.
+ * Insert-if-missing, never re-arm: a job that exists was armed or moved by
+ * somebody, and one that is `done` has posted.
+ */
+async function healDayOf(env: Env, campaignId: string, now: Date): Promise<void> {
+  const upcoming = await db(env)
+    .select({ id: schema.sessions.id, startsAt: schema.sessions.startsAt })
+    .from(schema.sessions)
+    .where(
+      and(
+        eq(schema.sessions.campaignId, campaignId),
+        // Not started yet: a reminder for an evening already under way is noise.
+        gt(schema.sessions.startsAt, Math.floor(now.getTime() / 1000)),
+        notInArray(schema.sessions.state, ["CANCELLED", "PLAYED"]),
+      ),
+    )
+    .all();
+  if (upcoming.length === 0) return;
+
+  const jobs = await Promise.all(upcoming.map((row) => dayOfJob(env, row.id, row.startsAt)));
+  await db(env)
+    .insert(schema.jobs)
+    .values(jobs.map((job) => ({ ...job, idempotencyKey: job.id })))
+    .onConflictDoNothing();
 }
 
 function sessionCount(env: Env, campaignId: string): Promise<number> {

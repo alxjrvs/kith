@@ -19,8 +19,14 @@ export const SETTING_KEYS = {
    * scheduled events are capped per guild and treated as disposable.
    */
   horizonSessions: "horizon.sessions",
-  /** How long before a session starts its attendance post goes up, in days. */
+  /** How long before a game day's session its attendance post goes up, in days. */
   attendanceLeadDays: "attendance.lead_days",
+  /**
+   * The hour, on the guild's clock, a running campaign's day-of reminder goes up
+   * in its own channel. Campaign sessions take no signups ahead of time: the
+   * table is already the table, so the morning of is when it is asked.
+   */
+  dayOfHour: "attendance.day_of_hour",
   /**
    * The role that may administer. Read with the bot token against the guild
    * member endpoint — never from the user's own OAuth token, which is why the
@@ -65,6 +71,7 @@ export const SETTING_KEYS = {
 export const SETTING_DEFAULTS = {
   [SETTING_KEYS.horizonSessions]: 4,
   [SETTING_KEYS.attendanceLeadDays]: 10,
+  [SETTING_KEYS.dayOfHour]: 9,
   [SETTING_KEYS.jeopardyLeadHours]: 24,
   [SETTING_KEYS.reminderStepsHours]: [72, 24, 2],
   [SETTING_KEYS.pollWindowHours]: 72,

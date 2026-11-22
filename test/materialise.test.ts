@@ -164,18 +164,30 @@ describe("materialising the horizon", () => {
 });
 
 describe("the jobs a new session arms", () => {
-  it("asks for the projection now and the post at its lead time", async () => {
+  it("asks for the projection now and the reminder the morning of", async () => {
     await db(env).insert(schema.campaigns).values(campaign);
     const [first] = await materialiseHorizon(env, NOW);
 
     const armed = (await jobs()).filter((job) => job.payload !== null);
     const project = armed.find((job) => job.id === `session.project:${first!.sessionId}`);
-    const post = armed.find((job) => job.id === `session.post-attendance:${first!.sessionId}`);
+    const dayOf = armed.find((job) => job.id === `session.day-of:${first!.sessionId}`);
 
     expect(project).toMatchObject({ kind: "session.project", state: "pending" });
     // The post is a job, not a post made here: a post is the one thing that
-    // cannot be taken back, so it waits until it is nearly time.
-    expect(post?.runAt).toBe(first!.startsAt - 10 * 86_400);
+    // cannot be taken back. A running campaign takes no signups, so it waits for
+    // 09:00 on the day, guild time — 19:00 London is 09:00 London ten hours
+    // earlier, whichever side of the clocks changing it falls.
+    expect(dayOf?.runAt).toBe(first!.startsAt - 10 * 3600);
+  });
+
+  it("arms no signup post and no reminder ladder for a running campaign", async () => {
+    await db(env).insert(schema.campaigns).values(campaign);
+    await materialiseHorizon(env, NOW);
+
+    const kinds = new Set((await jobs()).map((job) => job.kind));
+    expect(kinds.has("session.post-attendance")).toBe(false);
+    expect(kinds.has("reminder.step")).toBe(false);
+    expect(kinds.has("session.day-of")).toBe(true);
   });
 
   it("arms each session's jobs once, however often the tick runs", async () => {
