@@ -6,6 +6,8 @@ import { GameHome } from "./pages/GameHome.tsx";
 import { Agenda } from "./pages/Agenda.tsx";
 import { Profile } from "./pages/Profile.tsx";
 import { Splash } from "./pages/Splash.tsx";
+import { Landing } from "./pages/Landing.tsx";
+import { useMe } from "./api.ts";
 import { Table } from "./pages/Table.tsx";
 import { GameKnowledgePage, TableKnowledgePage } from "./pages/KnowledgePage.tsx";
 import { NotFound } from "./pages/NotFound.tsx";
@@ -23,7 +25,23 @@ function Shell() {
 const rootRoute = createRootRoute({ component: Outlet, notFoundComponent: NotFound });
 const shell = createRoute({ getParentRoute: () => rootRoute, id: "shell", component: Shell });
 
-const home = createRoute({ getParentRoute: () => shell, path: "/", component: Home });
+/**
+ * The front page. Signed out, it is the landing: every game, one screen, and a
+ * way in. Signed in, it is the usual home with the site header.
+ */
+function Front() {
+  const me = useMe();
+  if (me.isPending) return <div className="show" aria-busy="true" />;
+  if (!me.data?.signedIn) return <Landing />;
+  return (
+    <>
+      <Header />
+      <Home />
+    </>
+  );
+}
+
+const home = createRoute({ getParentRoute: () => rootRoute, path: "/", component: Front });
 /** There is no searching for a game any more: the games are the hub. Old links land there. */
 const find = createRoute({
   getParentRoute: () => shell,
@@ -59,7 +77,7 @@ const knowledge = createRoute({
 /** The splash is full screen and brings its own header. */
 const splash = createRoute({ getParentRoute: () => rootRoute, path: "/join/$kind/$id", component: Splash });
 
-const routeTree = rootRoute.addChildren([shell.addChildren([home, find, games, gamePage, agenda, profile, table, knowledge]), gameHome, splash]);
+const routeTree = rootRoute.addChildren([shell.addChildren([find, games, gamePage, agenda, profile, table, knowledge]), home, gameHome, splash]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });
 

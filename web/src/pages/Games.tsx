@@ -7,7 +7,7 @@ import { inDays, stamp } from "../format.ts";
 import { signInHref } from "../signin.ts";
 import { SeatSquares } from "../components/Squares.tsx";
 
-const STATE_LABEL: Record<string, string> = {
+export const STATE_LABEL: Record<string, string> = {
   FORMING: "Forming",
   RUNNING: "Running",
   HIATUS: "On hiatus",
