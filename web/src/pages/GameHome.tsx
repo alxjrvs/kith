@@ -123,7 +123,7 @@ function NextUp({ row }: { row: Row }) {
   return (
     <div className="next-up">
       <span className="label">Next up · {inDays(row.startsAt)}</span>
-      <span className="mono next-stamp">{stamp(row.startsAt)}</span>
+      <span className="num next-stamp">{stamp(row.startsAt)}</span>
       <div className="panel" style={{ marginTop: 4 }}>
         <AgendaRow row={row} tally={false} simple={row.quorum.rule === "unanimous"} />
       </div>
@@ -170,7 +170,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
           <section className="panel">
             <h2 className="panel-head label">
               <span>Coming up · {upcoming.length}</span>
-              <Link to="/agenda" style={{ fontSize: 12, textTransform: "none", letterSpacing: 0 }}>
+              <Link to="/agenda" style={{ fontWeight: 400 }}>
                 Full agenda
               </Link>
             </h2>
@@ -198,7 +198,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
 
           {listing.pitch ? (
             <section className="stack">
-              <h2 className="label" style={{ fontSize: 12 }}>
+              <h2 className="label">
                 The pitch
               </h2>
               <div className="prose">
@@ -275,11 +275,11 @@ function BoardBase({ home }: { home: BoardHome }) {
         {next ? (
           <div className="next-up">
             <span className="label">Next game day · {next.when.startsAt ? inDays(next.when.startsAt) : "date to come"}</span>
-            {next.when.startsAt ? <span className="mono next-stamp">{stamp(next.when.startsAt)}</span> : null}
+            {next.when.startsAt ? <span className="num next-stamp">{stamp(next.when.startsAt)}</span> : null}
             {next.open ? (
               <div className="row">
                 <SeatSquares capacity={next.capacity} taken={next.taken} big />
-                <span className="mono" style={{ fontSize: 13 }}>
+                <span className="num" style={{ fontSize: 13 }}>
                   {seatLine(next)}
                 </span>
               </div>
@@ -301,7 +301,7 @@ function BoardBase({ home }: { home: BoardHome }) {
 
       <div className="split">
         <div className="main">
-          <h2 className="label" style={{ fontSize: 12 }}>
+          <h2 className="label">
             Upcoming game days · {upcoming.length}
           </h2>
           {upcoming.length === 0 ? <p className="empty">No day on the calendar yet.</p> : null}
@@ -326,7 +326,7 @@ function BoardBase({ home }: { home: BoardHome }) {
                 {listing.open ? (
                   <div className="row">
                     <SeatSquares capacity={listing.capacity} taken={listing.taken} />
-                    <span className="mono" style={{ fontSize: 13 }}>
+                    <span className="num" style={{ fontSize: 13 }}>
                       {seatLine(listing)}
                     </span>
                   </div>

@@ -83,7 +83,7 @@ function DayTable({ kind, id }: { kind: string; id: string }) {
           </section>
           {listing.pitch ? (
             <section className="stack">
-              <h2 className="label" style={{ fontSize: 12 }}>
+              <h2 className="label">
                 The pitch
               </h2>
               <p className="prose" style={{ whiteSpace: "pre-line" }}>
@@ -104,7 +104,7 @@ function DayTable({ kind, id }: { kind: string; id: string }) {
           <section className="panel">
             <h2 className="panel-head label">The table</h2>
             <div className="panel-body">
-              {cadence(listing).length > 0 ? <span className="mono" style={{ fontSize: 12 }}>{cadence(listing).join(" · ").toUpperCase()}</span> : null}
+              {cadence(listing).length > 0 ? <span className="num" style={{ fontSize: 12 }}>{cadence(listing).join(" · ")}</span> : null}
               {listing.lead ? (
                 <span className="muted">
                   {listing.kind === "campaign" ? "GM" : "Host"} {listing.lead.name}
@@ -112,7 +112,7 @@ function DayTable({ kind, id }: { kind: string; id: string }) {
               ) : null}
               <div className="row">
                 <SeatSquares capacity={listing.capacity} taken={listing.taken} />
-                <span className="mono" style={{ fontSize: 13 }}>
+                <span className="num" style={{ fontSize: 13 }}>
                   {seatLine(listing)}
                 </span>
               </div>

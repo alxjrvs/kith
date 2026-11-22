@@ -23,7 +23,7 @@ export function Agenda() {
         <div className="stack" style={{ gap: 4 }}>
           <h1>Agenda</h1>
           <p className="muted" style={{ fontSize: 13 }}>
-            Does it run, then when. {agenda.data ? <span className="mono">{asOf(agenda.data.asOf)}</span> : null}
+            Does it run, then when. {agenda.data ? <span className="num">{asOf(agenda.data.asOf)}</span> : null}
           </p>
         </div>
         <div className="row">
@@ -76,7 +76,7 @@ export function Agenda() {
               {waiting.map((row) => (
                 <div key={row.sessionId} className="panel-row" style={{ flexDirection: "column", alignItems: "flex-start", gap: 2 }}>
                   <span style={{ fontWeight: 600 }}>No reply · {row.title}</span>
-                  <span className="mono muted" style={{ fontSize: 12 }}>
+                  <span className="num muted" style={{ fontSize: 12 }}>
                     {row.dayLabel.toLowerCase()}
                   </span>
                 </div>

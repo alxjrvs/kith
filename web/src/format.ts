@@ -8,7 +8,7 @@ const clock = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-d
 
 export function stamp(unix: number): string {
   const d = new Date(unix * 1000);
-  return `${weekday.format(d)} ${dayMonth.format(d)} · ${clock.format(d)}`.toUpperCase();
+  return `${weekday.format(d)} ${dayMonth.format(d)} · ${clock.format(d)}`;
 }
 
 export function time(unix: number): string {
@@ -16,7 +16,7 @@ export function time(unix: number): string {
 }
 
 export function asOf(unix: number): string {
-  return `AS OF ${time(unix)}`;
+  return `as of ${time(unix)}`;
 }
 
 export function inDays(unix: number, now = Date.now()): string {

@@ -64,7 +64,7 @@ export function Splash() {
                 ) : null}
                 <div className="row">
                   <SeatSquares capacity={listing.capacity} taken={listing.taken} />
-                  <span className="mono" style={{ fontSize: 13 }}>
+                  <span className="num" style={{ fontSize: 13 }}>
                     {listing.capacity === null ? `${listing.taken} in` : `${listing.taken} / ${listing.capacity}`}
                     {listing.waitlist > 0 ? ` · waitlist ${listing.waitlist}` : ""}
                   </span>
@@ -177,7 +177,7 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
           <SignupButtons listing={listing} big />
           <div className="row" style={{ gap: 10 }}>
             <SeatSquares capacity={listing.capacity} taken={listing.taken} big />
-            <span className="mono" style={{ fontSize: 13 }}>
+            <span className="num" style={{ fontSize: 13 }}>
               {listing.capacity === null ? `${listing.taken} in` : `${listing.taken} / ${listing.capacity}`}
               {left !== null ? ` · ${left === 0 ? "full" : `${left} ${left === 1 ? "seat" : "seats"} left`}` : ""}
             </span>

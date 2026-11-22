@@ -37,7 +37,7 @@ export function AgendaRow({
 
   return (
     <article className={`panel-row${row.inJeopardy ? " jeopardy" : ""}`}>
-      <span className="mono" style={{ width: 52, fontSize: 15 }}>
+      <span className="num" style={{ width: 52, fontSize: 15 }}>
         {time(row.startsAt)}
       </span>
       <div style={{ flex: "1 1 220px", display: "flex", flexDirection: "column" }}>
@@ -61,7 +61,7 @@ export function AgendaRow({
       {tally ? (
         <div className="row" style={{ gap: 10 }}>
           <TallySquares tally={row.tally} />
-          <span className="mono" style={{ fontSize: 13 }}>
+          <span className="num" style={{ fontSize: 13 }}>
             {row.tally.in} / {row.rosterSize}
           </span>
         </div>
