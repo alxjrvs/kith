@@ -254,8 +254,19 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
 .show { position: relative; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: var(--deep); }
 .show-top { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; }
 .show-slides { position: absolute; inset: 0; }
-.show-slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; opacity: 0; visibility: hidden; transition: opacity 900ms ease, visibility 0s linear 900ms; }
-.show-slide[data-current] { opacity: 1; visibility: visible; transition: opacity 900ms ease, visibility 0s; }
+.show-slides { overflow: hidden; }
+.show-slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; visibility: hidden; }
+/* The game coming in slides across from one side while the one going out slides off the other. */
+.show-slide[data-current], .show-slide[data-motion] { visibility: visible; }
+.show-slide[data-motion] { animation: 800ms cubic-bezier(0.65, 0, 0.35, 1) both; }
+.show-slide[data-motion="in-next"] { animation-name: show-in-next; }
+.show-slide[data-motion="in-prev"] { animation-name: show-in-prev; }
+.show-slide[data-motion="out-next"] { animation-name: show-out-next; }
+.show-slide[data-motion="out-prev"] { animation-name: show-out-prev; }
+@keyframes show-in-next { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes show-in-prev { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@keyframes show-out-next { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+@keyframes show-out-prev { from { transform: translateX(0); } to { transform: translateX(100%); } }
 .show-art { position: absolute; inset: 0; background-size: cover; background-position: center; transform: scale(1.04); }
 .show-slide[data-current] .show-art { animation: show-drift 14s ease-out both; }
 /* A game's own page is its slide holding still: no drift. */
@@ -281,7 +292,8 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
 @keyframes show-drift { from { transform: scale(1.1); } to { transform: scale(1.04); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .show-slide, .show-slide[data-current] { transition: none; }
+  .show-slide[data-motion] { animation: none; }
+  .show-slide[data-motion^="out"] { visibility: hidden; }
   .show-slide[data-current] .show-art { animation: none; }
 }
 
