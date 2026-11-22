@@ -234,7 +234,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
             <h2 className="panel-head label">Links · {links.length}</h2>
             {links.length === 0 ? <p className="panel-body muted">No links yet.</p> : null}
             {links.map((link) => (
-              <LinkRow key={link.id} link={link} canEdit={canEdit && !link.id.startsWith("cms:")} kind={kind} id={id} />
+              <LinkRow key={link.id} link={link} canEdit={canEdit} removable={!link.id.startsWith("cms:")} kind={kind} id={id} />
             ))}
             {canEdit ? <EditInCms collection="links">Add or edit links in the CMS</EditInCms> : null}
           </section>

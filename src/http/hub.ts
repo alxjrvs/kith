@@ -105,7 +105,7 @@ export function hubRoutes() {
   hub.get("/copy", async (c) => {
     const sections = await cmsSections(c.env);
     const copy = Object.fromEntries(
-      Object.values(sections).map((s) => [s.slug, { title: s.title, kicker: s.kicker ?? null, body: toMarkdown(s.body) || null }]),
+      Object.values(sections).map((s) => [s.slug, { title: s.title ?? null, kicker: s.kicker ?? null, body: toMarkdown(s.body) || null }]),
     );
     return c.json({ copy });
   });

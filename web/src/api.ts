@@ -114,7 +114,7 @@ export const useListing = (kind: string, id: string) =>
 
 /** One section of the site's own copy, from kith-cms. */
 export interface Copy {
-  title: string;
+  title: string | null;
   kicker: string | null;
   body: string | null;
 }
@@ -224,6 +224,7 @@ export interface PageSummary {
 export interface Page extends PageSummary {
   body: string;
   updatedBy: Person | null;
+  source: "cms" | "kith";
 }
 
 export interface Table {

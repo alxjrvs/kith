@@ -25,11 +25,12 @@ function KnowledgePage({ kind, id, slug, title }: { kind: string; id: string; sl
   const table = useTable(kind, id);
   const page = usePage(kind, id, slug);
   const canEdit = table.data?.canEdit === true;
-  // A campaign's pages are written in kith-cms (docs/CMS.md); a game day's here.
-  const inCms = kind === "campaign";
   // Only a 404 is a page that does not exist yet. Any other failure must never
   // open an empty editor over a page that is really there.
   const missing = page.error instanceof ApiError && page.error.status === 404;
+  // A campaign's pages are written in kith-cms (docs/CMS.md), new ones too; a
+  // game day's here, and so is a campaign page not moved over yet.
+  const inCms = page.data ? page.data.page.source === "cms" : kind === "campaign";
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
