@@ -44,8 +44,18 @@
         },
         {
           "slug": "system",
-          "label": "System (for a campaign: Mothership, D&D 5e, ...)",
-          "type": "string"
+          "label": "System",
+          "type": "select",
+          "validation": {
+            "options": [
+              "D&D",
+              "Daggerheart",
+              "Root RPG",
+              "Salvage Union",
+              "Mothership",
+              "Other"
+            ]
+          }
         },
         {
           "slug": "tagline",
