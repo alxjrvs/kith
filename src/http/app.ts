@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { legacyRedirect } from "./legacy-host.ts";
 import type { Env } from "../env.ts";
 import { verifyDiscordRequest } from "../discord/verify.ts";
 import { handleInteraction } from "../discord/interactions.ts";
@@ -61,6 +62,12 @@ import {
 
 export function createApp() {
   const app = new Hono<{ Bindings: Env; Variables: { userId: string } }>();
+
+  app.use("*", async (c, next) => {
+    const to = legacyRedirect(c.req.method, new URL(c.req.url));
+    if (to) return c.redirect(to, 301);
+    await next();
+  });
 
   app.get("/healthz", (c) => c.json({ ok: true, environment: c.env.ENVIRONMENT }));
 
