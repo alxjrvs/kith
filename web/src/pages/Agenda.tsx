@@ -55,7 +55,7 @@ export function Agenda() {
           {agenda.isSuccess && rows.length === 0 ? (
             <p className="empty">
               {effective === "mine" ? "Nothing on your tables in the next six weeks." : "Nothing public in the next six weeks."}{" "}
-              <Link to="/find">Find a game</Link>
+              <Link to="/games">See every game</Link>
             </p>
           ) : null}
           {[...days.entries()].map(([day, list]) => (

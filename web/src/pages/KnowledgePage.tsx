@@ -1,12 +1,26 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams, useSearch } from "@tanstack/react-router";
+import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { ApiError, usePage, useTable, useTableEdits, type Visibility } from "../api.ts";
 import { Markdown } from "../markdown.tsx";
+import { ToTable } from "../components/To.tsx";
 
-/** One knowledge page: read it, or, for organisers, write it. */
-export function KnowledgePage() {
+/** A campaign's page, under its game's home base. */
+export function GameKnowledgePage() {
+  const { slug, page } = useParams({ from: "/shell/games/$slug/$page" });
+  const search = useSearch({ from: "/shell/games/$slug/$page" });
+  return <KnowledgePage kind="campaign" id={slug} slug={page} title={search.title} />;
+}
+
+/** A game day's page, under the day. */
+export function TableKnowledgePage() {
   const { kind, id, slug } = useParams({ from: "/shell/table/$kind/$id/$slug" });
   const search = useSearch({ from: "/shell/table/$kind/$id/$slug" });
+  return <KnowledgePage kind={kind} id={id} slug={slug} title={search.title} />;
+}
+
+/** One knowledge page: read it, or, for organisers, write it. */
+function KnowledgePage({ kind, id, slug, title }: { kind: string; id: string; slug: string; title: string | undefined }) {
+  const search = { title };
   const table = useTable(kind, id);
   const page = usePage(kind, id, slug);
   const canEdit = table.data?.canEdit === true;
@@ -20,9 +34,9 @@ export function KnowledgePage() {
   }, [missing, canEdit]);
 
   const back = (
-    <Link to="/table/$kind/$id" params={{ kind, id }} style={{ fontSize: 13 }}>
+    <ToTable kind={kind} id={id} style={{ fontSize: 13 }}>
       Back to {table.data?.listing.name ?? "the table"}
-    </Link>
+    </ToTable>
   );
 
   if (page.isPending || table.isPending) return <main className="page" aria-busy="true" />;
@@ -163,7 +177,12 @@ function PageEditor({
               className="btn"
               style={{ marginLeft: "auto", borderColor: "var(--out)" }}
               onClick={() =>
-                edits.removePage.mutate(slug, { onSuccess: () => void navigate({ to: "/table/$kind/$id", params: { kind, id } }) })
+                edits.removePage.mutate(slug, {
+                  onSuccess: () =>
+                    void (kind === "campaign"
+                      ? navigate({ to: "/games/$slug", params: { slug: id } })
+                      : navigate({ to: "/table/$kind/$id", params: { kind, id } })),
+                })
               }
             >
               Delete the page

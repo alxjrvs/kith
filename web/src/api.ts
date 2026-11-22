@@ -105,12 +105,6 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
 
 export const useMe = () => useQuery({ queryKey: ["me"], queryFn: () => api<Me>("/api/hub/me") });
 
-export const useListings = () =>
-  useQuery({
-    queryKey: ["listings"],
-    queryFn: () => api<{ asOf: number; listings: Listing[] }>("/api/hub/listings"),
-  });
-
 export const useListing = (kind: string, id: string) =>
   useQuery({
     queryKey: ["listing", kind, id],
@@ -146,9 +140,10 @@ export function useSignup(listing: Pick<Listing, "kind" | "id">) {
         asOf: old?.asOf ?? Math.floor(Date.now() / 1000),
         listing: data.listing,
       }));
-      void client.invalidateQueries({ queryKey: ["listings"] });
       void client.invalidateQueries({ queryKey: ["agenda"] });
       void client.invalidateQueries({ queryKey: ["table", listing.kind, listing.id] });
+      void client.invalidateQueries({ queryKey: ["home"] });
+      void client.invalidateQueries({ queryKey: ["homes"] });
     },
   });
 }
@@ -158,7 +153,10 @@ export function useIntent() {
   return useMutation({
     mutationFn: ({ sessionId, intent }: { sessionId: string; intent: Intent }) =>
       api(`/api/hub/sessions/${encodeURIComponent(sessionId)}/intent`, { method: "POST", body: { intent } }),
-    onSuccess: () => void client.invalidateQueries({ queryKey: ["agenda"] }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["agenda"] });
+      void client.invalidateQueries({ queryKey: ["home"] });
+    },
   });
 }
 
@@ -172,8 +170,9 @@ export function useListingEdit(listing: Pick<Listing, "kind" | "id">) {
       ),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ["listing", listing.kind, listing.id] });
-      void client.invalidateQueries({ queryKey: ["listings"] });
       void client.invalidateQueries({ queryKey: ["table", listing.kind, listing.id] });
+      void client.invalidateQueries({ queryKey: ["home"] });
+      void client.invalidateQueries({ queryKey: ["homes"] });
     },
   });
 }
@@ -183,7 +182,11 @@ export function useCatalogEdit(gameId: string) {
   return useMutation({
     mutationFn: (patch: Partial<Pick<CatalogEntry, "category" | "summary" | "coverUrl">>) =>
       api(`/api/games/${encodeURIComponent(gameId)}/catalog`, { method: "PATCH", body: patch }),
-    onSuccess: () => void client.invalidateQueries({ queryKey: ["games"] }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["games"] });
+      void client.invalidateQueries({ queryKey: ["home"] });
+      void client.invalidateQueries({ queryKey: ["homes"] });
+    },
   });
 }
 
@@ -234,7 +237,10 @@ export const usePage = (kind: string, id: string, slug: string, enabled = true) 
 export function useTableEdits(kind: string, id: string) {
   const client = useQueryClient();
   const base = `/api/tables/${kind}/${encodeURIComponent(id)}`;
-  const refresh = () => void client.invalidateQueries({ queryKey: ["table", kind, id] });
+  const refresh = () => {
+    void client.invalidateQueries({ queryKey: ["table", kind, id] });
+    void client.invalidateQueries({ queryKey: ["home"] });
+  };
   return {
     addLink: useMutation({
       mutationFn: (link: { label: string; url: string; kind: string; visibility: Visibility }) =>
@@ -258,4 +264,80 @@ export function useTableEdits(kind: string, id: string) {
       onSuccess: refresh,
     }),
   };
+}
+
+/** One seat at a table: the person (when signed in) and who they play. */
+export interface Seat {
+  person: Person | null;
+  character: string | null;
+  role: "gm" | "player";
+  state: "in" | "waitlisted";
+}
+
+/** A card on the games hub. Mirrors src/hub/home-base.ts. */
+export interface GameSummary {
+  kind: "campaign" | "board" | "day";
+  slug: string;
+  name: string;
+  state: string;
+  label: string | null;
+  tagline: string | null;
+  imageUrl: string | null;
+  lead: Person | null;
+  players: number;
+  capacity: number | null;
+  next: number | null;
+  mine: boolean;
+  open: boolean;
+}
+
+export interface CampaignHome {
+  kind: "campaign";
+  slug: string;
+  listing: Listing;
+  member: boolean;
+  canEdit: boolean;
+  roster: Seat[];
+  upcoming: AgendaRow[];
+  calendarUrl: string | null;
+  links: TableLink[];
+  pages: PageSummary[];
+}
+
+export interface BoardHome {
+  kind: "board";
+  slug: string;
+  game: CatalogEntry;
+  canEdit: boolean;
+  upcoming: { listing: Listing; seats: Seat[] }[];
+  calendarUrl: string | null;
+  played: number;
+}
+
+export type HomeBase = CampaignHome | BoardHome;
+
+export const useHomes = () =>
+  useQuery({
+    queryKey: ["homes"],
+    queryFn: () => api<{ asOf: number; games: GameSummary[] }>("/api/hub/homes"),
+  });
+
+export const useHome = (slug: string) =>
+  useQuery({
+    queryKey: ["home", slug],
+    queryFn: () => api<{ asOf: number; home: HomeBase }>(`/api/hub/homes/${encodeURIComponent(slug)}`),
+    retry: false,
+  });
+
+/** Organisers: call off one session. The console's own cancel, so Discord and calendars follow. */
+export function useCancelSession() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => api(`/api/sessions/${encodeURIComponent(sessionId)}/cancel`, { method: "POST", body: {} }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["home"] });
+      void client.invalidateQueries({ queryKey: ["homes"] });
+      void client.invalidateQueries({ queryKey: ["agenda"] });
+    },
+  });
 }

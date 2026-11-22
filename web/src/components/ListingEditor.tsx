@@ -26,7 +26,7 @@ export function ListingEditor({ listing }: { listing: Listing }) {
           <div className="field">
             <label htmlFor="le-visibility">Who can see it</label>
             <select id="le-visibility" value={visibility} onChange={(e) => setVisibility(e.target.value as Visibility)}>
-              <option value="public">Anyone (listed on Find a game)</option>
+              <option value="public">Anyone (shown on the games hub)</option>
               <option value="members">The people on it</option>
               <option value="organisers">Organisers only</option>
             </select>

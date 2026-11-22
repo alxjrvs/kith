@@ -1,7 +1,7 @@
-import { Link } from "@tanstack/react-router";
 import { useIntent, type AgendaRow as Row, type Intent } from "../api.ts";
 import { time } from "../format.ts";
 import { TallySquares } from "./Squares.tsx";
+import { ToTable } from "./To.tsx";
 
 export function statusOf(row: Row): { label: string; tone: string } {
   if (row.state === "CANCELLED") return { label: "Called off", tone: "out" };
@@ -15,7 +15,21 @@ export function statusOf(row: Row): { label: string; tone: string } {
 }
 
 /** One session on the agenda, with your own In / Maybe / Out when it is yours. */
-export function AgendaRow({ row, answer = true }: { row: Row; answer?: boolean }) {
+export function AgendaRow({
+  row,
+  answer = true,
+  tally = true,
+  simple = false,
+}: {
+  row: Row;
+  answer?: boolean;
+  tally?: boolean;
+  /**
+   * One button instead of three. On a roster silence is already "in", so the
+   * only thing a player needs to say is that they cannot make it, and take it back.
+   */
+  simple?: boolean;
+}) {
   const intent = useIntent();
   const status = statusOf(row);
   const taking = row.state !== "LOCKED" && row.state !== "CANCELLED" && row.state !== "PLAYED";
@@ -28,13 +42,13 @@ export function AgendaRow({ row, answer = true }: { row: Row; answer?: boolean }
       </span>
       <div style={{ flex: "1 1 220px", display: "flex", flexDirection: "column" }}>
         {row.campaignId || row.gameDayId ? (
-          <Link
-            to="/table/$kind/$id"
-            params={{ kind: row.campaignId ? "campaign" : "game-day", id: (row.campaignId ?? row.gameDayId)! }}
+          <ToTable
+            kind={row.campaignId ? "campaign" : "game-day"}
+            id={(row.campaignId ?? row.gameDayId)!}
             style={{ fontWeight: 600, color: "var(--text)" }}
           >
             {row.title}
-          </Link>
+          </ToTable>
         ) : (
           <span style={{ fontWeight: 600 }}>{row.title}</span>
         )}
@@ -44,14 +58,30 @@ export function AgendaRow({ row, answer = true }: { row: Row; answer?: boolean }
           </span>
         ) : null}
       </div>
-      <div className="row" style={{ gap: 10 }}>
-        <TallySquares tally={row.tally} />
-        <span className="mono" style={{ fontSize: 13 }}>
-          {row.tally.in} / {row.rosterSize}
-        </span>
-      </div>
+      {tally ? (
+        <div className="row" style={{ gap: 10 }}>
+          <TallySquares tally={row.tally} />
+          <span className="mono" style={{ fontSize: 13 }}>
+            {row.tally.in} / {row.rosterSize}
+          </span>
+        </div>
+      ) : null}
       <span className={`pill ${status.tone}`}>{status.label}</span>
-      {answer && row.canAnswer && taking ? (
+      {answer && row.canAnswer && taking && simple ? (
+        row.myIntent === "out" ? (
+          <div className="row" style={{ gap: 10 }}>
+            <span className="pill out">You can't make it</span>
+            <button type="button" className="btn" style={{ minHeight: 32, padding: "0 10px" }} disabled={intent.isPending} onClick={() => choose("in")}>
+              Actually, I can
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="btn" style={{ minHeight: 32, padding: "0 12px" }} disabled={intent.isPending} onClick={() => choose("out")}>
+            I can't make it
+          </button>
+        )
+      ) : null}
+      {answer && row.canAnswer && taking && !simple ? (
         <div className="segmented" role="group" aria-label={`Your answer for ${row.title}`}>
           {(["in", "maybe", "out"] as const).map((value) => (
             <button

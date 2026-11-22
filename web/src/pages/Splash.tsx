@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ToTable } from "../components/To.tsx";
 import { Link, useParams } from "@tanstack/react-router";
 import { useListing, useMe, type Listing } from "../api.ts";
 import { SeatSquares } from "../components/Squares.tsx";
@@ -29,7 +30,7 @@ export function Splash() {
               If it is a table you are on, <a href={signInHref()}>sign in with Discord</a>.
             </>
           ) : null}{" "}
-          <Link to="/find">See every open table</Link>
+          <Link to="/games">See every game</Link>
         </p>
       </main>
     );
@@ -78,13 +79,14 @@ export function Splash() {
   );
 }
 
-function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean }) {
+/** The splash's sound: off until pressed, looping once it plays. Shared with the home bases. */
+export function SoundButton({ url }: { url: string | null }) {
   const audio = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
-    if (!listing.soundUrl) return;
-    const element = new Audio(listing.soundUrl);
+    if (!url) return;
+    const element = new Audio(url);
     element.loop = true;
     element.preload = "none";
     element.addEventListener("pause", () => setPlaying(false));
@@ -94,7 +96,7 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
       element.pause();
       audio.current = null;
     };
-  }, [listing.soundUrl]);
+  }, [url]);
 
   const toggle = () => {
     const element = audio.current;
@@ -103,10 +105,35 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
     else element.pause();
   };
 
+  if (!url) return null;
+  return (
+    <button type="button" className="btn" aria-pressed={playing} onClick={toggle}>
+      {playing ? (
+        <>
+          <span aria-hidden="true" style={{ display: "inline-flex", gap: 3 }}>
+            <span style={{ width: 4, height: 12, background: "var(--in)" }} />
+            <span style={{ width: 4, height: 12, background: "var(--in)" }} />
+          </span>
+          Pause the sound
+        </>
+      ) : (
+        <>
+          <span
+            aria-hidden="true"
+            style={{ width: 0, height: 0, borderLeft: "10px solid var(--text)", borderTop: "6px solid transparent", borderBottom: "6px solid transparent" }}
+          />
+          Play the sound
+        </>
+      )}
+    </button>
+  );
+}
+
+function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean }) {
   const left = listing.capacity === null ? null : Math.max(listing.capacity - listing.taken, 0);
+  // The system is a chip of its own below the title, where people look for it.
   const eyebrow = [
     listing.kind === "campaign" ? "New campaign" : "Game day",
-    listing.game?.name,
     listing.lead ? `${listing.kind === "campaign" ? "GM" : "Host"} ${listing.lead.name}` : null,
   ]
     .filter(Boolean)
@@ -115,34 +142,14 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
   return (
     <div className="splash">
       {listing.heroUrl ? <div className="hero" style={{ backgroundImage: `url("${encodeURI(listing.heroUrl)}")` }} /> : null}
-      <Table />
+      {listing.heroUrl ? null : <TableMotif />}
       <header>
         <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
           <img src="/mark.svg" alt="" width="26" height="26" />
-          kith
+          Kith
         </Link>
         <div className="row" style={{ gap: 10 }}>
-          {listing.soundUrl ? (
-            <button type="button" className="btn" aria-pressed={playing} onClick={toggle}>
-              {playing ? (
-                <>
-                  <span aria-hidden="true" style={{ display: "inline-flex", gap: 3 }}>
-                    <span style={{ width: 4, height: 12, background: "var(--in)" }} />
-                    <span style={{ width: 4, height: 12, background: "var(--in)" }} />
-                  </span>
-                  Pause the sound
-                </>
-              ) : (
-                <>
-                  <span
-                    aria-hidden="true"
-                    style={{ width: 0, height: 0, borderLeft: "10px solid var(--text)", borderTop: "6px solid transparent", borderBottom: "6px solid transparent" }}
-                  />
-                  Play the sound
-                </>
-              )}
-            </button>
-          ) : null}
+          <SoundButton url={listing.soundUrl} />
           {signedIn ? (
             <Link to="/agenda" className="btn">
               Your agenda
@@ -159,6 +166,7 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
         <h1>{listing.name}</h1>
         {listing.tagline ? <p className="tagline">{listing.tagline}</p> : null}
         <div className="row" style={{ gap: 6 }}>
+          {listing.game ? <span className="chip system">{listing.game.name}</span> : null}
           {[...cadence(listing), listing.where === "voice" ? "Voice" : listing.where].filter(Boolean).map((chip) => (
             <span key={chip} className="chip">
               {chip}
@@ -177,34 +185,19 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
         </div>
         <div className="row" style={{ gap: 18, fontSize: 13 }}>
           <a href="#details">Read the full details</a>
-          <Link to="/table/$kind/$id" params={{ kind: listing.kind, id: listing.id }}>
-            Links and pages
-          </Link>
+          <ToTable kind={listing.kind} id={listing.id}>
+            {listing.kind === "campaign" ? "The game's home base" : "Links and pages"}
+          </ToTable>
         </div>
       </main>
     </div>
   );
 }
 
-/** The Lantern splash's orrery: three rings, the ember sun and two worlds. */
-/** The mark, at room scale: a round table seen from above, six seats, the top one lit. */
-function Table() {
-  const at = (size: number, style: CSSProperties, dx = 0, dy = 0) => (
-    <div
-      aria-hidden="true"
-      className="seat"
-      style={{ left: "68%", top: "46%", width: size, height: size, margin: `${dy - size / 2}px 0 0 ${dx - size / 2}px`, ...style }}
-    />
-  );
-  const seats = Array.from({ length: 6 }, (_, i) => {
-    const t = (i / 6) * Math.PI * 2 - Math.PI / 2;
-    return at(56, { background: i === 0 ? "var(--accent)" : "var(--border)", border: 0, opacity: i === 0 ? 0.85 : 0.5 }, 300 * Math.cos(t), 300 * Math.sin(t));
-  });
-  return (
-    <>
-      {at(1100, { borderColor: "var(--rule)" })}
-      {at(400, { background: "var(--panel)", border: "2px solid var(--accent)", opacity: 0.55 })}
-      {seats}
-    </>
-  );
+/**
+ * With no hero image, the art is the Kith logo itself, at room scale on the
+ * right. With one, the organiser's picture is the art and this stays out.
+ */
+export function TableMotif() {
+  return <img className="logo-art" src="/mark.svg" alt="" aria-hidden="true" />;
 }

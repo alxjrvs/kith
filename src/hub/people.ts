@@ -18,8 +18,18 @@ export function personFrom(row: {
   };
 }
 
-/** Discord's CDN. A null hash is the default avatar, which the site draws itself. */
+/**
+ * Discord's CDN. Somebody with no avatar of their own gets the default one
+ * Discord itself shows them, picked the way Discord picks it, so the site's
+ * faces match the server's.
+ */
 export function avatarUrl(userId: string, hash: string | null): string | null {
-  if (!hash || !/^(a_)?[0-9a-f]{32}$/.test(hash)) return null;
-  return `https://cdn.discordapp.com/avatars/${userId}/${hash}.png?size=96`;
+  if (hash && /^(a_)?[0-9a-f]{32}$/.test(hash)) return `https://cdn.discordapp.com/avatars/${userId}/${hash}.png?size=96`;
+  return defaultAvatarUrl(userId);
+}
+
+export function defaultAvatarUrl(userId: string): string | null {
+  if (!/^\d{1,20}$/.test(userId)) return null;
+  const index = Number((BigInt(userId) >> 22n) % 6n);
+  return `https://cdn.discordapp.com/embed/avatars/${index}.png`;
 }

@@ -8,7 +8,7 @@ import { canSee, type Viewer } from "./visibility.ts";
 
 /**
  * What the site says about a table people can join: a campaign that is still
- * forming, or a game day. One shape for both, so Find a game, the front page
+ * forming, or a game day. One shape for both, so the home bases, the front page
  * and the splash page render either without asking which.
  */
 export interface Listing {

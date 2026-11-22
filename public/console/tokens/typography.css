@@ -1,6 +1,6 @@
 :root{
-  --font-ui:"Space Grotesk",system-ui,-apple-system,sans-serif;
-  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --font-ui:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
   /* Discord's real UI face is "gg sans", which is proprietary and not redistributable,
      so no @font-face for it ships here. Discord mockups render in the nearest stack. */
   --font-discord:"Noto Sans","Helvetica Neue",system-ui,sans-serif;
