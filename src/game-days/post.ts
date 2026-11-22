@@ -4,7 +4,6 @@ import { db, schema } from "../db/index.ts";
 import {
   SETTING_DEFAULTS,
   SETTING_KEYS,
-  getSetting,
   requireGuildId,
   settingOr,
 } from "../db/settings.ts";
@@ -19,6 +18,7 @@ import { claim, find, record, recordFailure, release } from "../projection/publi
 import { gameDayTitle } from "../projection/target.ts";
 import { renderSignupPost } from "./render.ts";
 import { capacityOf, signupsForDay } from "./signups.ts";
+import { isStaging, schedulingChannel } from "../projection/staging.ts";
 
 /**
  * The signup post, sent once, and the thread that hangs off it.
@@ -57,8 +57,7 @@ export async function postSignupPost(env: Env, gameDayId: string): Promise<strin
   if (day.day.state !== "SEATING") return undefined;
 
   const channelId =
-    day.day.discordChannelId ??
-    (await getSetting<string>(env, SETTING_KEYS.schedulingChannelId));
+    day.day.discordChannelId ?? (await schedulingChannel(env, isStaging({ campaign: null, game: day.game })));
   if (!channelId) {
     throw new Error(
       `no channel to post game day ${gameDayId} in — the day has none and neither does settings`,

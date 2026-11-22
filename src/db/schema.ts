@@ -109,6 +109,12 @@ export const games = sqliteTable(
     summary: text("summary"),
     /** An https URL to a cover image. Kith stores the link, never the image. */
     coverUrl: text("cover_url"),
+    /**
+     * A test game: 1 sends its game days' posts to the Staging channels and keeps
+     * it off the site for everybody but organisers. `src/projection/staging.ts`
+     * is the one place that reads it.
+     */
+    staging: integer("staging").notNull().default(0),
     createdAt: integer("created_at").notNull().default(now),
     updatedAt: integer("updated_at").notNull().default(now),
   },
@@ -204,6 +210,12 @@ export const campaigns = sqliteTable(
     /** https URLs. Kith links to the hero image and the sound; it hosts neither. */
     heroUrl: text("hero_url"),
     soundUrl: text("sound_url"),
+    /**
+     * A test campaign: 1 sends everything Kith would post for it to the Staging
+     * channels instead of the real ones, and publishes nothing to the calendar.
+     * `src/projection/staging.ts` is the one place that reads it.
+     */
+    staging: integer("staging").notNull().default(0),
     createdAt: integer("created_at").notNull().default(now),
     updatedAt: integer("updated_at").notNull().default(now),
   },

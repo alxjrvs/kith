@@ -4,7 +4,6 @@ import { db, schema } from "../db/index.ts";
 import {
   SETTING_DEFAULTS,
   SETTING_KEYS,
-  getSetting,
   requireGuildId,
   settingOr,
 } from "../db/settings.ts";
@@ -13,6 +12,7 @@ import { isThreadAlreadyStarted, postMessage, startThreadFromMessage } from "../
 import { claim, find, record, release } from "../projection/publications.ts";
 import { sessionTitle, type ProjectionTarget } from "../projection/target.ts";
 import type { MessagePayload } from "./render.ts";
+import { isStaging, schedulingChannel } from "../projection/staging.ts";
 
 /**
  * A thread per session.
@@ -166,7 +166,7 @@ export async function channelOf(env: Env, target: ProjectionTarget): Promise<str
   return (
     target.campaign?.discordChannelId ??
     target.gameDay?.discordChannelId ??
-    (await getSetting<string>(env, SETTING_KEYS.schedulingChannelId))
+    (await schedulingChannel(env, isStaging(target)))
   );
 }
 

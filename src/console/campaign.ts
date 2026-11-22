@@ -82,6 +82,8 @@ export interface CampaignPage {
   /** Assembled from ids. Never a reason to call Discord. */
   channelUrl: string | null;
   roleId: string | null;
+  /** A test campaign: posts go to Staging (src/projection/staging.ts). */
+  staging: boolean;
   roster: RosterMember[];
   upcoming: UpcomingSession[];
   /**
@@ -149,6 +151,7 @@ export async function campaignPage(
         ? `https://discord.com/channels/${guildId}/${campaign.discordChannelId}`
         : null,
     roleId: campaign.discordRoleId,
+    staging: campaign.staging === 1,
     // `rosterOf` and not a second query: a FORMING campaign's roster is its
     // claimants and a started one's is its members, and that rule lives in one
     // place. A page that re-cut it would be the console disagreeing with the

@@ -46,6 +46,7 @@ import {
   actorOf,
   type Interaction,
 } from "./types.ts";
+import { isStaging, schedulingChannel } from "../projection/staging.ts";
 
 type Json = Record<string, unknown>;
 
@@ -321,7 +322,7 @@ async function openDatePoll(
     ...(target.session.campaignId ? { campaignId: target.session.campaignId } : {}),
     channelId:
       target.campaign?.discordChannelId ??
-      (await getSetting<string>(env, SETTING_KEYS.schedulingChannelId)) ??
+      (await schedulingChannel(env, isStaging(target))) ??
       undefined,
     dates: parsed.dates,
     now: new Date(),

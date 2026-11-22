@@ -4,6 +4,7 @@ import { db, schema } from "../db/index.ts";
 import { SETTING_DEFAULTS, SETTING_KEYS, settingOr } from "../db/settings.ts";
 import { agendaBetween, windowAround, type AgendaRow } from "../console/agenda.ts";
 import { canSee, type Viewer } from "./visibility.ts";
+import { siteVisibility } from "../projection/staging.ts";
 
 /**
  * The site's agenda: the console's `agendaBetween`, read as the viewer.
@@ -45,20 +46,26 @@ export async function agendaFor(
   const visibility = new Map<string, string>();
   for (const ids of chunks(campaignIds)) {
     for (const row of await d
-      .select({ id: schema.campaigns.id, visibility: schema.campaigns.visibility })
+      .select({ id: schema.campaigns.id, visibility: schema.campaigns.visibility, staging: schema.campaigns.staging })
       .from(schema.campaigns)
       .where(inArray(schema.campaigns.id, ids))
       .all()) {
-      visibility.set(`c:${row.id}`, row.visibility);
+      visibility.set(`c:${row.id}`, siteVisibility(row.visibility, row.staging));
     }
   }
   for (const ids of chunks(dayIds)) {
     for (const row of await d
-      .select({ id: schema.gameDays.id, visibility: schema.gameDays.visibility, host: schema.gameDays.hostUserId })
+      .select({
+        id: schema.gameDays.id,
+        visibility: schema.gameDays.visibility,
+        host: schema.gameDays.hostUserId,
+        staging: schema.games.staging,
+      })
       .from(schema.gameDays)
+      .leftJoin(schema.games, eq(schema.gameDays.gameId, schema.games.id))
       .where(inArray(schema.gameDays.id, ids))
       .all()) {
-      visibility.set(`d:${row.id}`, row.visibility);
+      visibility.set(`d:${row.id}`, siteVisibility(row.visibility, row.staging));
       // A host is on their own day, seat or no seat, as `isMemberOf` says.
       if (viewer.userId && row.host === viewer.userId) {
         myDays.add(row.id);

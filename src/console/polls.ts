@@ -6,6 +6,7 @@ import { getUser } from "../db/users.ts";
 import { parseDates } from "../polls/parse-dates.ts";
 import { openPoll } from "../polls/open.ts";
 import type { WinRule } from "../polls/win-rule.ts";
+import { isStagingParent, schedulingChannel } from "../projection/staging.ts";
 
 /**
  * The console's way in to the same `openPoll` the modal uses.
@@ -102,6 +103,11 @@ export async function openPollFromConsole(
 
   const actor = await getUser(env, actorUserId);
 
+  // A test campaign's or test game's poll goes to Staging, like its posts.
+  const staging = await isStagingParent(env, {
+    campaignId: typeof body.campaignId === "string" ? body.campaignId : undefined,
+    gameId,
+  });
   const opened = await openPoll(env, {
     // The console's caller is a Discord id, so the user row is the actor. It
     // exists: the session cookie was minted from an identify exchange.
@@ -118,7 +124,7 @@ export async function openPollFromConsole(
       : {}),
     ...(winRule ? { winRule } : {}),
     ...(typeof body.winThreshold === "number" ? { winThreshold: body.winThreshold } : {}),
-    channelId: (await getSetting<string>(env, SETTING_KEYS.schedulingChannelId)) ?? undefined,
+    channelId: (await schedulingChannel(env, staging)) ?? undefined,
     dates: parsed.dates,
     now: new Date(),
   });
@@ -141,7 +147,7 @@ export async function openPollFromConsole(
         ok: false,
         // A missing setting, not a refused person — the same shape the roles
         // check uses when the organiser role has not been seeded.
-        error: `setting ${SETTING_KEYS.schedulingChannelId} is not seeded — there is nowhere to post`,
+        error: `setting ${staging ? SETTING_KEYS.stagingChannelId : SETTING_KEYS.schedulingChannelId} is not seeded — there is nowhere to post`,
         status: 503,
       };
   }

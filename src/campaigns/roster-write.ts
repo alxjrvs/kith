@@ -3,6 +3,7 @@ import type { Env } from "../env.ts";
 import { db, schema } from "../db/index.ts";
 import { mintFeedToken } from "../db/users.ts";
 import { InvalidCampaign } from "./write.ts";
+import { stagingIsSettled } from "../projection/staging.ts";
 
 /**
  * The roster, edited from the console. Same shape as every other write here: the
@@ -156,6 +157,8 @@ export interface GameInput {
   minPlayers?: number | null;
   maxPlayers?: number | null;
   defaultDurationMinutes?: number | null;
+  /** A test game: its game days post to the Staging channels (src/projection/staging.ts). */
+  staging?: boolean;
 }
 
 export class InvalidGame extends Error {
@@ -198,6 +201,14 @@ export async function putGame(
     .from(schema.games)
     .where(eq(schema.games.id, gameId))
     .get();
+  if (
+    before &&
+    input.staging !== undefined &&
+    (input.staging ? 1 : 0) !== before.staging &&
+    (await stagingIsSettled(env, { gameId }))
+  ) {
+    throw new InvalidGame("a game with game days or polls cannot become a test or stop being one; make a new one instead");
+  }
 
   const row = {
     name: input.name,
@@ -206,6 +217,7 @@ export async function putGame(
     ...(input.defaultDurationMinutes === undefined
       ? {}
       : { defaultDurationMinutes: input.defaultDurationMinutes }),
+    ...(input.staging === undefined ? {} : { staging: input.staging ? 1 : 0 }),
   };
 
   const d = db(env);

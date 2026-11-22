@@ -33,6 +33,7 @@ export interface GameRow {
   minPlayers: number | null;
   maxPlayers: number | null;
   defaultDurationMinutes: number | null;
+  staging: boolean;
   usage: GameUsage;
 }
 
@@ -73,6 +74,7 @@ export async function gameRows(env: Env): Promise<GameRow[]> {
     minPlayers: game.minPlayers,
     maxPlayers: game.maxPlayers,
     defaultDurationMinutes: game.defaultDurationMinutes,
+    staging: game.staging === 1,
     usage: { campaigns: byGame.get(game.id) ?? [], gameDays: days.get(game.id) ?? 0 },
   }));
 }

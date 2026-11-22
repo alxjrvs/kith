@@ -8,6 +8,7 @@ import {
   unprojectOrphanedEvent as unprojectOrphanedGoogleEvent,
 } from "../google/calendar.ts";
 import { isProjectable, loadProjectionTarget } from "../projection/target.ts";
+import { publishesTo } from "../projection/staging.ts";
 
 /**
  * Outbound projection. Google Calendar and Discord *scheduled events* only —
@@ -67,6 +68,10 @@ export async function project(body: OutboxMessage, env: Env): Promise<void> {
   }
 
   if (!retracting && !isProjectable(target)) return;
+  // A test game keeps off the calendar people subscribe to, and off the
+  // server's event list (src/projection/staging.ts). Deletes still pass, for
+  // the same reason as above.
+  if (!retracting && !publishesTo(target, body.kind.startsWith("gcal") ? "google" : "discord")) return;
 
   switch (body.kind) {
     case "discord.event.upsert":
