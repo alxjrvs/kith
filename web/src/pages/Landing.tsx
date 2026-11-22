@@ -26,14 +26,20 @@ export function Landing() {
 
   return (
     <div className="show">
-      <header className="show-top">
-        <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
-          <img src="/mark.svg" alt="" width="26" height="26" />
-          Kith.town
-        </Link>
-      </header>
+      <Top />
       {homes.isPending ? null : slides.length === 0 ? <Empty /> : <Slides slides={slides} />}
     </div>
+  );
+}
+
+function Top() {
+  return (
+    <header className="show-top">
+      <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
+        <img src="/mark.svg" alt="" width="26" height="26" />
+        Kith.town
+      </Link>
+    </header>
   );
 }
 
@@ -129,14 +135,33 @@ function Slides({ slides }: { slides: GameSummary[] }) {
   );
 }
 
-function Slide({ game, current, position }: { game: GameSummary; current: boolean; position: string }) {
+/**
+ * A game's own page for someone signed out: its slide from the slideshow,
+ * standing still. No details beyond what the game is, and the way in at the
+ * bottom (taking a seat, when it is signing up).
+ */
+export function StillSlide({ game, action }: { game: GameSummary; action?: ReactNode }) {
+  useNoScroll();
+  return (
+    <div className="show">
+      <Top />
+      <section className="show-slides">
+        <Slide game={game} current still position="" />
+      </section>
+      <Footer action={action} hint={false} />
+    </div>
+  );
+}
+
+function Slide({ game, current, position, still = false }: { game: GameSummary; current: boolean; position: string; still?: boolean }) {
   return (
     <article
       className="show-slide"
-      aria-roledescription="slide"
-      aria-label={`${game.name}, ${position}`}
+      aria-roledescription={still ? undefined : "slide"}
+      aria-label={still ? game.name : `${game.name}, ${position}`}
       aria-hidden={current ? undefined : true}
       data-current={current ? "" : undefined}
+      data-still={still ? "" : undefined}
       inert={current ? undefined : true}
     >
       {game.imageUrl ? (
@@ -148,6 +173,7 @@ function Slide({ game, current, position }: { game: GameSummary; current: boolea
         {game.label ? <span className="chip system show-system">{game.label}</span> : null}
         <h1>{game.name}</h1>
         {game.tagline ? <p className="show-tagline">{game.tagline}</p> : null}
+        {still ? null : (
         <div className="row" style={{ gap: "8px 18px", fontSize: 14 }}>
           {game.next ? (
             <span className="num">
@@ -157,6 +183,7 @@ function Slide({ game, current, position }: { game: GameSummary; current: boolea
           {game.open ? <span className="pill accent">Signing up</span> : null}
           {game.state === "CONCLUDED" ? null : <GameLink game={game}>{game.kind === "day" ? "See the game day" : "Visit its home base"}</GameLink>}
         </div>
+        )}
       </div>
     </article>
   );
@@ -175,15 +202,17 @@ function GameLink({ game, children }: { game: GameSummary; children: ReactNode }
   );
 }
 
-function Footer({ children }: { children?: ReactNode }) {
+function Footer({ children, action, hint = true }: { children?: ReactNode; action?: ReactNode; hint?: boolean }) {
   return (
     <footer className="show-bottom">
       {children ?? <span />}
       <div className="row" style={{ gap: 12 }}>
-        <span className="muted show-hint">Playing in one of these?</span>
-        <a className="btn primary" href={signInHref()}>
-          Sign in with Discord
-        </a>
+        {hint ? <span className="muted show-hint">Playing in one of these?</span> : null}
+        {action ?? (
+          <a className="btn primary" href={signInHref()}>
+            Sign in with Discord
+          </a>
+        )}
       </div>
     </footer>
   );

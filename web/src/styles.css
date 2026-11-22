@@ -258,6 +258,8 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
 .show-slide[data-current] { opacity: 1; visibility: visible; transition: opacity 900ms ease, visibility 0s; }
 .show-art { position: absolute; inset: 0; background-size: cover; background-position: center; transform: scale(1.04); }
 .show-slide[data-current] .show-art { animation: show-drift 14s ease-out both; }
+/* A game's own page is its slide holding still: no drift. */
+.show-slide[data-still] .show-art { animation: none; transform: none; }
 /* Darkest where the words are: under them and to their left. */
 .show-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--deep) 60%, transparent), transparent 18%), linear-gradient(0deg, var(--deep) 4%, color-mix(in srgb, var(--deep) 55%, transparent) 38%, transparent 70%), linear-gradient(90deg, color-mix(in srgb, var(--deep) 70%, transparent), transparent 60%); }
 .show-mark { position: absolute; right: 8%; top: 50%; transform: translateY(-50%); width: min(40vw, 62vh, 560px); height: auto; opacity: 0.9; pointer-events: none; }
