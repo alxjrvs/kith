@@ -16,6 +16,7 @@ import {
 } from "../discord/rest.ts";
 import { claim, record, recordFailure, release } from "../projection/publications.ts";
 import { leaveForming } from "../campaigns/forming-signup.ts";
+import { schedulingChannel } from "../projection/staging.ts";
 import { rearm } from "../jobs/arm.ts";
 import type { MessagePayload } from "../attendance/render.ts";
 import { personFrom, type Person } from "./people.ts";
@@ -73,19 +74,30 @@ export async function atTheDoor(env: Env, userId: string): Promise<Standing> {
     if (request && request.joinedAt === null) await markJoined(env, request);
     return "member";
   }
-  if (request) return request.state;
+  if (request && request.state !== "pending") return request.state;
 
-  const inserted = await db(env)
-    .insert(schema.serverRequests)
-    .values({ userId })
-    .onConflictDoNothing()
-    .returning({ userId: schema.serverRequests.userId });
-  if (inserted.length > 0) {
+  if (!request) await db(env).insert(schema.serverRequests).values({ userId }).onConflictDoNothing();
+  // Armed on every signup until the ask is posted: the job skips anybody with
+  // nothing signed up, so the signup that does land is the one that posts it.
+  if (!request?.discordMessageId) {
     await rearm(db(env), [
       { id: `${ASK_JOB}:${userId}`, kind: ASK_JOB, payload: { userId }, runAt: Math.floor(Date.now() / 1000) },
     ]);
   }
   return "pending";
+}
+
+/**
+ * Discord couldn't say whether they're in the server, so the signup went
+ * ahead without asking. This job asks again later, and opens a request if
+ * they turn out not to be.
+ */
+export const CHECK_JOB = "server-request.check";
+
+export async function checkLater(env: Env, userId: string): Promise<void> {
+  await rearm(db(env), [
+    { id: `${CHECK_JOB}:${userId}`, kind: CHECK_JOB, payload: { userId }, runAt: Math.floor(Date.now() / 1000) + 60 },
+  ]);
 }
 
 /** A signup is provisional while its person waits to be let into the server. */
@@ -110,7 +122,8 @@ async function markJoined(env: Env, request: Request): Promise<void> {
 
 export type Decision =
   | { outcome: "let-in"; inviteUrl: string }
-  | { outcome: "turned-away" }
+  /** `kept` is any place a table that has stopped moving would not give back. */
+  | { outcome: "turned-away"; kept: string[] }
   | { outcome: "unchanged"; inviteUrl: string | null }
   | { outcome: "already-joined" }
   | { outcome: "no-such-request" }
@@ -166,7 +179,11 @@ export async function turnAway(env: Env, userId: string, deciderId: string): Pro
   const request = await requestOf(env, userId);
   if (!request) return { outcome: "no-such-request" };
   if (request.joinedAt !== null) return { outcome: "already-joined" };
-  if (request.state === "declined") return { outcome: "unchanged", inviteUrl: null };
+
+  // Places first, so a failure partway leaves them waiting and a second click
+  // finishes the job, rather than declined with places still held.
+  const kept = await giveBackPlaces(env, userId);
+  if (request.state === "declined") return { outcome: "turned-away", kept };
 
   const d = db(env);
   await d.batch([
@@ -190,8 +207,7 @@ export async function turnAway(env: Env, userId: string, deciderId: string): Pro
       detail: { before: request.state, after: "declined" },
     }),
   ]);
-  await giveBackPlaces(env, userId);
-  return { outcome: "turned-away" };
+  return { outcome: "turned-away", kept };
 }
 
 /**
@@ -199,29 +215,27 @@ export async function turnAway(env: Env, userId: string, deciderId: string): Pro
  * the waitlist in exactly as it would have. A game day's goes through its lock,
  * like every other click on that day.
  */
-async function giveBackPlaces(env: Env, userId: string): Promise<void> {
-  const held = await db(env)
-    .select({ targetType: schema.signups.targetType, targetId: schema.signups.targetId })
-    .from(schema.signups)
-    .where(and(eq(schema.signups.userId, userId), ne(schema.signups.state, "out")))
-    .all();
-  if (held.length === 0) return;
+async function giveBackPlaces(env: Env, userId: string): Promise<string[]> {
+  const held = await signupsOf(env, userId);
+  if (held.length === 0) return [];
   const user = await db(env).select().from(schema.users).where(eq(schema.users.discordId, userId)).get();
   const actor = { id: userId, username: user?.username ?? userId, global_name: user?.globalName ?? null };
   for (const signup of held) {
-    if (signup.targetType === "campaign_forming") {
-      await leaveForming(env, signup.targetId, userId);
+    if (signup.kind === "campaign") {
+      await leaveForming(env, signup.id, userId);
     } else {
-      const lock = env.SESSION_LOCK.get(env.SESSION_LOCK.idFromName(signup.targetId));
-      await lock.leaveSeat({ gameDayId: signup.targetId, actor });
+      const lock = env.SESSION_LOCK.get(env.SESSION_LOCK.idFromName(signup.id));
+      await lock.leaveSeat({ gameDayId: signup.id, actor });
     }
   }
+  // A started campaign or a locked day refuses a withdrawal, as it would
+  // refuse theirs. Say which, rather than claim they were all given back.
+  return (await signupsOf(env, userId)).map((signup) => signup.name);
 }
 
 async function mintInvite(env: Env): Promise<{ code: string; expiresAt: number } | { reason: string }> {
   const channelId =
-    (await getSetting<string>(env, SETTING_KEYS.inviteChannelId)) ??
-    (await getSetting<string>(env, SETTING_KEYS.schedulingChannelId));
+    (await getSetting<string>(env, SETTING_KEYS.inviteChannelId)) ?? (await schedulingChannel(env, false));
   if (!channelId) return { reason: "Kith has no channel to make an invite on. Set the invite channel in Settings." };
   const guildId = await requireGuildId(env);
   try {
@@ -251,8 +265,9 @@ export interface ServerStatus {
 export async function serverStatusFor(env: Env, userId: string): Promise<ServerStatus> {
   const request = await requestOf(env, userId);
   if (!request || request.joinedAt !== null) return { server: "member", invite: null };
-  if (request.state !== "approved") return { server: request.state, invite: null };
+  if (request.state === "declined") return { server: "declined", invite: null };
 
+  // Somebody may have joined another way, waiting or not.
   try {
     if (await inServer(env, userId)) {
       await markJoined(env, request);
@@ -262,6 +277,7 @@ export async function serverStatusFor(env: Env, userId: string): Promise<ServerS
     // Discord being slow is no reason to hide the invite they already have.
     console.warn("server membership check failed", error);
   }
+  if (request.state === "pending") return { server: "pending", invite: null };
 
   const now = Math.floor(Date.now() / 1000);
   if (request.inviteCode && (request.inviteExpiresAt ?? 0) > now) {
@@ -418,6 +434,11 @@ export async function askPayload(env: Env, userId: string): Promise<MessagePaylo
   } else if (request.state === "approved") {
     const invite = request.inviteCode ? ` Their invite: ${inviteUrl(request.inviteCode)}` : "";
     lines.push("", `Let in by ${decider}. Kith shows them the invite when they next visit.${invite}`);
+  } else if (signups.length > 0) {
+    lines.push(
+      "",
+      `Not this time, said ${decider}. The places above have stopped taking changes, so they're still on them. Everything else was given back.`,
+    );
   } else {
     lines.push("", `Not this time, said ${decider}. Their places were given back.`);
   }
@@ -440,6 +461,8 @@ export async function postAsk(env: Env, userId: string): Promise<void> {
     (await getSetting<string>(env, SETTING_KEYS.approvalsChannelId)) ??
     (await getSetting<string>(env, SETTING_KEYS.stagingChannelId));
   if (!channelId) throw new Error("no approvals channel or Staging channel is set");
+  // A signup that didn't land (the table closed mid-click) leaves nothing to ask about.
+  if ((await signupsOf(env, userId)).length === 0) return;
   const payload = await askPayload(env, userId);
   if (!payload) return;
   const guildId = await requireGuildId(env);

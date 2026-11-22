@@ -17,7 +17,7 @@ import { loadProjectionTarget } from "../projection/target.ts";
 import { takesIntent } from "../sessions/lifecycle.ts";
 import type { InteractionUser } from "../discord/types.ts";
 import { cmsSections, toMarkdown } from "../cms/content.ts";
-import { atTheDoor, serverStatusFor } from "../hub/server-door.ts";
+import { atTheDoor, checkLater, serverStatusFor } from "../hub/server-door.ts";
 
 /**
  * `/api/hub/*`: the site's API, for everybody.
@@ -259,8 +259,12 @@ async function atTheDoorOrRefusal(c: Context<HubEnv>, userId: string): Promise<R
   try {
     standing = await atTheDoor(c.env, userId);
   } catch (error) {
-    console.error("server membership check failed", error);
-    return c.json({ error: "Kith couldn't check with Discord just now. Try again in a minute." }, 503);
+    // Discord being slow must not cost a member their seat. The signup goes
+    // ahead, and a job asks again in a minute; somebody who turns out not to
+    // be in the server is asked about then.
+    console.warn("server membership check failed; checking again later", error);
+    await checkLater(c.env, userId);
+    return undefined;
   }
   if (standing === "declined") {
     return c.json({ error: "Kith can't sign you up here, because you haven't been let into the Kith server." }, 403);

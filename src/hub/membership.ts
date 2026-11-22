@@ -5,7 +5,8 @@ import { isProvisional } from "./server-door.ts";
 
 /**
  * Who counts as "the people on it" for `members` visibility: a campaign's
- * roster or live forming signups; a game day's live seats, its queue, and its
+ * roster or live forming signups (In or Interested, and not held for somebody
+ * still waiting to be let into the server); a game day's live seats, its queue, and its
  * host. The listing reads the same rows; this is the same answer for links
  * and pages.
  */
@@ -25,7 +26,7 @@ export async function isMemberOf(
         eq(schema.signups.targetType, kind === "campaign" ? "campaign_forming" : "game_day"),
         eq(schema.signups.targetId, id),
         eq(schema.signups.userId, userId),
-        inArray(schema.signups.state, ["in", "waitlisted"]),
+        inArray(schema.signups.state, ["in", "waitlisted", "interested"]),
       ),
     )
     .get();

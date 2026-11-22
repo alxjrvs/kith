@@ -8,6 +8,8 @@ import { SESSION_COOKIE, issueSession } from "../src/console/cookies.ts";
 import { forgetOrganisers } from "../src/http/hub.ts";
 import { ASK_JOB, postAsk } from "../src/hub/server-door.ts";
 import { isMemberOf } from "../src/hub/membership.ts";
+import { transition } from "../src/campaigns/lifecycle.ts";
+import { CHECK_JOB } from "../src/hub/server-door.ts";
 import { InteractionResponseType, InteractionType, MessageFlags } from "../src/discord/types.ts";
 import { fakeDiscord } from "./discord.ts";
 
@@ -27,6 +29,7 @@ let outsiders = new Set<string>();
 let posted: Array<{ channel: string; body: { content: string; components: unknown[] } }> = [];
 let invites: string[] = [];
 let inviteRefusal: number | null = null;
+let discordDown = false;
 
 function testEnv() {
   return {
@@ -82,11 +85,13 @@ beforeEach(async () => {
   posted = [];
   invites = [];
   inviteRefusal = null;
+  discordDown = false;
   forgetOrganisers();
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     const member = url.match(/\/members\/(\d+)$/);
     if (member) {
+      if (discordDown) return Response.json({ message: "oops" }, { status: 500 });
       if (outsiders.has(member[1]!)) return Response.json({ code: 10007, message: "Unknown Member" }, { status: 404 });
       return Response.json({ roles: member[1] === "1003" ? [ORGANISER_ROLE] : [] });
     }
@@ -290,6 +295,51 @@ describe("somebody not in the server", () => {
     const request = await requestOf("2001");
     expect(request?.state).toBe("approved");
     expect(request?.joinedAt).not.toBeNull();
+  });
+});
+
+describe("what the review caught", () => {
+  it("leaves somebody still waiting off the roster when the campaign starts", async () => {
+    await db(env).update(schema.campaigns).set({ capacity: null }).where(eq(schema.campaigns.id, "colossus"));
+    await call("POST", "/api/hub/campaigns/colossus/signup", await as("2001"), { action: "in" });
+    await call("POST", "/api/hub/campaigns/colossus/signup", await as("1001"), { action: "in" });
+    await transition(env, "colossus", "RUNNING", "1003");
+    const roster = await db(env)
+      .select({ userId: schema.campaignMembers.userId })
+      .from(schema.campaignMembers)
+      .where(eq(schema.campaignMembers.campaignId, "colossus"))
+      .all();
+    expect(roster.map((r) => r.userId)).toEqual(["1001"]);
+  });
+
+  it("signs a member up anyway when Discord can't answer, and checks again later", async () => {
+    discordDown = true;
+    const res = await call("POST", "/api/hub/campaigns/colossus/signup", await as("1001"), { action: "in" });
+    expect(res.status).toBe(200);
+    expect((await signupOf("campaign_forming", "colossus", "1001"))?.state).toBe("in");
+    const jobs = await db(env).select().from(schema.jobs).where(eq(schema.jobs.kind, CHECK_JOB)).all();
+    expect(jobs).toHaveLength(1);
+  });
+
+  it("notices somebody waiting who joined the server another way", async () => {
+    const cookie = await as("2001");
+    await call("POST", "/api/hub/campaigns/colossus/signup", cookie, { action: "in" });
+    outsiders.delete("2001");
+    const me = (await (await call("GET", "/api/hub/me", cookie)).json()) as { server: string };
+    expect(me.server).toBe("member");
+    expect(await isMemberOf(env, "campaign", "colossus", "2001")).toBe(true);
+  });
+
+  it("says which places a table that stopped moving kept", async () => {
+    const cookie = await as("2001");
+    await call("POST", "/api/hub/campaigns/colossus/signup", cookie, { action: "in" });
+    await call("POST", "/api/hub/game-days/arcs-afternoon/seat", cookie, { action: "in" });
+    await db(env).update(schema.gameDays).set({ state: "LOCKED" }).where(eq(schema.gameDays.id, "arcs-afternoon"));
+
+    const res = await call("POST", "/api/door/2001/turn-away", await as("1003"), {});
+    const body = (await res.json()) as { decision: { outcome: string; kept: string[] } };
+    expect(body.decision).toEqual({ outcome: "turned-away", kept: ["Arcs afternoon"] });
+    expect((await signupOf("campaign_forming", "colossus", "2001"))?.state).toBe("out");
   });
 });
 

@@ -33,7 +33,7 @@ import {
 } from "../game-days/lifecycle.ts";
 import { postDayNoticeOnce, promotedNotice } from "../game-days/notice.ts";
 import { loadProjectionTarget } from "../projection/target.ts";
-import { ASK_JOB, postAsk } from "../hub/server-door.ts";
+import { ASK_JOB, CHECK_JOB, atTheDoor, postAsk } from "../hub/server-door.ts";
 
 const CLAIM_SECONDS = 60;
 const BATCH = 25;
@@ -506,6 +506,14 @@ async function runJob(job: typeof schema.jobs.$inferSelect, env: Env): Promise<v
       const { userId } = job.payload as { userId?: string };
       if (!userId) throw new Error(`${ASK_JOB} job ${job.id} has no userId`);
       await postAsk(env, userId);
+      return;
+    }
+
+    /** A signup Discord couldn't vouch for at the time: ask whether they're in now. */
+    case CHECK_JOB: {
+      const { userId } = job.payload as { userId?: string };
+      if (!userId) throw new Error(`${CHECK_JOB} job ${job.id} has no userId`);
+      await atTheDoor(env, userId);
       return;
     }
 

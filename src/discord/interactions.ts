@@ -505,6 +505,9 @@ async function handleDoor(
   if (!actor) return ephemeral("Kith could not tell who clicked that.");
   if (!(await hasOrganiserRole(env, interaction))) return ephemeral("Only an organiser can answer this.");
 
+  // Letting in makes one Discord call (the invite) inside the 3 seconds. If it
+  // runs long and Discord says the interaction failed, a second click is safe:
+  // an approved request with a live invite answers `unchanged`.
   // The audit row names them, and `audit_log` references `users`.
   await rememberUser(env, actor);
   const decision = arg === "in" ? await letIn(env, userId, actor.id) : await turnAway(env, userId, actor.id);

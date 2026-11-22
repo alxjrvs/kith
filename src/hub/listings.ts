@@ -142,8 +142,10 @@ async function campaignListing(
     .all();
 
   const mineClaim = claims.find((c) => c.userId === viewer.userId);
+  // A held signup is a place, not membership: the same answer isMemberOf gives.
+  const held = mineClaim ? await isProvisional(env, viewer.userId) : false;
   const isMember =
-    mineClaim !== undefined || members.some((m) => m.member.userId === viewer.userId);
+    (mineClaim !== undefined && !held) || members.some((m) => m.member.userId === viewer.userId);
   if (!canSee(siteVisibility(campaign.visibility, campaign.staging), viewer, isMember)) return undefined;
 
   const gm = members.find((m) => m.member.role === "gm");
@@ -181,7 +183,7 @@ async function campaignListing(
     },
     where: campaign.locationType === "voice" ? "voice" : null,
     mine: mineClaim ? (mineClaim.state as Listing["mine"]) : null,
-    held: mineClaim ? await isProvisional(env, viewer.userId) : false,
+    held,
   };
 }
 
@@ -193,7 +195,9 @@ async function gameDayListing(
 ): Promise<Listing | undefined> {
   const signups = await signupsForDay(env, day.id);
   const mine = signups.find((s) => s.userId === viewer.userId);
-  const isMember = mine !== undefined || (viewer.userId !== undefined && day.hostUserId === viewer.userId);
+  const held = mine ? await isProvisional(env, viewer.userId) : false;
+  const isMember =
+    (mine !== undefined && !held) || (viewer.userId !== undefined && day.hostUserId === viewer.userId);
   if (!canSee(siteVisibility(day.visibility, game?.staging), viewer, isMember)) return undefined;
 
   // A day's own words stay in D1; its board game's art (kith-cms) fills in
@@ -225,7 +229,7 @@ async function gameDayListing(
     when: { startsAt: day.startsAt, endsAt: day.endsAt, intervalWeeks: null },
     where: day.venue,
     mine: mine && mine.state !== "out" ? (mine.state as Listing["mine"]) : null,
-    held: mine && mine.state !== "out" ? await isProvisional(env, viewer.userId) : false,
+    held,
   };
 }
 

@@ -137,6 +137,12 @@ function accepted(env: Env, campaignId: string) {
         eq(schema.signups.targetType, "campaign_forming"),
         eq(schema.signups.targetId, campaignId),
         eq(schema.signups.state, "in"),
+        // Somebody still waiting to be let into the server (or turned away)
+        // holds a place, not a seat on the roster: a roster member who can't
+        // see Discord would count as "in" every week under the unanimous rule.
+        sql`NOT EXISTS (SELECT 1 FROM ${schema.serverRequests}
+          WHERE ${schema.serverRequests.userId} = ${schema.signups.userId}
+            AND ${schema.serverRequests.state} IN ('pending', 'declined'))`,
       ),
     )
     .all();
