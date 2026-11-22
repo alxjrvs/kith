@@ -408,7 +408,7 @@ function Cast({ seats, empty }: { seats: Seat[]; empty: string }) {
       {seats.map((seat, i) => {
         const gmOnly = seat.role === "gm" && !seat.character;
         return (
-          <article key={seat.person?.id ?? `seat-${i}`} className={`cast-card${seat.role === "gm" ? " gm" : ""}`}>
+          <article key={`${seat.role}-${seat.person?.id ?? i}`} className={`cast-card${seat.role === "gm" ? " gm" : ""}`}>
             <span className="label">{seat.role === "gm" ? "Game master" : seat.state === "waitlisted" ? "Waitlist" : "Player"}</span>
             <span className="cast-name">{gmOnly ? (seat.person?.name ?? "Game master") : (seat.character ?? "Character to come")}</span>
             <div className="row" style={{ gap: 10 }}>
