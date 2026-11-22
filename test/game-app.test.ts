@@ -7,6 +7,7 @@ import { SESSION_COOKIE, issueSession } from "../src/console/cookies.ts";
 import { forgetOrganisers } from "../src/http/hub.ts";
 import { resetCmsCache } from "../src/cms/client.ts";
 import { mediaKeyOf } from "../src/hub/game-app.ts";
+import { describe as describeGame } from "../src/hub/social-card.ts";
 
 /**
  * Each game as its own installable app (src/hub/game-app.ts). What matters:
@@ -196,5 +197,81 @@ describe("a game's icon", () => {
     expect(mediaKeyOf("/media/01AB.01CD.png")).toBe("01AB.01CD.png");
     expect(mediaKeyOf("https://elsewhere.example/a.png")).toBeNull();
     expect(mediaKeyOf(null)).toBeNull();
+  });
+});
+
+/** The tags a link preview is read from, as the page arrives. */
+function meta(html: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const m of html.matchAll(/<meta (?:property|name)="([^"]+)" content="([^"]*)"/g)) out[m[1]!] = m[2]!;
+  return out;
+}
+
+describe("a game's link preview", () => {
+  it("unfurls as the game: its name, its tagline, its art cut to size", async () => {
+    for (const path of ["/games/umbra", "/games/umbra/join"]) {
+      const tags = meta(await (await get(path)).text());
+      expect(tags["og:title"]).toBe("The Age of Umbra");
+      expect(tags["twitter:title"]).toBe("The Age of Umbra");
+      expect(tags["og:description"]).toBe("Shadows fall.");
+      expect(tags["description"]).toBe("Shadows fall.");
+      expect(tags["og:url"]).toBe(`https://kith.test${path}`);
+      expect(tags["og:image"]).toBe("https://kith.test/media/01AB.01CD.png/card");
+      expect(tags["twitter:image"]).toBe("https://kith.test/media/01AB.01CD.png/card");
+      expect(tags["og:image:width"]).toBe("1200");
+      expect(tags["twitter:card"]).toBe("summary_large_image");
+      expect(tags["og:site_name"]).toBe("Kith.town");
+    }
+  });
+
+  it("wears Kith's own card for a game with no art", async () => {
+    const tags = meta(await (await get("/games/ti")).text());
+    expect(tags["og:title"]).toBe("Twilight Imperium");
+    expect(tags["og:image"]).toBe("https://kith.test/og.png");
+    // No words of its own: nothing, rather than Kith's.
+    expect(tags["og:description"]).toBeUndefined();
+  });
+
+  it("is the public card whoever pastes the link: a test or members-only game unfurls as Kith", async () => {
+    roles["1003"] = [ORGANISER_ROLE];
+    for (const slug of ["test-rpg", "test-ti", "secret", "nope"]) {
+      const html = await (await get(`/games/${slug}`, await as("1003"))).text();
+      const tags = meta(html);
+      expect(tags["og:title"]).toBe("Kith.town");
+      expect(tags["og:image"]).toBe("https://kith.town/og.png");
+      // (The organiser's own <title> and home-screen name are theirs; a crawler never carries their cookie.)
+      const preview = Object.entries(tags).filter(([k]) => /^(og:|twitter:|description$)/.test(k));
+      expect(JSON.stringify(preview)).not.toMatch(/Test|Secret/);
+    }
+  });
+
+  it("has its image cut to 1200x630 by Cloudflare Images, or Kith's card without it", async () => {
+    const asked: unknown[] = [];
+    const IMAGES = {
+      input: () => ({
+        transform: (t: unknown) => {
+          asked.push(t);
+          return { output: async (o: unknown) => (asked.push(o), { response: () => new Response("jpg") }) };
+        },
+      }),
+    };
+    const res = await get("/media/01AB.01CD.png/card", undefined, { IMAGES });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("image/jpeg");
+    expect(asked).toEqual([{ width: 1200, height: 630, fit: "cover", gravity: "auto" }, { format: "image/jpeg", quality: 85 }]);
+    const fallback = await get("/media/01AB.01CF.png/card");
+    expect(fallback.status).toBe(200);
+    expect(fallback.headers.get("content-type")).toContain("image/png");
+  });
+
+  it("describes a game in plain text, short enough to show whole", () => {
+    expect(describeGame("Shadows fall.", "A **dark** game, with [links](https://x.example).\n\n- and a list")).toBe(
+      "Shadows fall. A dark game, with links. and a list",
+    );
+    expect(describeGame("Shadows fall.", "Shadows fall. And more.")).toBe("Shadows fall. And more.");
+    expect(describeGame(null, null)).toBeNull();
+    const long = describeGame("Tagline.", "word ".repeat(100))!;
+    expect(long.length).toBeLessThanOrEqual(200);
+    expect(long.endsWith("word…")).toBe(true);
   });
 });

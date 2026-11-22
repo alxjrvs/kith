@@ -35,6 +35,7 @@ import { deleteGame, gameRows } from "../console/games.ts";
 import { InvalidSetting, putSetting, settingsView } from "../console/settings.ts";
 import { hubRoutes } from "./hub.ts";
 import { gameAppRoutes, squareIcon } from "./game-apps.ts";
+import { cardImage } from "./social-card.ts";
 import { media } from "../cms/client.ts";
 import { InvalidListing, updateCatalogEntry, updateListing } from "../hub/write.ts";
 import { InvalidKnowledge, addLink, putPage, removeLink, removePage, tableExists } from "../hub/knowledge.ts";
@@ -78,6 +79,8 @@ export function createApp() {
   // never changes, and browsers may keep it.
   /** A game's app icon, cut square from its art (src/http/game-apps.ts). */
   app.get("/media/:key/icon/:size", (c) => squareIcon(c.env, c.req.raw, c.req.param("key"), c.req.param("size")));
+  /** A game's link preview image, cut to 1200x630 from its art (src/http/social-card.ts). */
+  app.get("/media/:key/card", (c) => cardImage(c.env, c.req.raw, c.req.param("key")));
 
   /** Each game is its own installable app: its manifest, and its pages loaded with it linked. */
   app.route("/games", gameAppRoutes());
