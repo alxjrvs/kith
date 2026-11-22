@@ -54,6 +54,7 @@ function BaseHero({
   heroUrl,
   soundUrl,
   chips,
+  system = null,
   children,
 }: {
   eyebrow: string;
@@ -62,6 +63,8 @@ function BaseHero({
   heroUrl: string | null;
   soundUrl: string | null;
   chips: string[];
+  /** The game system, as its own chip: people look for it first. */
+  system?: string | null;
   children?: ReactNode;
 }) {
   const me = useMe().data;
@@ -93,8 +96,9 @@ function BaseHero({
         <span className="label">{eyebrow}</span>
         <h1>{title}</h1>
         {tagline ? <p className="tagline">{tagline}</p> : null}
-        {chips.length > 0 ? (
+        {chips.length > 0 || system ? (
           <div className="row" style={{ gap: 6 }}>
+            {system ? <span className="chip system">{system}</span> : null}
             {chips.map((chip) => (
               <span key={chip} className="chip">
                 {chip}
@@ -131,13 +135,14 @@ function CampaignBase({ home }: { home: CampaignHome }) {
   return (
     <>
       <BaseHero
-        eyebrow={[STATE_EYEBROW[listing.state] ?? "Campaign", listing.game?.name, listing.lead ? `GM ${listing.lead.name}` : null]
+        eyebrow={[STATE_EYEBROW[listing.state] ?? "Campaign", listing.lead ? `GM ${listing.lead.name}` : null]
           .filter(Boolean)
           .join(" · ")}
         title={listing.name}
         tagline={listing.tagline}
         heroUrl={listing.heroUrl}
         soundUrl={listing.soundUrl}
+        system={listing.game?.name ?? null}
         chips={[...cadence(listing), listing.where === "voice" ? "Voice" : listing.where].filter((c): c is string => Boolean(c))}
       >
         {upcoming[0] ? <NextUp row={upcoming[0]} /> : null}

@@ -174,8 +174,20 @@ img { max-width: 100%; }
 
 /* Splash */
 .splash { position: relative; overflow: hidden; min-height: 100vh; display: flex; flex-direction: column; background: var(--deep); }
-.splash .hero { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0.45; }
-.splash .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--deep) 15%, transparent 85%), linear-gradient(0deg, var(--deep), transparent 60%); }
+/*
+ * An organiser's hero image fades in from the left: nothing behind the words,
+ * full strength on the right. A mask rather than an overlay, so the image is
+ * never greyed where it shows.
+ */
+.splash .hero {
+  position: absolute; inset: 0 0 0 20%;
+  background-size: cover; background-position: center right;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.35) 30%, #000 70%);
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.35) 30%, #000 70%);
+}
+.splash .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, var(--deep), transparent 40%); }
+/* An organiser's picture is the art; the drawn table steps aside for it. */
+.splash .hero ~ .seat { display: none; }
 .splash .seat { position: absolute; border-radius: 50%; border: 1px solid var(--border); pointer-events: none; }
 .splash header { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 32px; }
 .splash main { position: relative; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 24px; padding: 32px 32px 48px; max-width: 760px; }
@@ -211,6 +223,8 @@ img { max-width: 100%; }
 /* On a phone the orrery sits behind the words, so it steps back. */
 @media (max-width: 640px) {
   .splash .seat { opacity: 0.3; }
+  /* On a phone the words run the full width, so the picture steps back behind them. */
+  .splash .hero { inset: 0; opacity: 0.35; -webkit-mask-image: linear-gradient(0deg, transparent 0%, #000 60%); mask-image: linear-gradient(0deg, transparent 0%, #000 60%); }
 }
 
 .prose blockquote { margin: 0 0 0.9em; padding-left: 12px; border-left: 2px solid var(--accent); color: var(--muted); }
@@ -220,3 +234,6 @@ img { max-width: 100%; }
 .link-row:last-child { border-bottom: 0; }
 .link-row a { font-weight: 600; }
 .prose > :first-child { margin-top: 0; }
+
+/* The game system, first among the chips and lit like the table's top seat. */
+.chip.system { border-color: var(--accent); color: var(--link); }
