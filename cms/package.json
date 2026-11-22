@@ -1,0 +1,25 @@
+{
+  "name": "@kith/cms",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Kith's CMS: EmDash on its own Worker (kith-cms), admin at cms.kith.alxjrvs.com. Every word on kith.alxjrvs.com is written here.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "typecheck": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "14.4.3",
+    "@astrojs/react": "7.1.2",
+    "@emdash-cms/cloudflare": "1.4.0",
+    "astro": "7.4.4",
+    "emdash": "1.4.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.12",
+    "typescript": "6.0.3"
+  }
+}

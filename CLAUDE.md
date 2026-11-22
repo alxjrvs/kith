@@ -11,6 +11,11 @@ rules that are easy to violate by accident.
   that came *from* that message. The one exception is the cutover strip-components step.
 - **Orrey's database is the source of truth.** Discord and Google are projections. Never
   read state back out of a Discord message.
+- **Words live in EmDash; state lives in D1.** Every word a visitor reads (game copy,
+  characters, knowledge pages, links, the site's own copy) is written in kith-cms
+  (`cms/`, admin at cms.kith.alxjrvs.com) and read over the `CMS` service binding.
+  Anything a rule reads (rosters, attendance, schedules, signups, visibility of a
+  table) stays in D1. A game is born in EmDash; its D1 row follows it. `docs/CMS.md`.
 - **Discord is the only identity system.** `identify` scope only; roles come from the bot
   token; never request `guilds`.
 - **The command surface is four commands.** Administration belongs in the console. If a new

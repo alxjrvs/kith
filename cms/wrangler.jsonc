@@ -1,0 +1,45 @@
+// kith-cms: EmDash, the CMS behind every word on kith.alxjrvs.com. Astro builds
+// it (`bun run build`, @astrojs/cloudflare). The Kith Worker (../wrangler.jsonc)
+// reads it over a service binding; people use its admin at cms.kith.alxjrvs.com,
+// behind Cloudflare Access. Deployed by ../bin/deploy, before the Kith Worker.
+//
+// The D1 and KV ids below are filled in once by ../bin/cms-setup. Until they are, bin/deploy
+// skips this Worker and the Kith Worker runs without a CMS.
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "kith-cms",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist/client"
+  },
+  // EmDash: entries, users and settings in D1; uploaded images and sounds in R2;
+  // who's signed in to the admin in KV.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kith-emdash",
+      "database_id": "14e4d3be-7d54-4cd5-bdb1-56821e30c9c4"
+    }
+  ],
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "kith-emdash-media" }],
+  "kv_namespaces": [{ "binding": "SESSION", "id": "b431fba600dd4b2799bcae43532b8cba" }],
+  "vars": {
+    // The Application Audience (AUD) tag of the Cloudflare Access app that
+    // guards cms.kith.alxjrvs.com. Not a secret: it only names which app signed
+    // a token. This is the app that already guards admin.alxjrvs.com, with
+    // cms.kith.alxjrvs.com added as a second hostname (docs/CMS.md), so both
+    // CMSes share one sign-in. Give Kith its own app and this changes.
+    "CF_ACCESS_AUDIENCE": "b6b316406fef4d06b6426b1b47d30ab1359c683f3bc3c997efbae6c3463d58c9"
+  },
+  "observability": { "enabled": true },
+  // EmDash's scheduled publishing and housekeeping.
+  "triggers": { "crons": ["* * * * *"] },
+  // A custom domain: the deploy creates its DNS record. Access must guard it
+  // before the first deploy (docs/CMS.md).
+  "routes": [{ "pattern": "cms.kith.alxjrvs.com", "custom_domain": true }],
+  // Only /healthz answers there (src/gateway.ts).
+  "workers_dev": true
+}

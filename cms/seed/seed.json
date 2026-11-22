@@ -1,0 +1,310 @@
+{
+  "$schema": "https://emdashcms.com/seed.schema.json",
+  "version": "1",
+  "meta": {
+    "name": "Kith",
+    "description": "Every word on kith.alxjrvs.com: games, characters, knowledge pages, links and the site's own copy",
+    "author": "alxjrvs"
+  },
+  "settings": {
+    "title": "Kith",
+    "tagline": "Your games, your table, your people."
+  },
+  "collections": [
+    {
+      "slug": "games",
+      "label": "Games",
+      "labelSingular": "Game",
+      "sortOrder": 1,
+      "description": "One entry per game: a campaign or a board game. Publishing a new one creates it in Kith; its slug is its address, kith.alxjrvs.com/games/<slug>. Schedule, quorum and Discord channel are set in Kith's Organise pages.",
+      "urlPattern": "/games/{slug}",
+      "supports": [
+        "drafts",
+        "revisions"
+      ],
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "slug": "category",
+          "label": "What it is",
+          "type": "select",
+          "required": true,
+          "defaultValue": "campaign",
+          "validation": {
+            "options": [
+              "campaign",
+              "board_game"
+            ]
+          }
+        },
+        {
+          "slug": "system",
+          "label": "System (for a campaign: Mothership, D&D 5e, ...)",
+          "type": "string"
+        },
+        {
+          "slug": "tagline",
+          "label": "Tagline (the line under the name)",
+          "type": "string"
+        },
+        {
+          "slug": "summary",
+          "label": "Summary (one or two lines, for its card on Games)",
+          "type": "text"
+        },
+        {
+          "slug": "pitch",
+          "label": "Pitch (the home base's longer description)",
+          "type": "portableText"
+        },
+        {
+          "slug": "hero",
+          "label": "Hero image",
+          "type": "image"
+        },
+        {
+          "slug": "cover",
+          "label": "Cover (its card on Games)",
+          "type": "image"
+        },
+        {
+          "slug": "sound",
+          "label": "Sound (plays from the splash page's button)",
+          "type": "file"
+        },
+        {
+          "slug": "visibility",
+          "label": "Who can see it (members: the people on the game; organisers: only organisers)",
+          "type": "select",
+          "required": true,
+          "defaultValue": "members",
+          "validation": {
+            "options": [
+              "members",
+              "public",
+              "organisers"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "characters",
+      "label": "Characters",
+      "labelSingular": "Character",
+      "sortOrder": 2,
+      "description": "Who each player is playing, per game. They appear on the game's roster beside the player.",
+      "supports": [
+        "drafts",
+        "revisions"
+      ],
+      "fields": [
+        {
+          "slug": "name",
+          "label": "Name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "slug": "game",
+          "label": "Game (its slug, e.g. hollowmere)",
+          "type": "string",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "slug": "player",
+          "label": "Player (their Discord username)",
+          "type": "string",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "slug": "sheet",
+          "label": "Character sheet link",
+          "type": "url"
+        }
+      ]
+    },
+    {
+      "slug": "pages",
+      "label": "Knowledge pages",
+      "labelSingular": "Knowledge page",
+      "sortOrder": 3,
+      "description": "A game's knowledge pages: house rules, setting notes, session zero. Shown at kith.alxjrvs.com/games/<game>/<slug>.",
+      "supports": [
+        "drafts",
+        "revisions"
+      ],
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Title",
+          "type": "string",
+          "required": true
+        },
+        {
+          "slug": "game",
+          "label": "Game (its slug)",
+          "type": "string",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "slug": "order",
+          "label": "Order (1 is first)",
+          "type": "integer"
+        },
+        {
+          "slug": "content",
+          "label": "Content",
+          "type": "portableText"
+        },
+        {
+          "slug": "visibility",
+          "label": "Who can see it (members: the people on the game; organisers: only organisers)",
+          "type": "select",
+          "required": true,
+          "defaultValue": "members",
+          "validation": {
+            "options": [
+              "members",
+              "public",
+              "organisers"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "links",
+      "label": "Links",
+      "labelSingular": "Link",
+      "sortOrder": 4,
+      "description": "A game's links: the VTT, the rules, a shared doc.",
+      "supports": [
+        "drafts"
+      ],
+      "fields": [
+        {
+          "slug": "label",
+          "label": "Label",
+          "type": "string",
+          "required": true
+        },
+        {
+          "slug": "url",
+          "label": "URL",
+          "type": "url",
+          "required": true
+        },
+        {
+          "slug": "game",
+          "label": "Game (its slug)",
+          "type": "string",
+          "required": true,
+          "indexed": true
+        },
+        {
+          "slug": "kind",
+          "label": "Kind",
+          "type": "select",
+          "required": true,
+          "defaultValue": "other",
+          "validation": {
+            "options": [
+              "vtt",
+              "sheet",
+              "rules",
+              "doc",
+              "discord",
+              "other"
+            ]
+          }
+        },
+        {
+          "slug": "order",
+          "label": "Order (1 is first)",
+          "type": "integer"
+        },
+        {
+          "slug": "visibility",
+          "label": "Who can see it (members: the people on the game; organisers: only organisers)",
+          "type": "select",
+          "required": true,
+          "defaultValue": "members",
+          "validation": {
+            "options": [
+              "members",
+              "public",
+              "organisers"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "sections",
+      "label": "Site copy",
+      "labelSingular": "Section",
+      "sortOrder": 5,
+      "description": "The site's own words, by slug: home (the front page), games (the Games hub), agenda, signin, not-found.",
+      "supports": [
+        "drafts",
+        "revisions"
+      ],
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Heading",
+          "type": "string",
+          "required": true
+        },
+        {
+          "slug": "kicker",
+          "label": "Kicker (the small line above the heading)",
+          "type": "string"
+        },
+        {
+          "slug": "body",
+          "label": "Body",
+          "type": "portableText"
+        }
+      ]
+    }
+  ],
+  "content": {
+    "sections": [
+      {
+        "id": "home",
+        "slug": "home",
+        "status": "published",
+        "data": {
+          "title": "Your games",
+          "kicker": "Kith"
+        }
+      },
+      {
+        "id": "games",
+        "slug": "games",
+        "status": "published",
+        "data": {
+          "title": "Games"
+        }
+      },
+      {
+        "id": "agenda",
+        "slug": "agenda",
+        "status": "published",
+        "data": {
+          "title": "Agenda"
+        }
+      }
+    ]
+  }
+}

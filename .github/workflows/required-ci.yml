@@ -28,8 +28,14 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.4
+      # Astro (kith-cms's build) runs under Node 22.
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
       - run: bun install --frozen-lockfile
       - run: bun run build
+      # kith-cms (cms/, EmDash): it deploys from main too, so it must build here.
+      - run: bun run build:cms
 
   # The one "CI" check (factory:repo-ruleset): it fails if any job it needs
   # failed or was cancelled, and runs with if: always() so a failed dependency
