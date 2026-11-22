@@ -1,8 +1,8 @@
 /**
  * Neutralises Hermuz's old interactive posts at cutover.
  *
- * Hermuz's custom_ids are unknown to Orrey; an unhandled click shows Discord's
- * "interaction failed". Orrey's catch-all answers "this post is retired", but a
+ * Hermuz's custom_ids are unknown to Kith; an unhandled click shows Discord's
+ * "interaction failed". Kith's catch-all answers "this post is retired", but a
  * button that does nothing is still a button, so the buttons come off.
  *
  * This is THE ONE sanctioned use of the channel message-edit endpoint, and only

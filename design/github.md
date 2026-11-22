@@ -1,4 +1,4 @@
-repo: alxjrvs/orrey
+repo: alxjrvs/kith
 branch: main
 path: (whole repo)
 

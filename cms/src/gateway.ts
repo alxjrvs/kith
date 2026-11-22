@@ -1,7 +1,7 @@
 // Which requests kith-cms answers, as a pure function so it can be tested
 // without the Workers runtime (gateway.test.ts).
 
-export const ADMIN_HOST = "cms.kith.alxjrvs.com";
+export const ADMIN_HOST = "admin.kith.town";
 /** The hostname a service-binding request from the Kith Worker carries. */
 export const BINDING_HOST = "cms.internal";
 

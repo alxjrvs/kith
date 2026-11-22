@@ -19,7 +19,7 @@ import {
  * ...and asking a group which day works (phase 4).
  *
  * The rest — game_days' venue and seating, session_logs — lands in the phase
- * that actually reads it. See https://github.com/alxjrvs/orrey/issues/1.
+ * that actually reads it. See https://github.com/alxjrvs/kith/issues/1.
  */
 
 const now = sql`(unixepoch())`;

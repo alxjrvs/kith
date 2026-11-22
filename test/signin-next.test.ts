@@ -17,7 +17,7 @@ function consoleEnv() {
 
 function get(path: string, cookie?: string) {
   return app.fetch(
-    new Request(`https://orrey.test${path}`, {
+    new Request(`https://kith.test${path}`, {
       redirect: "manual",
       ...(cookie ? { headers: { cookie } } : {}),
     }),

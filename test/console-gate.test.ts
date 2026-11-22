@@ -49,7 +49,7 @@ async function cookieFor(userId: string): Promise<string> {
 
 function api(path: string, cookie?: string) {
   return app.fetch(
-    new Request(`https://orrey.test${path}`, cookie ? { headers: { cookie } } : {}),
+    new Request(`https://kith.test${path}`, cookie ? { headers: { cookie } } : {}),
     consoleEnv(),
   );
 }

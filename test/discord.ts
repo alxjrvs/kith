@@ -44,7 +44,7 @@ export async function fakeDiscord(): Promise<FakeDiscord> {
     async request(body, opts = {}) {
       const text = JSON.stringify(body);
       const { signature, timestamp } = await sign(text);
-      return new Request("https://orrey.test/interactions", {
+      return new Request("https://kith.test/interactions", {
         method: "POST",
         headers: {
           "content-type": "application/json",

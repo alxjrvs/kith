@@ -26,7 +26,7 @@ const message = await postMessage({ DISCORD_BOT_TOKEN: botToken }, channelId, {
   content: [
     `**Smoke test — \`${target}\`**`,
     "No clicks yet.",
-    "-# Click the button. Orrey writes to D1 and rewrites this message.",
+    "-# Click the button. Kith writes to D1 and rewrites this message.",
   ].join("\n"),
   components: [
     {

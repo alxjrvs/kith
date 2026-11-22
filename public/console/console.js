@@ -1703,7 +1703,7 @@ function auditLine(row) {
     minute: "2-digit",
     hour12: false,
   });
-  const who = row.actorName ?? row.actorUserId ?? "orrey";
+  const who = row.actorName ?? row.actorUserId ?? "kith";
   const action = row.action.includes(".") ? row.action.slice(row.action.indexOf(".") + 1) : row.action;
   const parts = [time, who, "→", row.targetType, row.targetId, action];
 

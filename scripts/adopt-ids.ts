@@ -1,7 +1,7 @@
 /**
- * Lists the Discord objects Orrey adopts — issue #10.
+ * Lists the Discord objects Kith adopts — issue #10.
  *
- * Orrey takes over the guild's existing roles, channels and scheduled events
+ * Kith takes over the guild's existing roles, channels and scheduled events
  * rather than creating a parallel set, and the application is the same one
  * Hermuz used, so it already has authorship of them. There is no database to
  * import from: Hermuz's D1 is empty, so the ids are read from Discord itself
@@ -13,9 +13,9 @@
  *   (default)     a readable listing: roles (with member-visible colour), text
  *                 channels grouped by category, and every scheduled event with
  *                 its creator — the ones created by this application are the
- *                 ones Orrey inherits
+ *                 ones Kith inherits
  *   --json FILE   the same, as a file to keep for phase 2 (#26)
- *   --sql         INSERTs for Orrey's `settings`, to pipe into
+ *   --sql         INSERTs for Kith's `settings`, to pipe into
  *                 `wrangler d1 execute orrey --remote --file`. The scheduling
  *                 channel is a human choice, so it is passed explicitly.
  *
@@ -134,7 +134,7 @@ if (flag("sql")) {
       `  ${pad(e.id, 20)} ${e.startsAt}  ${pad(e.status, 9)} ${e.createdByThisApplication ? "ours" : "    "} ${e.name}`,
     );
   }
-  console.log("\n'ours' = created by this application: Orrey inherits authorship of those.");
+  console.log("\n'ours' = created by this application: Kith inherits authorship of those.");
 }
 
 const out = value("json");

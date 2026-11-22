@@ -2,7 +2,7 @@
  * Checks a deployed Worker the way Discord will when the Interactions Endpoint
  * URL is saved — as far as that can be done from outside.
  *
- *   node --experimental-strip-types scripts/verify-endpoint.ts https://orrey.<account>.workers.dev
+ *   node --experimental-strip-types scripts/verify-endpoint.ts https://kith.<account>.workers.dev
  *
  * What it proves: /healthz answers, and POST /interactions returns 401 for a
  * bad signature and for no signature at all. What it cannot prove: PING → PONG

@@ -37,7 +37,7 @@ async function login(cookie?: string) {
 
 function get(path: string, cookie?: string) {
   return app.fetch(
-    new Request(`https://orrey.test${path}`, {
+    new Request(`https://kith.test${path}`, {
       redirect: "manual",
       ...(cookie ? { headers: { cookie } } : {}),
     }),
@@ -84,7 +84,7 @@ describe("the authorize redirect", () => {
     // The invariant, checked the bluntest way there is.
     expect(response.headers.get("location")).not.toContain("guilds");
     expect(location.searchParams.get("response_type")).toBe("code");
-    expect(location.searchParams.get("redirect_uri")).toBe("https://orrey.test/console/callback");
+    expect(location.searchParams.get("redirect_uri")).toBe("https://kith.test/console/callback");
   });
 
   it("mints a state and remembers it in a cookie of its own", async () => {
@@ -146,7 +146,7 @@ describe("the callback", () => {
       code: "c1",
       client_id: "app-1",
       client_secret: "shh",
-      redirect_uri: "https://orrey.test/console/callback",
+      redirect_uri: "https://kith.test/console/callback",
     });
     // No PKCE: Kith is a confidential client and Discord's acceptance of a
     // verifier is undocumented.

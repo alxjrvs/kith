@@ -24,7 +24,7 @@
  * live channel pushing at a URL or two stray events on the calendar.
  *
  * The calendar id comes from the environment like every other Google caller
- * here, so this cannot be pointed at a calendar Orrey does not own. Secrets stay
+ * here, so this cannot be pointed at a calendar Kith does not own. Secrets stay
  * in the environment: this prints statuses, ids and durations.
  *
  * Record the printed summary on #49, and put each answer in `docs/GOTCHAS.md`.
@@ -114,7 +114,7 @@ try {
   for (const [index, id] of eventIds.entries()) {
     const made = await call("POST", `${API}/events`, {
       id,
-      summary: `Orrey — watch probe ${index + 1} (safe to delete)`,
+      summary: `Kith — watch probe ${index + 1} (safe to delete)`,
       description: "Inserted by scripts/probe-watch.ts. If you can see this, it forgot to clean up.",
       start: { dateTime: start.toISOString() },
       end: { dateTime: end.toISOString() },

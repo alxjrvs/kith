@@ -12,10 +12,10 @@ import type { Env } from "../env.ts";
  * letting the OAuth redirect arrive with it, and `Path=/` because the API and
  * the SPA are the same origin by design.
  */
-export const SESSION_COOKIE = "orrey_session";
-export const STATE_COOKIE = "orrey_oauth_state";
+export const SESSION_COOKIE = "kith_session";
+export const STATE_COOKIE = "kith_oauth_state";
 /** Where to land after the callback: the page "Sign in" was pressed on. */
-export const NEXT_COOKIE = "orrey_next";
+export const NEXT_COOKIE = "kith_next";
 
 /** A week, matching Discord's own access-token lifetime. */
 const SESSION_SECONDS = 7 * 24 * 60 * 60;

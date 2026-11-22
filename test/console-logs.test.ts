@@ -43,7 +43,7 @@ async function send(method: string, path: string, body?: unknown, userId = GM) {
   // Tuesday.
   const cookie = `${SESSION_COOKIE}=${await issueSession(consoleEnv(), userId, new Date())}`;
   return app.fetch(
-    new Request(`https://orrey.test${path}`, {
+    new Request(`https://kith.test${path}`, {
       method,
       headers: { cookie, "content-type": "application/json" },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),

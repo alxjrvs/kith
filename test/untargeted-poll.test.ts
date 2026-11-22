@@ -184,7 +184,7 @@ describe("several at once", () => {
 describe("the two ways in", () => {
   it("keeps the console route behind the same gate as everything else", async () => {
     const res = await app.fetch(
-      new Request("https://orrey.test/api/polls", {
+      new Request("https://kith.test/api/polls", {
         method: "POST",
         body: JSON.stringify({ gameId: "blades", gameDayKind: "single", dates: DATES }),
       }),

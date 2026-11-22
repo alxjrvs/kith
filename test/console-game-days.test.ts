@@ -34,7 +34,7 @@ function consoleEnv() {
 
 async function send(method: string, path: string, body?: unknown) {
   return app.fetch(
-    new Request(`https://orrey.test${path}`, {
+    new Request(`https://kith.test${path}`, {
       method,
       headers: {
         cookie: `${SESSION_COOKIE}=${await issueSession(consoleEnv(), "1001", new Date())}`,
@@ -215,7 +215,7 @@ describe("opening seating", () => {
   it("is behind the same gate as everything else", async () => {
     await day();
     const response = await app.fetch(
-      new Request(`https://orrey.test/api/game-days/${DAY_ID}/transition`, {
+      new Request(`https://kith.test/api/game-days/${DAY_ID}/transition`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ to: "SEATING" }),

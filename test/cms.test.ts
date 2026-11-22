@@ -120,11 +120,11 @@ describe("reading kith-cms", () => {
 
   it("proxies media at /media/:key", async () => {
     const app = createApp();
-    const res = await app.fetch(new Request("https://kith.alxjrvs.com/media/01ABC.png"), cmsEnv());
+    const res = await app.fetch(new Request("https://kith.town/media/01ABC.png"), cmsEnv());
     expect(res.status).toBe(200);
     expect(await res.text()).toBe("file 01ABC.png");
     expect(res.headers.get("Cache-Control")).toContain("immutable");
-    const bad = await app.fetch(new Request("https://kith.alxjrvs.com/media/..%2f..%2fadmin"), cmsEnv());
+    const bad = await app.fetch(new Request("https://kith.town/media/..%2f..%2fadmin"), cmsEnv());
     expect(bad.status).toBe(404);
   });
 });

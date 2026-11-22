@@ -2,15 +2,15 @@
  * Proves the service-account calendar pattern by hand — issue #11.
  *
  * The settled Google design rests on something community-established but not
- * documented by Google: an Orrey-owned calendar, a service account granted
+ * documented by Google: an Kith-owned calendar, a service account granted
  * `writer` on it, and no refresh token anywhere. Phase 1 builds on it, so it is
  * proved here first, end to end, against the real API.
  *
- * Set-up (once, in a browser, as the Orrey Google account):
+ * Set-up (once, in a browser, as the Kith Google account):
  *   1. Google Cloud console → new project → APIs & Services → enable "Google
  *      Calendar API" → Credentials → create a service account → Keys → add a
  *      JSON key. Put `client_email` and `private_key` from it in 1Password.
- *   2. Google Calendar → create a calendar "Orrey" → Settings → "Share with
+ *   2. Google Calendar → create a calendar "Kith" → Settings → "Share with
  *      specific people" → add the service account's email with "Make changes to
  *      events". That is `acl.insert` with role `writer`, done by the owner.
  *      Copy the calendar id (…@group.calendar.google.com) to 1Password.
@@ -85,7 +85,7 @@ const start = new Date(Date.now() + 7 * 24 * 3600 * 1000);
 const end = new Date(start.getTime() + 3 * 3600 * 1000);
 const event = {
   id: eventId,
-  summary: "Orrey — service-account proof (safe to delete)",
+  summary: "Kith — service-account proof (safe to delete)",
   description: "Inserted by scripts/prove-gcal.ts. If you can see this, it forgot to clean up.",
   start: { dateTime: start.toISOString() },
   end: { dateTime: end.toISOString() },

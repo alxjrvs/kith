@@ -3,7 +3,7 @@
   "version": "1",
   "meta": {
     "name": "Kith",
-    "description": "Every word on kith.alxjrvs.com: games, characters, knowledge pages, links and the site's own copy",
+    "description": "Every word on kith.town: games, characters, knowledge pages, links and the site's own copy",
     "author": "alxjrvs"
   },
   "settings": {
@@ -16,7 +16,7 @@
       "label": "Games",
       "labelSingular": "Game",
       "sortOrder": 1,
-      "description": "One entry per game: a campaign or a board game. Publishing a new one creates it in Kith; its slug is its address, kith.alxjrvs.com/games/<slug>. Schedule, quorum and Discord channel are set in Kith's Organise pages.",
+      "description": "One entry per game: a campaign or a board game. Publishing a new one creates it in Kith; its slug is its address, kith.town/games/<slug>. Schedule, quorum and Discord channel are set in Kith's Organise pages.",
       "urlPattern": "/games/{slug}",
       "supports": [
         "drafts",
@@ -146,7 +146,7 @@
       "label": "Knowledge pages",
       "labelSingular": "Knowledge page",
       "sortOrder": 3,
-      "description": "A game's knowledge pages: house rules, setting notes, session zero. Shown at kith.alxjrvs.com/games/<game>/<slug>.",
+      "description": "A game's knowledge pages: house rules, setting notes, session zero. Shown at kith.town/games/<game>/<slug>.",
       "supports": [
         "drafts",
         "revisions"

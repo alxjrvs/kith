@@ -4,7 +4,7 @@
 # to, and writes their ids into cms/wrangler.jsonc. Safe to re-run: anything
 # that already exists is looked up instead of created.
 #
-# It does not put cms.kith.alxjrvs.com behind Cloudflare Access; that is a
+# It does not put admin.kith.town behind Cloudflare Access; that is a
 # dashboard step (docs/CMS.md). It never touches the Kith Worker or its database.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -33,4 +33,4 @@ sed -i.bak \
 echo "kith-emdash D1:        $d1_id"
 echo "kith-emdash-media R2:  ok"
 echo "kith-cms-sessions KV:  $kv_id"
-echo "Commit cms/wrangler.jsonc. Before kith-cms first deploys, put cms.kith.alxjrvs.com behind Access (docs/CMS.md)."
+echo "Commit cms/wrangler.jsonc. Before kith-cms first deploys, put admin.kith.town behind Access (docs/CMS.md)."

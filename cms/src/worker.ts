@@ -3,7 +3,7 @@
 //
 // Two kinds of caller reach it:
 //
-// - People, at cms.kith.alxjrvs.com. Cloudflare Access guards that hostname
+// - People, at admin.kith.town. Cloudflare Access guards that hostname
 //   as a whole, and EmDash checks the Access token on every admin request.
 // - The Kith Worker, over its `CMS` service binding. A service binding never
 //   passes through Access, so it authenticates the way any API client does:

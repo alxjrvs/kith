@@ -36,7 +36,7 @@ function consoleEnv() {
 
 async function send(method: string, path: string, body?: unknown) {
   return app.fetch(
-    new Request(`https://orrey.test${path}`, {
+    new Request(`https://kith.test${path}`, {
       method,
       headers: {
         cookie: `${SESSION_COOKIE}=${await issueSession(consoleEnv(), "1001", new Date())}`,

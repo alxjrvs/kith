@@ -52,7 +52,7 @@ async function get(path: string, signedIn = true) {
   // Tuesday.
   const cookie = `${SESSION_COOKIE}=${await issueSession(consoleEnv(), "1001", new Date())}`;
   return app.fetch(
-    new Request(`https://orrey.test${path}`, {
+    new Request(`https://kith.test${path}`, {
       ...(signedIn ? { headers: { cookie } } : {}),
     }),
     consoleEnv(),

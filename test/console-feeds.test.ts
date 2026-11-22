@@ -34,7 +34,7 @@ async function send(
   method: string,
   path: string,
   userId: string | null,
-  origin = "https://orrey.test",
+  origin = "https://kith.test",
 ) {
   return app.fetch(
     new Request(`${origin}${path}`, {
@@ -88,7 +88,7 @@ function audit() {
 
 function feed(token: string, path = "all.ics") {
   return app.fetch(
-    new Request(`https://orrey.test/ics/${token}/${path}`),
+    new Request(`https://kith.test/ics/${token}/${path}`),
     env as never,
   );
 }
@@ -140,9 +140,9 @@ describe("the panel", () => {
       "Everything",
       "Age of Umbra",
     ]);
-    expect(body.links[0]?.url).toBe("https://orrey.test/ics/tok-ada/all.ics");
+    expect(body.links[0]?.url).toBe("https://kith.test/ics/tok-ada/all.ics");
     expect(body.links[1]?.url).toBe(
-      "https://orrey.test/ics/tok-ada/campaign/umbra.ics",
+      "https://kith.test/ics/tok-ada/campaign/umbra.ics",
     );
   });
 
@@ -150,13 +150,13 @@ describe("the panel", () => {
     await signedIn("ada", "tok-ada");
 
     const body = (await (
-      await send("GET", "/console/me/feeds", "ada", "https://orrey.example.dev")
+      await send("GET", "/console/me/feeds", "ada", "https://kith.example.dev")
     ).json()) as { links: { url: string }[] };
 
     // A hardcoded host is wrong on every environment but one, and the person
     // copying the URL has no way to tell.
     expect(body.links[0]?.url).toBe(
-      "https://orrey.example.dev/ics/tok-ada/all.ics",
+      "https://kith.example.dev/ics/tok-ada/all.ics",
     );
   });
 

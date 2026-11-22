@@ -1,9 +1,9 @@
-# Orrey Design System
+# Kith Design System
 
-Orrey is a scheduling system for **the Orrey of Worlds**, a TTRPG Discord: four campaigns,
+Kith is a scheduling system for **the Orrey of Worlds**, a TTRPG Discord: four campaigns,
 a rotating cast, and the one-off game days in between. It replaces hand-managing all of it.
 
-Orrey's own database is the source of truth. **Discord and Google Calendar are displays.**
+Kith's own database is the source of truth. **Discord and Google Calendar are displays.**
 Discord is also the only login. It runs as one Cloudflare Worker — TypeScript, Hono, D1,
 Drizzle — with three entry points: HTTP (interactions, console, ICS), a queue consumer for
 outbound projection, and cron for the clock.
@@ -16,7 +16,7 @@ design system is downstream of that sentence.
 
 | Source | What it gave |
 |---|---|
-| `https://github.com/alxjrvs/orrey` (branch `main`) | The specification. The build plan rev 5 (then `docs/build-plan.md`, now issue #1), `README.md`, `CLAUDE.md`, `src/db/schema.ts`, `src/discord/commands.ts` |
+| `https://github.com/alxjrvs/kith` (branch `main`) | The specification. The build plan rev 5 (then `docs/build-plan.md`, now issue #1), `README.md`, `CLAUDE.md`, `src/db/schema.ts`, `src/discord/commands.ts` |
 | `https://claude.ai/code/artifact/fa328d17-dff9-4ce9-84a3-4860b9270733` | The live build-plan document (same content, now issue #1). Not readable without the author's account |
 | Hermuz (archived, read-only) | The predecessor: ~14,500 lines of TypeScript, last commit 2026-08-20. Read as a specification, never ported. Not accessible from here |
 
@@ -33,21 +33,21 @@ from three candidate directions (see `directions/`).
 - **The console** — form-shaped administration a slash command models badly: campaigns,
   cadence, rosters, date polls. Holding administration here is what keeps the command list
   at four.
-- **Google Calendar** — a projection Orrey writes to and reconciles. Never a source.
+- **Google Calendar** — a projection Kith writes to and reconciles. Never a source.
 
 ---
 
 ## Content fundamentals
 
-The repo's own prose is the voice, and it is unusually consistent. Copy anywhere in Orrey
+The repo's own prose is the voice, and it is unusually consistent. Copy anywhere in Kith
 should read as though it came out of `CLAUDE.md`.
 
 **Declarative, present tense, no hedging.** The product states what is true and what it
-does. "Orrey never edits a post it has already sent." "Messages are send-only." "The
-database is the source of truth." Not "Orrey will try to…", not "we recommend…".
+does. "Kith never edits a post it has already sent." "Messages are send-only." "The
+database is the source of truth." Not "Kith will try to…", not "we recommend…".
 
 **Second person for the player, third person for the system.** A player reads "you are on
-the roster for three things". The system is named: "Orrey does not know what to do with
+the roster for three things". The system is named: "Kith does not know what to do with
 that", never "I". The organiser is "the organiser" or "the GM", not "the admin".
 
 **Sentence case everywhere. Uppercase is a typographic choice, not a copy choice.** Write
@@ -85,9 +85,9 @@ is deliberately different from every other surface.
 
 **No emoji.** Not in the console, not in bot posts, not in commit-adjacent copy. The build
 plan contains none; neither should the product. Discord's own UI supplies the only glyphs
-in the system (#, 🔊 in the channel list) and those belong to Discord, not to Orrey.
+in the system (#, 🔊 in the channel list) and those belong to Discord, not to Kith.
 
-**No exclamation marks, no encouragement, no personality voice.** Orrey is a clock. It does
+**No exclamation marks, no encouragement, no personality voice.** Kith is a clock. It does
 not congratulate you for showing up.
 
 ---
@@ -142,7 +142,7 @@ shadow tokens are for genuine overlays (`--shadow-overlay`) and Discord's own ch
 
 Zero, with three exceptions: status **pills** are fully round (`99px`), Discord **avatars**
 are circles, and Discord **embeds** use Discord's own 8px. Everything else — buttons,
-inputs, panels, avatars in Orrey's own chrome, the quorum meter's squares — is square.
+inputs, panels, avatars in Kith's own chrome, the quorum meter's squares — is square.
 
 ### Selection, hover, press, focus
 
@@ -184,7 +184,7 @@ never says "cancelled".
 
 ## Iconography
 
-**Orrey has no icon set, and this system does not add one.** The repo contains no icons, no
+**Kith has no icon set, and this system does not add one.** The repo contains no icons, no
 sprite, no icon font, and no SVG assets of any kind. Rather than import Lucide or Heroicons
 and pretend it was a brand decision, the system does the icon's job with shape and type:
 
@@ -198,9 +198,9 @@ and pretend it was a brand decision, the system does the icon's job with shape a
   arrow-shaped thing in the system.
 - **Actions are words.** Buttons are labelled, never glyph-only. "Nudge 1", not a bell.
 
-Two glyph sets appear and neither is Orrey's: the **#** and **🔊** in the Discord channel
+Two glyph sets appear and neither is Kith's: the **#** and **🔊** in the Discord channel
 list, and Discord's own button chrome. Both belong to Discord and appear only inside
-`ui_kits/discord`. **Emoji are not used by Orrey anywhere.**
+`ui_kits/discord`. **Emoji are not used by Kith anywhere.**
 
 If a future surface genuinely needs icons, add them as a documented decision — do not let
 one leak in through a component.
@@ -208,7 +208,7 @@ one leak in through a component.
 ## Logo
 
 **There is no logo.** No mark exists in the repo or anywhere the author provided. The brand
-is the name, set in type: `Wordmark` renders "ORREY·OF WORLDS" in Space Grotesk 700,
+is the name, set in type: `Wordmark` renders "KITH·OF WORLDS" in Space Grotesk 700,
 uppercase, tracked 0.14em, with the interpunct in blurple. The Discord bot avatar is
 "OR" in the same face. Nothing here was drawn or reconstructed. If a mark is commissioned,
 it replaces `Wordmark` and `assets/` gains its first file.
@@ -246,7 +246,7 @@ components/
 ui_kits/
   console/              The phase-2 console: agenda (two variants), campaign, date poll, players
   discord/              Bot posts: attendance, signup, poll, jeopardy notice, /upcoming, retired
-  entry/                Discord sign-in, first-run id adoption, the Orrey calendar
+  entry/                Discord sign-in, first-run id adoption, the Kith calendar
 directions/             The three candidate directions; B (Console) was chosen
 github.md               Repo association and sync record
 SKILL.md                Agent Skills front matter for use outside this project

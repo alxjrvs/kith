@@ -60,7 +60,7 @@ beforeEach(async () => {
 
 describe("the privacy policy page", () => {
   it("serves the policy at /privacy, not the console shell", async () => {
-    const res = await app.fetch(new Request("https://orrey.test/privacy"), env);
+    const res = await app.fetch(new Request("https://kith.test/privacy"), env);
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toMatch(/What Kith knows about you/);
@@ -72,7 +72,7 @@ describe("the privacy policy page", () => {
 
   it("refuses an unauthenticated HTTP delete and says where the real one is", async () => {
     const res = await app.fetch(
-      new Request("https://orrey.test/me", { method: "DELETE" }),
+      new Request("https://kith.test/me", { method: "DELETE" }),
       env,
     );
     expect(res.status).toBe(405);
@@ -89,7 +89,7 @@ describe("delete-my-data", () => {
     });
 
     const link = json.data.content.match(
-      /<(https:\/\/orrey\.test\/console\/login)>/,
+      /<(https:\/\/kith\.test\/console\/login)>/,
     )?.[1];
     expect(link).toBeTruthy();
 
@@ -110,7 +110,7 @@ describe("delete-my-data", () => {
       data: { name: "console" },
       member: { user: { id: "1001", username: "ada" }, roles: [] },
     });
-    expect(json.data.content).toMatch(/https:\/\/orrey\.test\/privacy/);
+    expect(json.data.content).toMatch(/https:\/\/kith\.test\/privacy/);
     expect(json.data.components?.[0]?.components?.[0]?.custom_id).toBe(
       "o1:privacy:delete",
     );
@@ -287,7 +287,7 @@ describe("delete my data, from the console", () => {
 
   async function deleteMe(userId: string | null, body?: unknown) {
     return app.fetch(
-      new Request("https://orrey.test/console/me/delete", {
+      new Request("https://kith.test/console/me/delete", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -383,7 +383,7 @@ describe("delete my data, from the console", () => {
     await signedIn("1001");
 
     const res = await app.fetch(
-      new Request("https://orrey.test/me", { method: "DELETE" }),
+      new Request("https://kith.test/me", { method: "DELETE" }),
       consoleEnv(),
     );
 
