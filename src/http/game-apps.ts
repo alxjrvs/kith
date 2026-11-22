@@ -1,6 +1,7 @@
 import { Hono, type Context } from "hono";
 import type { Env } from "../env.ts";
-import { media } from "../cms/client.ts";
+import { cutMedia } from "./media-cut.ts";
+import { withSocialCard } from "./social-card.ts";
 import { ICON_SIZES, gameApp, iconUrl, manifestFor, scopeOf, type GameApp, type IconSize } from "../hub/game-app.ts";
 import { viewerOf } from "./hub.ts";
 
@@ -38,7 +39,9 @@ export function gameAppRoutes() {
     const site = await c.env.ASSETS.fetch(new Request(new URL("/", c.req.raw.url), { headers }));
     if (!site.ok || !site.headers.get("content-type")?.includes("text/html")) return site;
     const app = await gameApp(c.env, c.req.param("slug") ?? "", await viewerOf(c.env, c.req.header("cookie")));
-    const out = app ? withManifest(site, app) : new Response(site.body, site);
+    // The preview is the public card whoever asks (src/hub/social-card.ts), so it is decided apart from `app`.
+    const shared = await withSocialCard(c.env, site, c.req.param("slug") ?? "", new URL(c.req.url));
+    const out = app ? withManifest(shared, app) : new Response(shared.body, shared);
     for (const [k, v] of Object.entries(PRIVATE)) out.headers.set(k, v);
     return out;
   };
@@ -49,46 +52,20 @@ export function gameAppRoutes() {
 }
 
 /**
- * A square icon cut from an uploaded image, for a game's manifest. Media keys
- * are fresh per upload and the file at one never changes, so neither does its
- * icon: each is cut once and then answered from the edge cache.
- *
- * Without the Images binding (local dev, tests) or when the cut fails, the
- * answer is Kith's own icon, briefly cached, so a later deploy that can cut
- * them is picked up rather than the fallback being kept for a year.
+ * A square icon cut from an uploaded image, for a game's manifest. Without the
+ * Images binding (local dev, tests) or when the cut fails, the answer is Kith's
+ * own icon.
  */
 export async function squareIcon(env: Env, request: Request, key: string, rawSize: string): Promise<Response> {
   const size = ICON_SIZES.find((s) => String(s) === rawSize);
   if (!size) return new Response("Not found", { status: 404 });
-
-  const cache = typeof caches === "undefined" ? undefined : caches.default;
-  const cacheKey = new Request(new URL(`/media/${key}/icon/${size}`, request.url));
-  const hit = await cache?.match(cacheKey);
-  if (hit) return hit;
-
-  const file = await media(env, key);
-  if (!file?.body) return new Response("Not found", { status: 404 });
-
-  if (env.IMAGES) {
-    try {
-      const cut = await env.IMAGES.input(file.body)
-        .transform({ width: size, height: size, fit: "cover", gravity: "auto" })
-        .output({ format: "image/png" });
-      const out = new Response(cut.response().body, {
-        headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=31536000, immutable" },
-      });
-      await cache?.put(cacheKey, out.clone());
-      return out;
-    } catch (error) {
-      console.error("game icon: the cut failed", key, error);
-    }
-  } else {
-    await file.body.cancel();
-  }
-  const fallback = await env.ASSETS.fetch(new Request(new URL(kithIcon(size), request.url)));
-  const out = new Response(fallback.body, fallback);
-  out.headers.set("Cache-Control", "public, max-age=3600");
-  return out;
+  return cutMedia(env, request, key, {
+    cachePath: `/media/${key}/icon/${size}`,
+    width: size,
+    height: size,
+    format: "image/png",
+    fallback: kithIcon(size),
+  });
 }
 
 function kithIcon(size: IconSize): string {
