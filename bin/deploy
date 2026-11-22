@@ -1,16 +1,26 @@
 #!/usr/bin/env bash
-# Deploys orrey to production: the deploy step of .github/workflows/deploy.yml.
-# Builds the site into dist/, applies D1 migrations, then deploys the Worker
-# with the site as its assets. Reads CLOUDFLARE_API_TOKEN and
-# CLOUDFLARE_ACCOUNT_ID. Migrations expand before code that needs them, and
-# contract only once no deployed release reads the old shape, so rolling the
-# Worker back never needs a schema rollback.
+# Deploys Kith to production: the deploy step of .github/workflows/deploy.yml.
+# First kith-cms (cms/, EmDash), which the Kith Worker reads over a service
+# binding, so it must exist before the binding does. Then the Kith Worker:
+# build the site into dist/, apply D1 migrations, deploy with the site as its
+# assets. Reads CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID. Migrations
+# expand before code that needs them, and contract only once no deployed
+# release reads the old shape, so rolling the Worker back never needs a schema
+# rollback. EmDash runs its own migrations on its first request.
 set -euo pipefail
 
 target="${1:-production}"
-[ "$target" = "production" ] || { echo "bin/deploy: orrey has only production, not '$target'" >&2; exit 2; }
+[ "$target" = "production" ] || { echo "bin/deploy: Kith has only production, not '$target'" >&2; exit 2; }
 : "${CLOUDFLARE_API_TOKEN:?set CLOUDFLARE_API_TOKEN (a secret of the production environment)}"
 : "${CLOUDFLARE_ACCOUNT_ID:?set CLOUDFLARE_ACCOUNT_ID (a secret of the production environment)}"
+
+# kith-cms deploys once bin/cms-setup and the Access app have filled in its ids
+# (docs/CMS.md). Until then it is skipped, loudly, and Kith runs without it.
+if grep -q REPLACE_WITH_ cms/wrangler.jsonc; then
+  echo "::notice title=kith-cms::cms/wrangler.jsonc still has placeholder ids, so kith-cms is not deployed (docs/CMS.md)."
+else
+  (cd cms && bun run build && bunx wrangler deploy)
+fi
 
 bun run build
 bunx wrangler d1 migrations apply orrey --remote

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# One-time setup for kith-cms (cms/wrangler.jsonc): creates its D1 database,
+# R2 bucket and KV namespace on the Cloudflare account wrangler is signed in
+# to, and writes their ids into cms/wrangler.jsonc. Safe to re-run: anything
+# that already exists is looked up instead of created.
+#
+# It does not put cms.kith.alxjrvs.com behind Cloudflare Access; that is a
+# dashboard step (docs/CMS.md). It never touches the Kith Worker or its database.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+config=cms/wrangler.jsonc
+wr() { bunx wrangler "$@"; }
+
+d1_id=$(wr d1 list --json | jq -r '.[] | select(.name == "kith-emdash") | .uuid')
+if [ -z "$d1_id" ]; then
+  wr d1 create kith-emdash >/dev/null
+  d1_id=$(wr d1 list --json | jq -r '.[] | select(.name == "kith-emdash") | .uuid')
+fi
+
+wr r2 bucket list | grep -q '^name:\s*kith-emdash-media$' || wr r2 bucket create kith-emdash-media
+
+kv_id=$(wr kv namespace list | jq -r '.[] | select(.title == "kith-cms-sessions") | .id')
+if [ -z "$kv_id" ]; then
+  wr kv namespace create kith-cms-sessions >/dev/null
+  kv_id=$(wr kv namespace list | jq -r '.[] | select(.title == "kith-cms-sessions") | .id')
+fi
+
+sed -i.bak \
+  -e "s/REPLACE_WITH_KITH_EMDASH_D1_ID/$d1_id/" \
+  -e "s/REPLACE_WITH_KITH_CMS_SESSION_KV_ID/$kv_id/" \
+  "$config" && rm -f "$config.bak"
+
+echo "kith-emdash D1:        $d1_id"
+echo "kith-emdash-media R2:  ok"
+echo "kith-cms-sessions KV:  $kv_id"
+echo "Commit cms/wrangler.jsonc. Before kith-cms first deploys, put cms.kith.alxjrvs.com behind Access (docs/CMS.md)."
