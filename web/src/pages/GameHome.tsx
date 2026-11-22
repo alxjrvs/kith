@@ -115,7 +115,7 @@ function NextUp({ row }: { row: Row }) {
       <span className="label">Next up · {inDays(row.startsAt)}</span>
       <span className="mono next-stamp">{stamp(row.startsAt)}</span>
       <div className="panel" style={{ marginTop: 4 }}>
-        <AgendaRow row={row} tally={false} simple />
+        <AgendaRow row={row} tally={false} simple={row.quorum.rule === "unanimous"} />
       </div>
     </div>
   );
@@ -174,7 +174,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
                   </div>
                   {list.map((row) => (
                     <div key={row.sessionId}>
-                      <AgendaRow row={row} tally={false} simple />
+                      <AgendaRow row={row} tally={false} simple={row.quorum.rule === "unanimous"} />
                       {canEdit ? <CancelSession row={row} /> : null}
                     </div>
                   ))}
