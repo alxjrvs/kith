@@ -6,6 +6,7 @@ import { escapeMarkdown } from "../discord/markdown.ts";
 export { escapeMarkdown };
 import { suggestRow } from "../polls/buttons.ts";
 import { quorumLine, quorumOf, type Quorum, type RuleKind } from "./quorum.ts";
+import { isDayOf } from "./day-of.ts";
 
 /**
  * The attendance post, rendered from D1 and nothing else.
@@ -58,7 +59,29 @@ export interface MessagePayload {
   allowed_mentions: { parse: never[]; roles: string[]; users?: string[] };
 }
 
-export function renderAttendancePost({ target, rows, asOf }: AttendanceView): MessagePayload {
+export function renderAttendancePost(view: AttendanceView): MessagePayload {
+  return dayOfWindow(view) ? renderDayOfPost(view) : renderSignupPost(view);
+}
+
+/**
+ * Which post a click is rewriting, worked out from D1 and the clock rather than
+ * from the message — a post is never read back.
+ *
+ * A running campaign's session is reminded on the day, so a click in the last
+ * day before it starts is a click on the reminder (or on an older signup post,
+ * which can then honestly become one: the heading says when it starts, not
+ * "today"). Anything further out is a signup post left from before running
+ * campaigns stopped taking signups, and it keeps its five buttons. A game day's
+ * session always has the signup post.
+ */
+function dayOfWindow({ target, asOf }: AttendanceView): boolean {
+  return isDayOf(target) && unix(asOf) >= target.session.startsAt - DAY_OF_WINDOW;
+}
+
+const DAY_OF_WINDOW = 24 * 3600;
+
+/** The signup post: In / Out / Maybe / Note / Refresh, and Suggest another day. */
+export function renderSignupPost({ target, rows, asOf }: AttendanceView): MessagePayload {
   const { session, campaign } = target;
 
   // Three passes, because a post over Discord's 2000 characters is not a post
@@ -85,6 +108,8 @@ const LIMIT = 1900;
 interface Detail {
   notes: boolean;
   names: boolean;
+  /** The day-of reminder's words rather than the signup post's. */
+  dayOf?: boolean;
 }
 
 function compose(
@@ -94,16 +119,29 @@ function compose(
   detail: Detail,
 ): string {
   const { session } = target;
-  const lines = [heading(target), when(session.startsAt, session.endsAt)];
+  const lines = detail.dayOf
+    ? [
+        `${heading(target)} starts <t:${session.startsAt}:R>!`,
+        `<t:${session.startsAt}:t> → <t:${session.endsAt}:t>`,
+      ]
+    : [heading(target), when(session.startsAt, session.endsAt)];
 
   if (session.location) lines.push(escapeMarkdown(session.location));
   lines.push("");
 
-  for (const [intent, label] of [
-    ["in", "In"],
-    ["out", "Out"],
-    ["maybe", "Maybe"],
-  ] as const) {
+  const labels = detail.dayOf
+    ? ([
+        ["in", HELL_YEAH],
+        ["out", "Can't make it"],
+        ["maybe", "Maybe"],
+      ] as const)
+    : ([
+        ["in", "In"],
+        ["out", "Out"],
+        ["maybe", "Maybe"],
+      ] as const);
+
+  for (const [intent, label] of labels) {
     const named = rows.filter((row) => row.intent === intent);
     if (named.length === 0) continue;
     const who = detail.names ? ` — ${named.map((row) => name(row, detail)).join(", ")}` : "";
@@ -131,16 +169,65 @@ function compose(
     lines.push(`**Not heard from (${silent.length})**${who}`);
   }
 
-  if (rows.length === 0) lines.push("*Nobody has said yet.*");
+  if (rows.length === 0 && !detail.dayOf) lines.push("*Nobody has said yet.*");
 
   // Does it run. Last, because it is the answer and the tallies above are the
   // working — and it survives every truncation pass, because a post shortened
-  // past the one line that answers the question is a post worth nothing.
-  const quorum = quorumLine(quorumOf(target, rows));
+  // past the one line that answers the question is a post worth nothing. In the
+  // words of the button the reader actually has.
+  const quorum = quorumLine(quorumOf(target, rows), detail.dayOf ? CANT_MAKE_IT : "Out");
   if (quorum) lines.push("", quorum);
 
-  lines.push("", `-# As of <t:${unix(asOf)}:R>. Refresh for a fresh reading.`);
+  // The day-of post has no Refresh: every click rewrites it with a fresh reading.
+  lines.push(
+    "",
+    detail.dayOf
+      ? `-# As of <t:${unix(asOf)}:R>.`
+      : `-# As of <t:${unix(asOf)}:R>. Refresh for a fresh reading.`,
+  );
   return lines.join("\n");
+}
+
+/**
+ * A running campaign's day-of reminder: when it starts, and two buttons.
+ *
+ * The same post underneath — the same session, the same `attend` ids, the same
+ * click path rewriting it with UPDATE_MESSAGE — so a click on **I can't make it**
+ * is an `out`, and under the unanimous rule an `out` from the roster is what
+ * moves the evening to a date poll. Only the words are different, because the
+ * table is not being asked to sign up for a game it is already playing.
+ *
+ * No Maybe, no Note, no Refresh, no Suggest buttons: a reminder on the day wants
+ * one of two answers, and every click rewrites the post with a fresh reading
+ * anyway. An answer or note given elsewhere (the site, an older post) still
+ * shows, because the tallies are the same tallies.
+ */
+export function renderDayOfPost({ target, rows, asOf }: AttendanceView): MessagePayload {
+  const { session, campaign } = target;
+
+  const dayOf = { dayOf: true };
+  let content = compose(target, rows, asOf, { notes: true, names: true, ...dayOf });
+  if (content.length > LIMIT) content = compose(target, rows, asOf, { notes: false, names: true, ...dayOf });
+  if (content.length > LIMIT) content = compose(target, rows, asOf, { notes: false, names: false, ...dayOf });
+
+  return {
+    content,
+    components: [dayOfButtons(session.id)],
+    allowed_mentions: { parse: [], roles: campaign?.discordRoleId ? [campaign.discordRoleId] : [] },
+  };
+}
+
+export const HELL_YEAH = "Hell yeah";
+export const CANT_MAKE_IT = "I can't make it";
+
+function dayOfButtons(sessionId: string): Record<string, unknown> {
+  return {
+    type: ComponentType.ACTION_ROW,
+    components: [
+      button(HELL_YEAH, sessionId, "in", ButtonStyle.SUCCESS),
+      button(CANT_MAKE_IT, sessionId, "out", ButtonStyle.DANGER),
+    ],
+  };
 }
 
 /** The five buttons, in one row — Discord allows five, which is exactly enough. */

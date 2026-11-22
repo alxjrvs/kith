@@ -5,6 +5,8 @@ import { enqueueProjection, enqueueUnprojection } from "../projection/outbox.ts"
 import { surfacesFor } from "../campaigns/event-cap.ts";
 import { postAttendancePost } from "../attendance/post.ts";
 import { startSessionThread } from "../attendance/thread.ts";
+import { DAY_OF_JOB, armDayOf, isDayOf } from "../attendance/day-of.ts";
+import { postDayOfOnce } from "../attendance/day-of-post.ts";
 import { postNoticeOnce } from "../attendance/notice.ts";
 import { checkJeopardy, jeopardyLabel } from "../attendance/jeopardy.ts";
 import { sendReminder } from "../attendance/reminders.ts";
@@ -123,17 +125,48 @@ async function runJob(job: typeof schema.jobs.$inferSelect, env: Env): Promise<v
       const { sessionId } = job.payload as { sessionId?: string };
       if (!sessionId) throw new Error(`session.post-attendance job ${job.id} has no sessionId`);
 
-      const messageId = await postAttendancePost(env, sessionId);
-      // No post, no thread to hang off it. The job re-runs, and a post that
-      // went up but was not recorded heals on the next drain — at which point
-      // this runs too, because the thread is started from the *recorded* id
-      // rather than from the one this call returned.
-      if (!messageId) return;
-
-      // Re-read: `postAttendancePost` has just written the message id, and the
-      // thread hangs off it.
+      /**
+       * A running campaign's session takes no signup post: it is reminded on the
+       * day instead (`src/attendance/day-of.ts`).
+       *
+       * This job is still armed for one by the paths that predate the day-of
+       * reminder — the seed, the carry-over's fresh post after a date poll, and
+       * the rows already in `jobs` from before — so rather than teaching each of
+       * them, the job hands itself on to the day-of job and posts nothing.
+       */
       const target = await loadProjectionTarget(env, sessionId);
-      if (target) await startSessionThread(env, target);
+      if (target && isDayOf(target)) {
+        await armDayOf(env, sessionId, target.session.startsAt);
+        return;
+      }
+
+      await postAndThread(env, sessionId);
+      return;
+    }
+
+    /**
+     * The day-of reminder for a running campaign's session: posted the morning
+     * of, in the campaign's own channel, once per date (`postDayOfOnce`).
+     */
+    case DAY_OF_JOB: {
+      const { sessionId } = job.payload as { sessionId?: string };
+      if (!sessionId) throw new Error(`${DAY_OF_JOB} job ${job.id} has no sessionId`);
+
+      const target = await loadProjectionTarget(env, sessionId);
+      // Called off, played, or gone: there is nothing to remind anybody of.
+      if (!target || target.session.state === "CANCELLED" || target.session.state === "PLAYED") return;
+      // Ran late enough that the evening has started. A reminder now is noise.
+      if (target.session.startsAt <= Math.floor(Date.now() / 1000)) return;
+      // Only a running campaign's session is reminded this way; a game day's has
+      // its own post.
+      if (!isDayOf(target)) return;
+
+      if (!(await postDayOfOnce(env, target))) return;
+
+      // The thread hangs off the session's post, which the reminder has just
+      // become if it had none. Re-read, because that write was just made.
+      const posted = await loadProjectionTarget(env, sessionId);
+      if (posted) await startSessionThread(env, posted);
       return;
     }
 
@@ -564,4 +597,22 @@ async function runJob(job: typeof schema.jobs.$inferSelect, env: Env): Promise<v
     default:
       throw new Error(`unknown job kind: ${job.kind}`);
   }
+}
+
+/**
+ * The attendance post, sent once, and the thread that hangs off it. Send-only:
+ * a re-run finds the recorded id and does nothing rather than posting again.
+ */
+async function postAndThread(env: Env, sessionId: string): Promise<void> {
+  const messageId = await postAttendancePost(env, sessionId);
+  // No post, no thread to hang off it. The job re-runs, and a post that went up
+  // but was not recorded heals on the next drain — at which point this runs too,
+  // because the thread is started from the *recorded* id rather than from the
+  // one this call returned.
+  if (!messageId) return;
+
+  // Re-read: `postAttendancePost` has just written the message id, and the
+  // thread hangs off it.
+  const target = await loadProjectionTarget(env, sessionId);
+  if (target) await startSessionThread(env, target);
 }

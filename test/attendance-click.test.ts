@@ -60,7 +60,7 @@ async function click(
 }
 
 function countIn(rewrite: Rewrite): number {
-  return Number(rewrite.data.content.match(/\*\*In \((\d+)\)\*\*/)?.[1] ?? 0);
+  return Number(rewrite.data.content.match(/\*\*Hell yeah \((\d+)\)\*\*/)?.[1] ?? 0);
 }
 
 beforeEach(async () => {
@@ -79,7 +79,7 @@ describe("clicking In / Out / Maybe", () => {
     const rewrite = await click("in", { id: "1001", name: "Ada" });
 
     expect(rewrite.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
-    expect(rewrite.data.content).toContain("**In (1)** — Ada");
+    expect(rewrite.data.content).toContain("**Hell yeah (1)** — Ada");
     expect(await db(env).select().from(schema.attendance).get()).toMatchObject({
       sessionId: SESSION_ID,
       userId: "1001",
@@ -97,8 +97,8 @@ describe("clicking In / Out / Maybe", () => {
     await click("in", { id: "1001", name: "Ada" });
     const rewrite = await click("out", { id: "1001", name: "Ada" });
 
-    expect(rewrite.data.content).toContain("**Out (1)** — Ada");
-    expect(rewrite.data.content).not.toContain("**In (1)**");
+    expect(rewrite.data.content).toContain("**Can't make it (1)** — Ada");
+    expect(rewrite.data.content).not.toContain("**Hell yeah (1)**");
     expect(await db(env).select().from(schema.attendance).all()).toHaveLength(1);
   });
 
@@ -125,13 +125,9 @@ describe("clicking In / Out / Maybe", () => {
     const rewrite = await click("in", { id: "1001", name: "Ada" });
     const ids = rewrite.data.components?.[0]?.components.map((c) => c.custom_id);
 
-    expect(ids).toEqual([
-      "o1:attend:in:age-of-umbra-s12",
-      "o1:attend:out:age-of-umbra-s12",
-      "o1:attend:maybe:age-of-umbra-s12",
-      "o1:attend:note:age-of-umbra-s12",
-      "o1:attend:refresh:age-of-umbra-s12",
-    ]);
+    // A running campaign's session: the day-of reminder's two buttons, which are
+    // the same `attend` ids as In and Out.
+    expect(ids).toEqual(["o1:attend:in:age-of-umbra-s12", "o1:attend:out:age-of-umbra-s12"]);
   });
 });
 
@@ -143,7 +139,7 @@ describe("Refresh", () => {
     const rewrite = await click("refresh", { id: "1002", name: "Bob" });
 
     expect(rewrite.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
-    expect(rewrite.data.content).toContain("**In (1)** — Ada");
+    expect(rewrite.data.content).toContain("**Hell yeah (1)** — Ada");
     // Refreshing is not answering: Bob said nothing by asking.
     expect(await db(env).select().from(schema.attendance).all()).toHaveLength(1);
     expect(await db(env).select().from(schema.attendance).get()).toEqual(before);

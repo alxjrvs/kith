@@ -233,7 +233,7 @@ export function vetoed(quorum: Quorum, target: ProjectionTarget): boolean {
 }
 
 /** The line the post carries about all this, or nothing when there is no rule to state. */
-export function quorumLine(quorum: Quorum): string | undefined {
+export function quorumLine(quorum: Quorum, outButton = "Out"): string | undefined {
   const { rule, required, saidIn, roster, vetoes, met, confirmed, slipped, state } = quorum;
 
   /**
@@ -261,7 +261,7 @@ export function quorumLine(quorum: Quorum): string | undefined {
     if (state === "LOCKED") {
       return `**On** — ${roster} on the roster, nobody out. Locked: answers are closed.`;
     }
-    return `**On** — ${roster} on the roster, nobody out. Silence counts as in; press **Out** if you cannot make it.`;
+    return `**On** — ${roster} on the roster, nobody out. Silence counts as in; press **${outButton}** if you cannot make it.`;
   }
 
   if (required === null) return undefined;

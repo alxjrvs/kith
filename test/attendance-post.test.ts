@@ -6,7 +6,7 @@ import { seedStatements } from "../src/db/seed-sql.ts";
 import { decodeCustomId } from "../src/discord/custom-id.ts";
 import { postAttendancePost } from "../src/attendance/post.ts";
 import { attendanceRows } from "../src/attendance/rows.ts";
-import { renderAttendancePost, type AttendanceRow } from "../src/attendance/render.ts";
+import { renderSignupPost, type AttendanceRow } from "../src/attendance/render.ts";
 import { loadProjectionTarget, type ProjectionTarget } from "../src/projection/target.ts";
 
 const realFetch = globalThis.fetch;
@@ -40,7 +40,7 @@ async function target(): Promise<ProjectionTarget> {
 }
 
 function render(rows: AttendanceRow[], over: Partial<ProjectionTarget> = {}) {
-  return async () => renderAttendancePost({ target: { ...(await target()), ...over }, rows, asOf });
+  return async () => renderSignupPost({ target: { ...(await target()), ...over }, rows, asOf });
 }
 
 const row = (

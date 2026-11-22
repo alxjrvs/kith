@@ -201,11 +201,10 @@ describe("the move", () => {
     expect(await jobs()).toEqual(
       [
         "attendance.assume",
-        "jeopardy.check",
         "poll.apply",
-        "reminder.step",
-        "reminder.step",
-        "reminder.step",
+        // A running campaign's session is reminded on the day of the new date,
+        // not nudged by the ladder or checked a day out.
+        "session.day-of",
         "session.project",
         // The carry-over's fresh attendance post, added one slice up.
         "session.post-attendance",

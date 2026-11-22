@@ -111,7 +111,7 @@ describe("submitting the modal", () => {
     const answer = await submitNote({ id: "1001", name: "Ada" }, "bringing snacks");
 
     expect(answer.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
-    expect(answer.data.content).toContain("**In (1)** — Ada (bringing snacks)");
+    expect(answer.data.content).toContain("**Hell yeah (1)** — Ada (bringing snacks)");
     expect(await db(env).select().from(schema.attendance).get()).toMatchObject({
       intent: "in",
       note: "bringing snacks",
@@ -186,7 +186,7 @@ describe("submitting the modal", () => {
     }
 
     const answer = await submitNote({ id: "1001", name: "Ada" }, "bringing snacks");
-    expect(answer.data.content).toContain("**In (2)** — Ada (bringing snacks), Bob");
+    expect(answer.data.content).toContain("**Hell yeah (2)** — Ada (bringing snacks), Bob");
   });
 
   it("retires a submission Kith no longer understands", async () => {

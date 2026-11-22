@@ -189,8 +189,9 @@ describe("the times moved", () => {
     // time-shifted work here. The drain's own case is what reaches the queue.
     const kinds = (await db(env).select().from(schema.jobs).all()).map((job) => job.kind);
     expect(kinds).toContain("session.project");
-    // The check, the nudges and the register were all pointing at the old day.
-    expect(kinds).toContain("jeopardy.check");
+    // The reminder and the register were both pointing at the old day. A
+    // running campaign's session is reminded on the day of its new date.
+    expect(kinds).toContain("session.day-of");
     expect(kinds).toContain("attendance.assume");
   });
 

@@ -6,6 +6,7 @@ import { bumpIcsSequence } from "../ics/sequence.ts";
 import { armAssume } from "../attendance/assume.ts";
 import { armJeopardyCheck } from "../attendance/jeopardy.ts";
 import { armReminders } from "../attendance/reminders.ts";
+import { armDayOf, isDayOf } from "../attendance/day-of.ts";
 import { postNoticeOnce } from "../attendance/notice.ts";
 import {
   loadProjectionTarget,
@@ -137,8 +138,15 @@ export async function moveSession(
       set: { runAt: sql`(unixepoch())`, state: "pending", attempts: 0, lastError: null },
     });
 
-  await armJeopardyCheck(env, sessionId, when.startsAt);
-  await armReminders(env, sessionId, when.startsAt);
+  // A running campaign's session is reminded on the day of its new date, and
+  // asked nothing before it; anything else keeps its check and its ladder.
+  // Either way the old day's rows move with it.
+  if (isDayOf(after)) {
+    await armDayOf(env, sessionId, when.startsAt);
+  } else {
+    await armJeopardyCheck(env, sessionId, when.startsAt);
+    await armReminders(env, sessionId, when.startsAt);
+  }
   await armAssume(env, sessionId, when.endsAt);
 
   // A new message in the thread, claimed under a label so a retry does not post

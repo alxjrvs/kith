@@ -8,7 +8,7 @@ import { InteractionResponseType, InteractionType } from "../src/discord/types.t
 import { decodeCustomId, encodeCustomId } from "../src/discord/custom-id.ts";
 import { fakeDiscord } from "./discord.ts";
 import { loadProjectionTarget } from "../src/projection/target.ts";
-import { renderAttendancePost, jeopardyNotice } from "../src/attendance/render.ts";
+import { renderSignupPost, jeopardyNotice } from "../src/attendance/render.ts";
 import { suggestButton } from "../src/polls/buttons.ts";
 import { quorumOf } from "../src/attendance/quorum.ts";
 
@@ -93,7 +93,7 @@ beforeEach(async () => {
 
 describe("where the button sits", () => {
   it("is in a second row, because the first is already five", async () => {
-    const rows = rowsOf(renderAttendancePost({ target: await target(), rows: [], asOf: ASOF }));
+    const rows = rowsOf(renderSignupPost({ target: await target(), rows: [], asOf: ASOF }));
 
     expect(rows).toHaveLength(2);
     expect(rows[0]).toHaveLength(5);
@@ -101,7 +101,7 @@ describe("where the button sits", () => {
   });
 
   it("leaves the five ids already on the first row exactly as they were", async () => {
-    const [first] = rowsOf(renderAttendancePost({ target: await target(), rows: [], asOf: ASOF }));
+    const [first] = rowsOf(renderSignupPost({ target: await target(), rows: [], asOf: ASOF }));
 
     // A post minted before this PR has no Suggest button and must keep working.
     // Its other five ids are unchanged, which is the whole reason ids are
