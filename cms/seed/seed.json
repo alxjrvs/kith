@@ -79,14 +79,15 @@
         },
         {
           "slug": "visibility",
-          "label": "Who can see it",
+          "label": "Who can see it (members: the people on the game; organisers: only organisers)",
           "type": "select",
           "required": true,
           "defaultValue": "members",
           "validation": {
             "options": [
               "members",
-              "public"
+              "public",
+              "organisers"
             ]
           }
         }
@@ -166,14 +167,15 @@
         },
         {
           "slug": "visibility",
-          "label": "Who can see it",
+          "label": "Who can see it (members: the people on the game; organisers: only organisers)",
           "type": "select",
           "required": true,
           "defaultValue": "members",
           "validation": {
             "options": [
               "members",
-              "public"
+              "public",
+              "organisers"
             ]
           }
         }
@@ -232,14 +234,15 @@
         },
         {
           "slug": "visibility",
-          "label": "Who can see it",
+          "label": "Who can see it (members: the people on the game; organisers: only organisers)",
           "type": "select",
           "required": true,
           "defaultValue": "members",
           "validation": {
             "options": [
               "members",
-              "public"
+              "public",
+              "organisers"
             ]
           }
         }
