@@ -115,7 +115,7 @@ function NextUp({ row }: { row: Row }) {
       <span className="label">Next up · {inDays(row.startsAt)}</span>
       <span className="mono next-stamp">{stamp(row.startsAt)}</span>
       <div className="panel" style={{ marginTop: 4 }}>
-        <AgendaRow row={row} />
+        <AgendaRow row={row} tally={false} simple />
       </div>
     </div>
   );
@@ -174,7 +174,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
                   </div>
                   {list.map((row) => (
                     <div key={row.sessionId}>
-                      <AgendaRow row={row} />
+                      <AgendaRow row={row} tally={false} simple />
                       {canEdit ? <CancelSession row={row} /> : null}
                     </div>
                   ))}
@@ -220,7 +220,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
         <aside>
           <Roster
             seats={roster}
-            title={listing.state === "FORMING" ? "Signed up so far" : "The table"}
+            title={listing.state === "FORMING" ? "Signed up so far" : "Roster"}
             empty={listing.state === "FORMING" ? "Nobody has signed up yet." : "No roster yet."}
           />
           <section className="panel">
@@ -230,26 +230,6 @@ function CampaignBase({ home }: { home: CampaignHome }) {
               <LinkRow key={link.id} link={link} canEdit={canEdit} kind={kind} id={id} />
             ))}
             {canEdit ? <NewLink kind={kind} id={id} /> : null}
-          </section>
-          <section className="panel">
-            <h2 className="panel-head label">At a glance</h2>
-            <div className="panel-body">
-              {cadence(listing).length > 0 ? (
-                <span className="mono" style={{ fontSize: 12 }}>
-                  {cadence(listing).join(" · ").toUpperCase()}
-                </span>
-              ) : null}
-              {listing.where === "voice" ? <span className="muted">On voice</span> : null}
-              {listing.lead ? <span className="muted">GM {listing.lead.name}</span> : null}
-              {listing.open ? (
-                <div className="row">
-                  <SeatSquares capacity={listing.capacity} taken={listing.taken} />
-                  <span className="mono" style={{ fontSize: 13 }}>
-                    {seatLine(listing)}
-                  </span>
-                </div>
-              ) : null}
-            </div>
           </section>
         </aside>
       </div>
@@ -345,18 +325,6 @@ function BoardBase({ home }: { home: BoardHome }) {
             </section>
           ))}
         </div>
-        <aside>
-          <section className="panel">
-            <h2 className="panel-head label">At a glance</h2>
-            <div className="panel-body">
-              {players ? <span className="muted">{players}</span> : null}
-              {length ? <span className="muted">{length}</span> : null}
-              <span className="mono" style={{ fontSize: 12 }}>
-                {played === 0 ? "NOT PLAYED HERE YET" : `PLAYED ${played} ${played === 1 ? "TIME" : "TIMES"}`}
-              </span>
-            </div>
-          </section>
-        </aside>
       </div>
     </main>
     </>
@@ -382,49 +350,38 @@ function RosterRows({ seats, empty, characters = true }: { seats: Seat[]; empty:
   if (seats.length === 0) return <p className="panel-body muted">{empty}</p>;
   return (
     <table className="roster">
+      <thead className="visually-hidden">
+        <tr>
+          <th>Avatar</th>
+          <th>Player</th>
+          {characters ? <th>Character</th> : null}
+        </tr>
+      </thead>
       <tbody>
-        {seats.map((seat, i) => {
-          const gmOnly = seat.role === "gm" && !seat.character;
-          const main = !characters
-            ? (seat.person?.name ?? "Seat taken")
-            : gmOnly
-              ? (seat.person?.name ?? "Game master")
-              : (seat.character ?? "Character to come");
-          const sub = !characters
-            ? seat.person
-              ? null
-              : "Shown to the table"
-            : gmOnly
-              ? "Game master"
-              : seat.person
-                ? seat.person.name
-                : "Shown to the table";
-          return (
-            <tr key={`${seat.role}-${seat.person?.id ?? i}`} className={seat.role === "gm" ? "gm" : undefined}>
-              <td style={{ width: 44 }}>
-                <img
-                  className="discord-avatar"
-                  src={seat.person?.avatarUrl ?? ANONYMOUS_AVATAR}
-                  alt=""
-                  width="32"
-                  height="32"
-                  // A blocked CDN leaves the round placeholder, not a broken-image glyph.
-                  onError={(e) => {
-                    e.currentTarget.style.visibility = "hidden";
-                  }}
-                />
-              </td>
-              <td>
-                <span className="roster-main">{main}</span>
-                {sub ? <span className="roster-sub">{sub}</span> : null}
-              </td>
-              <td style={{ textAlign: "right" }}>
-                {seat.role === "gm" ? <span className="pill accent">GM</span> : null}
-                {seat.state === "waitlisted" ? <span className="pill maybe">Waitlist</span> : null}
-              </td>
-            </tr>
-          );
-        })}
+        {seats.map((seat, i) => (
+          <tr key={`${seat.role}-${seat.person?.id ?? i}`} className={seat.role === "gm" ? "gm" : undefined}>
+            <td style={{ width: 44 }}>
+              <img
+                className="discord-avatar"
+                src={seat.person?.avatarUrl ?? ANONYMOUS_AVATAR}
+                alt=""
+                width="28"
+                height="28"
+                // A blocked CDN leaves the round placeholder, not a broken-image glyph.
+                onError={(e) => {
+                  e.currentTarget.style.visibility = "hidden";
+                }}
+              />
+            </td>
+            <td className="roster-user">
+              {seat.person?.name ?? <span className="muted">Kept to the table</span>}
+              {seat.state === "waitlisted" ? <span className="muted"> · waitlist</span> : null}
+            </td>
+            {characters ? (
+              <td className="roster-character">{seat.role === "gm" ? <span className="muted">GM</span> : (seat.character ?? <span className="muted">—</span>)}</td>
+            ) : null}
+          </tr>
+        ))}
       </tbody>
     </table>
   );
