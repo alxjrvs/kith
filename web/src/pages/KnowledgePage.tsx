@@ -4,6 +4,7 @@ import { ApiError, usePage, useTable, useTableEdits, type Visibility } from "../
 import { Markdown } from "../markdown.tsx";
 import { ToTable } from "../components/To.tsx";
 import { CMS_ADMIN } from "../components/EditInCms.tsx";
+import { useGameApp } from "../pwa.ts";
 
 /** A campaign's page, under its game's home base. */
 export function GameKnowledgePage() {
@@ -24,6 +25,8 @@ function KnowledgePage({ kind, id, slug, title }: { kind: string; id: string; sl
   const search = { title };
   const table = useTable(kind, id);
   const page = usePage(kind, id, slug);
+  // A campaign's page is inside its game's app.
+  useGameApp(kind === "campaign" && table.data ? id : undefined);
   const canEdit = table.data?.canEdit === true;
   // Only a 404 is a page that does not exist yet. Any other failure must never
   // open an empty editor over a page that is really there.

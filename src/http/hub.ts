@@ -209,7 +209,7 @@ export function hubRoutes() {
 const ORGANISER_TTL_MS = 60_000;
 const organiserSeen = new Map<string, { value: boolean; until: number }>();
 
-async function viewerOf(env: Env, cookie: string | undefined): Promise<Viewer> {
+export async function viewerOf(env: Env, cookie: string | undefined): Promise<Viewer> {
   const session = await sessionFrom(env, cookie, new Date());
   if (!session) return ANONYMOUS;
   const seen = organiserSeen.get(session.userId);

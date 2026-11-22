@@ -43,6 +43,8 @@
       "/google/*",
       "/healthz",
       "/media/*",
+      // Each game's pages arrive with its own app manifest linked (src/http/game-apps.ts).
+      "/games/*",
       "/privacy",
       "/me"
     ]
@@ -63,6 +65,10 @@
   // kith-cms (cms/, EmDash): every word on the site is read from it
   // (src/cms/client.ts, docs/CMS.md). bin/deploy deploys it first.
   "services": [{ "binding": "CMS", "service": "kith-cms" }],
+
+  // Cuts each game's art into a square icon for its installable app
+  // (src/http/game-apps.ts). Cached per upload, so a handful of cuts a month.
+  "images": { "binding": "IMAGES" },
 
   "queues": {
     "producers": [{ "binding": "OUTBOX", "queue": "kith-outbox" }],

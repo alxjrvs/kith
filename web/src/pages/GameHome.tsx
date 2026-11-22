@@ -13,6 +13,7 @@ import { Markdown } from "../markdown.tsx";
 import { SoundButton, TableMotif } from "./Splash.tsx";
 import { Header } from "../components/Header.tsx";
 import { signInHref } from "../signin.ts";
+import { useGameApp } from "../pwa.ts";
 
 const STATE_EYEBROW: Record<string, string> = {
   FORMING: "New campaign",
@@ -25,6 +26,7 @@ const STATE_EYEBROW: Record<string, string> = {
 export function GameHome() {
   const { slug } = useParams({ from: "/games/$slug" });
   const home = useHome(slug);
+  useGameApp(home.data ? slug : undefined);
 
   if (home.isPending) return <div className="splash base" aria-busy="true" />;
   if (home.isError) {
