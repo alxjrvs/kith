@@ -77,7 +77,7 @@ export interface Quorum {
   /**
    * Confirmed, and since fallen below. The post says so and nothing else
    * happens: whether that un-confirms the session is the organiser's call, and
-   * #28 is explicit that Orrey surfaces it rather than deciding it.
+   * #28 is explicit that Kith surfaces it rather than deciding it.
    */
   slipped: boolean;
 }
@@ -119,12 +119,12 @@ export function requiredFor(target: ProjectionTarget): number | null {
  *   move a date for the people who have. HIATUS and CONCLUDED are excluded for
  *   the opposite reason: their sessions are not published (`isProjectable` says
  *   so) but their posts are still up and still clickable, and a paused campaign
- *   whose post says "**On**" is Orrey asserting an evening nobody has planned.
+ *   whose post says "**On**" is Kith asserting an evening nobody has planned.
  *   `state !== "FORMING"` caught the first case and let both of those through.
  * - **Somebody on it.** Unanimity across nobody is vacuously true, and "it runs
  *   because there was nobody to object" is exactly the number-computed-from-
  *   nothing this repo keeps refusing to ship. A RUNNING campaign with an empty
- *   roster falls back to quorum — which, unset, is "nobody has asked". Orrey
+ *   roster falls back to quorum — which, unset, is "nobody has asked". Kith
  *   says nothing rather than something wrong, and the fix is entering the roster.
  * - **No quorum set.** The opt-out above.
  */

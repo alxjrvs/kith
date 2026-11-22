@@ -97,7 +97,7 @@ export async function agendaBetween(
     .all();
 
   // A campaign on hiatus contributes nothing, for the same reason
-  // `isProjectable` refuses to publish it: a console listing a session Orrey is
+  // `isProjectable` refuses to publish it: a console listing a session Kith is
   // not putting on anybody's calendar shows the organiser a plan Discord does
   // not have. One rule, asked once, rather than a second answer that drifts.
   const live = rows
@@ -203,7 +203,7 @@ function tallyOf(said: Said[], rosterSize: number): AgendaTally {
     in: counted("in"),
     out: counted("out"),
     maybe: counted("maybe"),
-    // Roster members Orrey has not heard from, floored at zero: somebody who
+    // Roster members Kith has not heard from, floored at zero: somebody who
     // answered and then left the roster is still an answer, and would otherwise
     // make this negative.
     noReply: Math.max(0, rosterSize - heard),

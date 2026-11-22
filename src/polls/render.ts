@@ -195,7 +195,7 @@ export function renderOverride(view: PollView, proposed: string[]): MessagePaylo
     content: [
       `**Closing the poll.**${poll.title ? ` ${escapeMarkdown(poll.title)}` : ""}`,
       proposed.length
-        ? "Orrey's rule picked the dates below. Change them if it got it wrong, then Apply."
+        ? "Kith's rule picked the dates below. Change them if it got it wrong, then Apply."
         : "The rule picked nothing. Choose the dates that won, then Apply.",
       "",
       ...dates.map((date) => tally(date, view.rosterSize)),
@@ -251,7 +251,7 @@ export function pollClosedNotice(view: PollView): MessagePayload {
  * cannot be claimed would be worse than saying less.
  *
  * Send-only, and its message id is deliberately not stored: nothing will ever
- * reconcile it, so keeping the id would be keeping a promise Orrey does not make.
+ * reconcile it, so keeping the id would be keeping a promise Kith does not make.
  */
 export function gameDayAnnouncement(day: {
   title: string | null;

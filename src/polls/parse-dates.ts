@@ -144,7 +144,7 @@ function readDate(text: string, now: Date, timeZone: string) {
 
   // `1 Oct`, `Oct 1`, `Thu 3 Dec`, optionally with a year. A leading weekday is
   // read and thrown away: it is how people write dates, and checking it against
-  // the date would mean refusing a line over a detail Orrey can compute.
+  // the date would mean refusing a line over a detail Kith can compute.
   const stripped = text.replace(/^[a-z]{3,9}[,.]?\s+/i, (match) =>
     MONTHS.includes(match.trim().slice(0, 3).toLowerCase()) ? match : "",
   );

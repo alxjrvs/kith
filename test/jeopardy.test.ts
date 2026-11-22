@@ -206,7 +206,7 @@ describe("what the check writes", () => {
     await setQuorum(null);
     await saidIn(0);
 
-    // The campaign has not asked this question, and Orrey does not answer it on
+    // The campaign has not asked this question, and Kith does not answer it on
     // their behalf.
     expect(await checkJeopardy(env, await target())).toBe("no-quorum-set");
     expect(await stateOf()).toBe("SCHEDULED");
@@ -276,7 +276,7 @@ describe("what the check writes", () => {
     await checkJeopardy(env, await target());
 
     // When the answer is no, the response is a date poll — phase 4's — not a
-    // cancellation. Orrey marks it and leaves the deciding to people.
+    // cancellation. Kith marks it and leaves the deciding to people.
     expect(await stateOf()).toBe("JEOPARDY");
     expect(await stateOf()).not.toBe("CANCELLED");
   });

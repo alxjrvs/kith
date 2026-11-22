@@ -187,7 +187,7 @@ describe("what it refuses", () => {
     const answer = await click("in", "1");
 
     // Ephemeral, and the post is left exactly as it was: rewriting it would make
-    // it look current when it is not, and Orrey cannot edit it back.
+    // it look current when it is not, and Kith cannot edit it back.
     expect(answer.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
     expect(answer.data.flags! & MessageFlags.EPHEMERAL).toBeTruthy();
     expect(answer.data.content).toContain("settled");

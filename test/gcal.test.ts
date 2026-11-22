@@ -148,7 +148,7 @@ describe("projecting a session to Google", () => {
     expect(stored?.lastError).toBeNull();
   });
 
-  it("writes to the Orrey calendar and to no other", async () => {
+  it("writes to Kith calendar and to no other", async () => {
     await upsert();
     await seed({ startsAt: session.startsAt + 3600 });
     reply(409, { error: { message: "duplicate" } });
@@ -178,7 +178,7 @@ describe("projecting a session to Google", () => {
     await upsert();
     await upsert();
 
-    // Google's `updated` moves on every write, and phase 7 has to tell Orrey's
+    // Google's `updated` moves on every write, and phase 7 has to tell Kith's
     // own echo from a person's edit — so a pointless write is worse than none.
     expect(apiCalls()).toEqual([]);
   });
@@ -241,7 +241,7 @@ describe("projecting a session to Google", () => {
 describe("retracting without the session row", () => {
   const ref = { surface: "google", kind: "event", targetId: SESSION_ID } as const;
 
-  it("deletes the event Orrey published for a session that no longer exists", async () => {
+  it("deletes the event Kith published for a session that no longer exists", async () => {
     reply(200, {});
     await upsert();
 

@@ -12,7 +12,7 @@ import { forget } from "../projection/publications.ts";
  *
  * **The old intents are cleared first.** They referred to the old date, and a
  * stale "out" about a Tuesday is not an answer about a Thursday — carrying it
- * over would be Orrey putting words in somebody's mouth. Only the people who
+ * over would be Kith putting words in somebody's mouth. Only the people who
  * marked the winning date available get an answer written for them, because that
  * is the only thing they actually said.
  *
@@ -53,7 +53,7 @@ export async function carryOver(
   /**
    * And forget the old post.
    *
-   * This is a deliberate forget, not a reconcile: Orrey is not tracking two
+   * This is a deliberate forget, not a reconcile: Kith is not tracking two
    * posts, it is tracking the newest one. Clearing the id is what lets
    * `postAttendancePost` send a fresh one instead of returning the stored id —
    * and the old post stays clickable and stays correct, because it renders from
@@ -70,7 +70,7 @@ export async function carryOver(
 
   // The ledger row has to go with the id, or the fresh post is refused by the
   // guard that exists to stop a *duplicate* post — which this is not. `forget`
-  // rather than `retract`: the old post stays up and stays clickable, and Orrey
+  // rather than `retract`: the old post stays up and stays clickable, and Kith
   // is deliberately no longer the thing that tracks it.
   await forget(env, { surface: "discord", kind: "message", targetId: sessionId });
 

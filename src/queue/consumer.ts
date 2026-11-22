@@ -11,7 +11,7 @@ import { isProjectable, loadProjectionTarget } from "../projection/target.ts";
 
 /**
  * Outbound projection. Google Calendar and Discord *scheduled events* only —
- * both of which Orrey reconciles against a stored fingerprint. Messages never
+ * both of which Kith reconciles against a stored fingerprint. Messages never
  * appear here: they are sent once and forgotten.
  *
  * The spine is the same for every projector: load the session from D1 (the
@@ -44,7 +44,7 @@ export async function handleQueueBatch(
 export async function project(body: OutboxMessage, env: Env): Promise<void> {
   const target = await loadProjectionTarget(env, body.sessionId);
 
-  // `isProjectable` guards what Orrey *publishes*. A delete is the opposite —
+  // `isProjectable` guards what Kith *publishes*. A delete is the opposite —
   // it is how something published comes down — so gating it on the campaign
   // still running would strand a concluded campaign's events out there forever,
   // with an ack saying the work was done.

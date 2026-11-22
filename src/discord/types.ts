@@ -11,7 +11,7 @@ export const InteractionResponseType = {
   CHANNEL_MESSAGE_WITH_SOURCE: 4,
   DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE: 5,
   DEFERRED_UPDATE_MESSAGE: 6,
-  /** The one write Orrey is allowed to make to an existing message. */
+  /** The one write Kith is allowed to make to an existing message. */
   UPDATE_MESSAGE: 7,
   APPLICATION_COMMAND_AUTOCOMPLETE_RESULT: 8,
   MODAL: 9,

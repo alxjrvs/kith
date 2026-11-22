@@ -27,12 +27,12 @@ export interface RegisterEntry {
   /** What they said beforehand. Null is "never asked", not "said nothing". */
   intent: "in" | "out" | "maybe" | null;
   /**
-   * Whether they came. **Null is not false.** A session Orrey holds no answer
+   * Whether they came. **Null is not false.** A session Kith holds no answer
    * about is not one they failed to turn up to, and the two are shown
    * differently everywhere they appear.
    */
   attended: boolean | null;
-  /** Whether a person decided that, as against Orrey having assumed it. */
+  /** Whether a person decided that, as against Kith having assumed it. */
   corrected: boolean;
 }
 

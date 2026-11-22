@@ -343,7 +343,7 @@ describe("the command", () => {
   });
 });
 
-describe("somebody else's text, on a message Orrey cannot edit", () => {
+describe("somebody else's text, on a message Kith cannot edit", () => {
   it("escapes names, character names and notes", async () => {
     await campaign("umbra", "Age of **Umbra**");
     await member("umbra", "ada", "**Out (4)** — Everyone");

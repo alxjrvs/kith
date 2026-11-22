@@ -284,7 +284,7 @@ describe("apply", () => {
 
     await app.fetch(await click("apply", "opener"), discord.env(env));
 
-    // A button click carries no select values, and Orrey never reads a message
+    // A button click carries no select values, and Kith never reads a message
     // back. D1 is the only place this state is allowed to live.
     expect(await outcomes()).toEqual(["lost", "lost", "won"]);
   });

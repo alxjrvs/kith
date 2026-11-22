@@ -67,7 +67,7 @@ beforeEach(async () => {
   await env.DB.prepare("DELETE FROM campaigns").run();
   await env.DB.prepare("DELETE FROM users").run();
 
-  // Whoever asks is somebody Orrey already knows: the console upserts the user
+  // Whoever asks is somebody Kith already knows: the console upserts the user
   // on login, and `audit_log.actor_user_id` references `users` so the log can
   // never name someone who does not exist.
   await db(env)
@@ -145,7 +145,7 @@ describe("the campaign lifecycle", () => {
     expect((await auditRows())[0]).toMatchObject({ actorUserId: null });
   });
 
-  it("refuses to attribute a move to somebody Orrey does not know", async () => {
+  it("refuses to attribute a move to somebody Kith does not know", async () => {
     await seedCampaign("RUNNING");
 
     // Fail closed, atomically: the audit row and the state change are one batch,

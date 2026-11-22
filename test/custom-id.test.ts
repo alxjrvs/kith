@@ -18,7 +18,7 @@ describe("custom ids", () => {
     expect(() => encodeCustomId({ action: "a", target: "x".repeat(100) })).toThrow(/too long/);
   });
 
-  it("returns undefined for anything Orrey did not mint", () => {
+  it("returns undefined for anything Kith did not mint", () => {
     // Hermuz-era ids, and ids from a hypothetical older schema version.
     for (const raw of ["", "attend_in_123", "gameday:rsvp:yes", "o0:attend:in:1", "o1", "o1:"]) {
       expect(decodeCustomId(raw)).toBeUndefined();

@@ -96,7 +96,7 @@ describe("where a roster comes from", () => {
     ]);
   });
 
-  it("falls back to a mention for somebody Orrey has never seen speak", async () => {
+  it("falls back to a mention for somebody Kith has never seen speak", async () => {
     await db(env)
       .insert(schema.users)
       .values({ discordId: "7", username: null, globalName: null, feedToken: "t-7" });

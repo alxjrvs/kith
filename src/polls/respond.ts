@@ -31,7 +31,7 @@ export async function answerPoll(
   now = new Date(),
 ): Promise<PollAnswer> {
   // Closing is enforced *here*, and it has to be: the poll post is still sitting
-  // in the channel with a live select, Orrey cannot disarm it, and the message is
+  // in the channel with a live select, Kith cannot disarm it, and the message is
   // not a place state can live. So the handler is the gate.
   const poll = await loadPoll(env, pollId);
   if (!poll) return { ok: false, reason: "unknown" };
@@ -143,7 +143,7 @@ export async function pickWinners(
 /**
  * Apply — the poll closes, and the post stops answering.
  *
- * A button click carries no select values, and Orrey never reads a message back,
+ * A button click carries no select values, and Kith never reads a message back,
  * so what Apply acts on is what the picks wrote to D1. That is not a
  * convenience: D1 is the only place this state is allowed to live.
  */

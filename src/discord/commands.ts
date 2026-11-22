@@ -45,7 +45,7 @@ export const commands = [
   },
   {
     name: "console",
-    description: "A login link for the Orrey console.",
+    description: "A login link for the Kith console.",
     type: CHAT_INPUT,
   },
 ] as const;

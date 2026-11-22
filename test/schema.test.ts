@@ -286,7 +286,7 @@ describe("a session's second parent", () => {
 
   it("says a session with both parents is wrong", () => {
     // The campaign half is phase 1's CHECK; this is the half SQLite will not let
-    // Orrey add without rebuilding `sessions` — and rebuilding it on D1 cascades
+    // Kith add without rebuilding `sessions` — and rebuilding it on D1 cascades
     // away every attendance row, calendar link and date poll that references it.
     expect(
       hasExactlyOneParent({ kind: "one_off", campaignId: "c", gameDayId: "d" }),

@@ -12,7 +12,7 @@ import type { DaySignup } from "./signups.ts";
  * Built the way the attendance post was, and for the same reasons: pure, with
  * the clock arriving as an argument so what a click renders is exactly what a
  * test renders; a snapshot with an as-of line and a Refresh button, because
- * Orrey never edits a post from the outside and the only rewrite is a click
+ * Kith never edits a post from the outside and the only rewrite is a click
  * rewriting the message it came from.
  *
  * The audience is different, though, and it changes one thing. An attendance
@@ -48,7 +48,7 @@ export function renderSignupPost(view: SignupView): MessagePayload {
     content,
     components: [seatButtons(view.day.id, view.day.kind, view.capacity)],
     // Nothing. A game day has no role of its own and its post is addressed to
-    // the room, so there is no mention Orrey means to fire — and `parse: []`
+    // the room, so there is no mention Kith means to fire — and `parse: []`
     // turns off the ones it does not.
     allowed_mentions: { parse: [], roles: [] },
   };

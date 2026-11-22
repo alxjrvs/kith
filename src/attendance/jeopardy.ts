@@ -123,7 +123,7 @@ export async function checkJeopardy(
 
   /**
    * A campaign that never said what quorum is has not asked this question, and
-   * Orrey does not get to answer it on their behalf.
+   * Kith does not get to answer it on their behalf.
    *
    * Only under the counting rule. Under the veto rule there is no number to be
    * short of and none missing — `met` is "nobody assigned to this has said they

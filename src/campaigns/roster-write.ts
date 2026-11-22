@@ -8,10 +8,10 @@ import { InvalidCampaign } from "./write.ts";
  * The roster, edited from the console. Same shape as every other write here: the
  * domain function does the work and puts its audit row in the same batch.
  *
- * A person is added by Discord id, because that is the only identity Orrey has.
+ * A person is added by Discord id, because that is the only identity Kith has.
  * They may well not be in `users` yet — somebody can be put on a roster before
  * they have ever clicked anything — so the row is made if it is missing, with no
- * names in it. The names are a cache, and Orrey learns them the first time that
+ * names in it. The names are a cache, and Kith learns them the first time that
  * person speaks to it.
  */
 async function ensureUser(env: Env, discordId: string): Promise<void> {

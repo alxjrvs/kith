@@ -124,7 +124,7 @@ describe("the roster", () => {
     expect((await sessionDetail(env, "s"))!.roster[0]?.attended).toBeNull();
   });
 
-  it("says when a person decided it rather than Orrey guessing", async () => {
+  it("says when a person decided it rather than Kith guessing", async () => {
     await seed();
     await db(env)
       .insert(schema.attendance)
@@ -312,7 +312,7 @@ describe("the three writes", () => {
     const answer = (await res.json()) as { type: number; data: { content: string } };
 
     // Ephemeral, and the post is left as it was: rewriting it would make a stale
-    // reading look fresh, and Orrey cannot edit it back.
+    // reading look fresh, and Kith cannot edit it back.
     expect(answer.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
     expect(answer.data.content).toContain("settled");
     expect(await db(env).select().from(schema.attendance).all()).toEqual([]);

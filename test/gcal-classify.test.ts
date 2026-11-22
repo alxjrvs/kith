@@ -14,10 +14,10 @@ import { classifyAll } from "../src/google/sync.ts";
 import type { CalendarEvent } from "../src/google/sync.ts";
 
 /**
- * Orrey's own handwriting.
+ * Kith's own handwriting.
  *
  * An echo that stops being recognised is an infinite loop; a change misread as
- * an echo is a drag in Google that Orrey silently reverts. So the two properties
+ * an echo is a drag in Google that Kith silently reverts. So the two properties
  * this file pins are that the verdict comes from a *recomputed* fingerprint,
  * and that the shape it recomputes is the same one the projector hashed.
  */
@@ -120,7 +120,7 @@ describe("the verdict", () => {
     );
   });
 
-  it("is foreign for an event with nothing of Orrey's behind it", async () => {
+  it("is foreign for an event with nothing of Kith's behind it", async () => {
     expect(await classifyEvent(event(), undefined, undefined)).toBe("foreign");
   });
 });
@@ -170,7 +170,7 @@ describe("finding the session", () => {
     { sessionId: "umbra-s12", gcalEventId: "evt-1", fingerprint: "abc" },
   ];
 
-  it("reads the property Orrey writes", () => {
+  it("reads the property Kith writes", () => {
     expect(sessionIdOf(event(), [])).toBe("umbra-s12");
   });
 
@@ -214,7 +214,7 @@ describe("classifying a whole list", () => {
     expect(only).toMatchObject({ verdict: "foreign", sessionId: undefined });
   });
 
-  it("recognises Orrey's own write as an echo", async () => {
+  it("recognises Kith's own write as an echo", async () => {
     const link = await stored();
     await db(env)
       .insert(schema.calendarLinks)

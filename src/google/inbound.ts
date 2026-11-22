@@ -6,7 +6,7 @@ import { shapeOf, type SessionShape } from "./classify.ts";
 import type { CalendarEvent } from "./sync.ts";
 
 /**
- * Somebody changed an event Orrey owns. What Orrey does about it.
+ * Somebody changed an event Kith owns. What Kith does about it.
  *
  * Two cases, and the second is the one worth the review attention, because the
  * naive version of it never terminates.
@@ -19,7 +19,7 @@ import type { CalendarEvent } from "./sync.ts";
 export type ChangeOutcome = "moved" | "re-projected" | "nothing";
 
 /**
- * Somebody deleted an event Orrey owns. **It comes back.**
+ * Somebody deleted an event Kith owns. **It comes back.**
  *
  * D1 is the source of truth, so a deletion on the calendar says nothing about
  * whether the session is happening — #48 is explicit, and nothing here touches
@@ -89,7 +89,7 @@ export async function applyChange(
   }
 
   /**
-   * Nothing Orrey adopts moved — somebody retyped the summary.
+   * Nothing Kith adopts moved — somebody retyped the summary.
    *
    * The naive version of this case never terminates. The row is unchanged, so
    * `calendar_links.fingerprint` still matches what `googleFingerprint`
@@ -101,7 +101,7 @@ export async function applyChange(
    * what is out there", which is exactly true here.
    *
    * No notice and no audit row, because nothing moved. Telling a thread that
-   * somebody retyped a summary Orrey is about to overwrite is noise.
+   * somebody retyped a summary Kith is about to overwrite is noise.
    */
   await db(env)
     .update(schema.calendarLinks)

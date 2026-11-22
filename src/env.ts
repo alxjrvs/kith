@@ -35,7 +35,7 @@ export interface Env {
 }
 
 /**
- * Everything Orrey projects outward. Note what is absent: Discord *messages*.
+ * Everything Kith projects outward. Note what is absent: Discord *messages*.
  * Messages are send-only and are never reconciled, so they never ride the queue.
  */
 export type OutboxMessage =

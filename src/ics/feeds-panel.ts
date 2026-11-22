@@ -33,7 +33,7 @@ export interface FeedsPanel {
 }
 
 export const LAG =
-  "Google refreshes a subscribed ICS feed every eight to twenty-four hours, so a change made now usually shows up tomorrow. The Orrey calendar is the timely one; these feeds are for choosing what you see, not for seeing it sooner.";
+  "Google refreshes a subscribed ICS feed every eight to twenty-four hours, so a change made now usually shows up tomorrow. The Kith calendar is the timely one; these feeds are for choosing what you see, not for seeing it sooner.";
 
 export async function feedsPanel(
   env: Env,

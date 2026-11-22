@@ -230,13 +230,13 @@ describe("the click", () => {
     expect(json.data.content).toContain("retired");
   });
 
-  it("answers the retired-post response for an argument Orrey does not act on", async () => {
+  it("answers the retired-post response for an argument Kith does not act on", async () => {
     const res = await app.fetch(
       await click(encodeCustomId({ action: "poll", arg: "nonsense", target: POLL }), undefined),
       discord.env(env),
     );
 
-    // An id Orrey minted but does not act on degrades exactly like one it never
+    // An id Kith minted but does not act on degrades exactly like one it never
     // minted at all — never to "interaction failed".
     expect(((await res.json()) as { data: { content: string } }).data.content).toContain("retired");
   });

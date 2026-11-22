@@ -6,7 +6,7 @@ import type { InteractionUser } from "../discord/types.ts";
 /**
  * Discord id is the primary key and the identity; the names are a cache that
  * every interaction refreshes, because a display name can change under us and
- * Orrey must never treat its copy as the truth.
+ * Kith must never treat its copy as the truth.
  *
  * The feed token is minted once and never rotated here — a calendar client
  * cannot re-subscribe on its own, so changing it silently would break a feed.

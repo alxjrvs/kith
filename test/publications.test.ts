@@ -17,7 +17,7 @@ import {
 } from "../src/projection/publications.ts";
 
 /**
- * #73: Orrey can lose the only record of something it published. These are the
+ * #73: Kith can lose the only record of something it published. These are the
  * two halves of the answer — a ledger that does not cascade, and a claim written
  * before the call rather than an id written after it.
  */

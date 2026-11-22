@@ -5,7 +5,7 @@ import { forgetTokens, refresh, replaceTokens, storedTokens, type TokenPair } fr
 /**
  * Who is asking, and are their Discord credentials still good.
  *
- * The cookie says who; `discord_tokens` says whether Orrey can still act as
+ * The cookie says who; `discord_tokens` says whether Kith can still act as
  * them. Those are separate questions, and keeping them separate is what lets the
  * cookie carry almost nothing: a valid cookie whose token pair has been revoked
  * is not a session, and a valid cookie with a stale *access* token is, because

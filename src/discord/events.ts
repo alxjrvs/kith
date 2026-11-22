@@ -26,8 +26,8 @@ import {
 } from "./rest.ts";
 
 /**
- * Discord scheduled events are the only Discord objects Orrey reconciles. A
- * session names one, Orrey keeps it in step with the database, and the id it
+ * Discord scheduled events are the only Discord objects Kith reconciles. A
+ * session names one, Kith keeps it in step with the database, and the id it
  * gets back is stored — but never treated as permanent: Discord's COMPLETED and
  * CANCELED statuses are terminal and fire on their own, so an event can be gone
  * or frozen without anyone touching it. Phase 4 mints a replacement when a
@@ -37,11 +37,11 @@ export const EntityType = { STAGE_INSTANCE: 1, VOICE: 2, EXTERNAL: 3 } as const;
 const GUILD_ONLY = 2;
 
 /**
- * Orrey's mark on a scheduled event, carried in the description.
+ * Kith's mark on a scheduled event, carried in the description.
  *
  * Google needs no equivalent: its event id is derived from the session id, so an
  * insert that lands twice lands on the same event. Discord hands out its own
- * ids, so the only way to recognise an event Orrey already made — after a crash
+ * ids, so the only way to recognise an event Kith already made — after a crash
  * between the POST and the write that was going to remember it — is to have
  * written something into the event that says whose it is.
  *
@@ -107,7 +107,7 @@ export async function projectDiscordEvent(
     : upsert(env, target, guildId);
 }
 
-/** This session's entry in the ledger of what Orrey has put into the world. */
+/** This session's entry in the ledger of what Kith has put into the world. */
 function refFor(sessionId: string): PublicationRef {
   return { surface: "discord", kind: "event", targetId: sessionId };
 }
@@ -137,7 +137,7 @@ async function upsert(env: Env, target: ProjectionTarget, guildId: string): Prom
     session.discordEventId ?? (ledger?.state === "published" ? ledger.remoteId : null);
 
   const event = await throughGovernor(env, guildId, async () => {
-    // And if even the ledger write was lost, ask Discord. An event Orrey made
+    // And if even the ledger write was lost, ask Discord. An event Kith made
     // carries this session's marker, so the guild's own list is the last record
     // standing — bounded by the 100-per-guild cap, which is what makes looking
     // before creating affordable.
@@ -217,7 +217,7 @@ async function adoptable(env: Env, guildId: string, sessionId: string): Promise<
 }
 
 /**
- * Take down what Orrey put up, for a session whose row is already gone.
+ * Take down what Kith put up, for a session whose row is already gone.
  *
  * `project` used to return on a missing session and ack the message. But delete
  * is precisely the case where the row is disappearing, so that was the common
@@ -229,7 +229,7 @@ export async function unprojectOrphanedEvent(env: Env, sessionId: string): Promi
   const guildId = await requireGuildId(env);
 
   for (const row of await standing(env, sessionId)) {
-    // Messages are not retracted. They are send-only, and a message Orrey can no
+    // Messages are not retracted. They are send-only, and a message Kith can no
     // longer explain is a message a person reads and ignores — not a duplicate
     // that books people into something.
     if (row.surface !== "discord" || row.kind !== "event" || !row.remoteId) continue;

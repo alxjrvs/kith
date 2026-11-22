@@ -10,7 +10,7 @@ import { claim, find, record } from "../src/projection/publications.ts";
 
 /**
  * Discord itself, scripted. Every call the projector makes lands here, so the
- * assertions are about what Orrey would actually send.
+ * assertions are about what Kith would actually send.
  */
 interface Call {
   method: string;
@@ -26,7 +26,7 @@ let guilds = 0;
 let calls: Call[] = [];
 let replies: { status: number; body: unknown; headers?: Record<string, string> }[] = [];
 /**
- * What the guild already holds when Orrey looks before creating. Answered out of
+ * What the guild already holds when Kith looks before creating. Answered out of
  * band rather than from `replies`, because the scan happens on every create and
  * scripting it into every case would say nothing about any of them.
  */
@@ -262,7 +262,7 @@ describe("projecting a session to Discord", () => {
 });
 
 /**
- * #73's other two findings. Discord hands out its own ids, so an event Orrey
+ * #73's other two findings. Discord hands out its own ids, so an event Kith
  * made can outlive every record of it: the POST returns, the write that was
  * going to remember the id fails, and the retry creates a second one. And a
  * retraction used to need the session row at exactly the moment the row was
@@ -400,7 +400,7 @@ describe("not losing what was published", () => {
 
     await retractEvent();
 
-    // No ledger row, so no DELETE for an event Orrey never made.
+    // No ledger row, so no DELETE for an event Kith never made.
     expect(calls).toEqual([]);
   });
 });

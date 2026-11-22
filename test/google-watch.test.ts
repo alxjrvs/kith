@@ -89,7 +89,7 @@ afterEach(() => {
 });
 
 describe("opening one", () => {
-  it("watches the Orrey calendar and nothing else", async () => {
+  it("watches Kith calendar and nothing else", async () => {
     await startWatch(watchEnv());
 
     const watch = calls.find((call) => call.path.endsWith("/events/watch"));

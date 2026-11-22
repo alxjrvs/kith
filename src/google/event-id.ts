@@ -1,6 +1,6 @@
 /**
  * Google lets the client choose an event id, within base32hex (`a-v`, `0-9`,
- * 5–1024 chars). Orrey mints one deterministically from its own session id, so
+ * 5–1024 chars). Kith mints one deterministically from its own session id, so
  * an upsert is `insert`, and on 409 `update` — no lookup, no duplicate, and a
  * retried queue message lands on the same event.
  */

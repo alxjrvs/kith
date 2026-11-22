@@ -38,7 +38,7 @@ const session = {
 
 /**
  * A click, as Discord sends it — including a `message` whose content is a lie.
- * Orrey must answer from D1; if it ever read the message it came from, this is
+ * Kith must answer from D1; if it ever read the message it came from, this is
  * the test that would notice.
  */
 async function click(
@@ -164,7 +164,7 @@ describe("clicks that cannot be honoured", () => {
     expect(answer.data.content).toMatch(/retired/);
   });
 
-  it("retires an id Orrey minted but no longer understands", async () => {
+  it("retires an id Kith minted but no longer understands", async () => {
     const answer = await click("sideways", { id: "1001", name: "Ada" });
     expect(answer.data.content).toMatch(/retired/);
   });

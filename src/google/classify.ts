@@ -3,12 +3,12 @@ import { googleProjectedContent } from "../projection/target.ts";
 import type { CalendarEvent } from "./sync.ts";
 
 /**
- * Whether Orrey is looking at its own handwriting.
+ * Whether Kith is looking at its own handwriting.
  *
  * This is the heart of #48 and the reason the return path is six PRs: everything
  * else in the loop is plumbing, and this is the one function that can make the
  * loop never terminate. An echo that stops being recognised is an infinite loop;
- * a change misread as an echo is a drag in Google that Orrey silently reverts.
+ * a change misread as an echo is a drag in Google that Kith silently reverts.
  *
  * Pure, and takes no clock and no database, so every verdict in this file is a
  * function of three values a test can write down.
@@ -39,7 +39,7 @@ export interface SessionShape {
  *
  * **An event with neither is `foreign` and is left entirely alone.** People put
  * things on this calendar too, and the whole design of owning a calendar rather
- * than filtering somebody else's is undone the moment Orrey starts editing rows
+ * than filtering somebody else's is undone the moment Kith starts editing rows
  * it did not write.
  */
 export function sessionIdOf(event: CalendarEvent, links: LinkRow[]): string | undefined {
@@ -53,7 +53,7 @@ export async function classifyEvent(
   link: LinkRow | undefined,
   session: SessionShape | undefined,
 ): Promise<Verdict> {
-  // Nothing of Orrey's behind it. Somebody else's evening on a shared calendar.
+  // Nothing of Kith's behind it. Somebody else's evening on a shared calendar.
   if (!link || !session) return "foreign";
 
   // Google's word for gone. It says nothing about whether the session is off —
@@ -65,7 +65,7 @@ export async function classifyEvent(
   //
   // That property is written by `eventBody` and a human dragging an event leaves
   // it untouched, so trusting it would call every real change an echo of
-  // Orrey's own write: the exact failure this phase exists to prevent, reached
+  // Kith's own write: the exact failure this phase exists to prevent, reached
   // by the more convenient route. It stays written because it is useful when
   // reading the calendar by hand, and it is never read here.
   const recomputed = await fingerprint(shapeOf(event, session));
@@ -105,7 +105,7 @@ export function shapeOf(
 }
 
 /**
- * Google gives a timed event `dateTime` and an all-day event `date`. Orrey only
+ * Google gives a timed event `dateTime` and an all-day event `date`. Kith only
  * ever writes the first, so a `date` is somebody having turned one of its events
  * into an all-day — which is a change, and is read as the day's start.
  */

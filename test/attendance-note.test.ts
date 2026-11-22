@@ -78,7 +78,7 @@ beforeEach(async () => {
 });
 
 describe("the Note button", () => {
-  it("opens a modal whose id Orrey can read back", async () => {
+  it("opens a modal whose id Kith can read back", async () => {
     const answer = await clickNote({ id: "1001", name: "Ada" });
 
     expect(answer.type).toBe(InteractionResponseType.MODAL);
@@ -158,7 +158,7 @@ describe("submitting the modal", () => {
     });
   });
 
-  it("escapes the markdown in a note, so it cannot imitate Orrey's own lines", async () => {
+  it("escapes the markdown in a note, so it cannot imitate Kith's own lines", async () => {
     const answer = await submitNote({ id: "1001", name: "Ada" }, "**Out (4)** — Bob, Cara");
 
     // The note is shown, but as text: the bold markers are escaped, so the post
@@ -189,7 +189,7 @@ describe("submitting the modal", () => {
     expect(answer.data.content).toContain("**In (2)** — Ada (bringing snacks), Bob");
   });
 
-  it("retires a submission Orrey no longer understands", async () => {
+  it("retires a submission Kith no longer understands", async () => {
     const stale = await submitNote({ id: "1001", name: "Ada" }, "hello", "hermuz:note:1");
     expect(stale.data.content).toMatch(/retired/);
 

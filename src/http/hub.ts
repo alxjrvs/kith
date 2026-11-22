@@ -60,7 +60,7 @@ export function hubRoutes() {
     // Not there and not yours to see are the same answer, so a guess learns nothing.
     return listing
       ? c.json({ asOf: unixNow(), listing })
-      : c.json({ error: "Orrey has no listing here, or it is not public." }, 404);
+      : c.json({ error: "Kith has no listing here, or it is not public." }, 404);
   });
 
   /**
@@ -74,7 +74,7 @@ export function hubRoutes() {
     const id = c.req.param("id");
     const viewer = c.get("viewer");
     const listing = await listingFor(c.env, kind, id, viewer);
-    if (!listing) return c.json({ error: "Orrey has no table here, or it is not yours to see." }, 404);
+    if (!listing) return c.json({ error: "Kith has no table here, or it is not yours to see." }, 404);
     const member = await isMemberOf(c.env, kind, id, viewer.userId);
     return c.json({
       listing,
@@ -90,7 +90,7 @@ export function hubRoutes() {
     if (kind !== "campaign" && kind !== "game-day") return c.json({ error: "No such page." }, 404);
     const id = c.req.param("id");
     const viewer = c.get("viewer");
-    const missing = c.json({ error: "Orrey has no page here, or it is not yours to see." }, 404);
+    const missing = c.json({ error: "Kith has no page here, or it is not yours to see." }, 404);
     if (!(await listingFor(c.env, kind, id, viewer))) return missing;
     const member = await isMemberOf(c.env, kind, id, viewer.userId);
     const page = await pageFor(c.env, kind, id, c.req.param("slug"), viewer, member);
@@ -112,7 +112,7 @@ export function hubRoutes() {
 
     // Visibility first: a campaign you cannot see is not one you can join.
     const listing = await listingFor(c.env, "campaign", id, c.get("viewer"));
-    if (!listing) return c.json({ error: "Orrey has no listing here, or it is not public." }, 404);
+    if (!listing) return c.json({ error: "Kith has no listing here, or it is not public." }, 404);
 
     const outcome =
       action === "out"
@@ -132,7 +132,7 @@ export function hubRoutes() {
     const id = c.req.param("id");
 
     const listing = await listingFor(c.env, "game-day", id, c.get("viewer"));
-    if (!listing) return c.json({ error: "Orrey has no listing here, or it is not public." }, 404);
+    if (!listing) return c.json({ error: "Kith has no listing here, or it is not public." }, 404);
     if (!listing.open) return c.json({ error: "Seating for that day is closed." }, 409);
 
     // Through the day's lock, the same one the Discord buttons use, so a click
@@ -158,7 +158,7 @@ export function hubRoutes() {
 
     const sessionId = c.req.param("id");
     const target = await loadProjectionTarget(c.env, sessionId);
-    if (!target) return c.json({ error: "Orrey does not know that session." }, 404);
+    if (!target) return c.json({ error: "Kith does not know that session." }, 404);
     if (!(await onTable(c.env, target, actor.id))) {
       return c.json({ error: "That is for the people at that table." }, 403);
     }
@@ -218,7 +218,7 @@ function userRow(env: Env, userId: string) {
 async function signedInActor(c: Context<HubEnv>): Promise<InteractionUser | Response> {
   const mediaType = (c.req.header("content-type") ?? "").split(";")[0]!.trim().toLowerCase();
   if (mediaType !== "application/json") return c.json({ error: "Send JSON." }, 415);
-  if (!sameOrigin(c)) return c.json({ error: "That did not come from Orrey." }, 403);
+  if (!sameOrigin(c)) return c.json({ error: "That did not come from Kith." }, 403);
   const userId = c.get("viewer").userId;
   if (!userId) return c.json({ error: "Sign in with Discord first." }, 401);
   const user = await userRow(c.env, userId);

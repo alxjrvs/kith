@@ -15,7 +15,7 @@ import {
 
 /**
  * A thread per session. What is worth testing is where the later posts go and
- * what happens when Discord has made the thread but Orrey never learned its id.
+ * what happens when Discord has made the thread but Kith never learned its id.
  */
 const realFetch = globalThis.fetch;
 const SESSION_ID = "age-of-umbra-s12";
@@ -37,7 +37,7 @@ const session = {
   location: "The Wreck",
 };
 
-/** A message payload, the shape everything Orrey posts has. */
+/** A message payload, the shape everything Kith posts has. */
 function notice(content: string) {
   return { content, components: [], allowed_mentions: { parse: [] as never[], roles: [] } };
 }
@@ -182,7 +182,7 @@ describe("the name's date", () => {
   it("is the guild's day, not the server's", async () => {
     // 23:30 UTC on 20 September is already the 21st in Auckland. A thread name
     // is plain text — Discord renders no `<t:…>` in one — so this is one of the
-    // few places Orrey has to pick a zone, and the server's is the wrong one.
+    // few places Kith has to pick a zone, and the server's is the wrong one.
     const late = { ...(await target()) };
     late.session = { ...late.session, startsAt: Date.parse("2026-09-20T23:30:00Z") / 1000 };
 

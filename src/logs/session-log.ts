@@ -55,7 +55,7 @@ export function sessionLogs(env: Env, sessionId: string): Promise<SessionLog[]> 
  * The counterpart to `normaliseNote`, differing in the one way that matters:
  * **a recap keeps its newlines.**
  *
- * A note is rendered inline on a post Orrey can never edit, so a newline there
+ * A note is rendered inline on a post Kith can never edit, so a newline there
  * would break that post's layout permanently — `normaliseNote` collapses all
  * whitespace for that reason. A recap is a message of its own, and a paragraph
  * break is part of what somebody wrote.

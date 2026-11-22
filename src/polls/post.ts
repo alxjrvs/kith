@@ -154,7 +154,7 @@ export async function postCloseNotice(env: Env, pollId: string): Promise<string 
  *
  * Guarded by a labelled ledger row keyed on the day, so a redelivered job posts
  * nothing further — but the id it returns is **not** written anywhere. Nothing
- * will ever reconcile this message, and storing an id Orrey will never use is
+ * will ever reconcile this message, and storing an id Kith will never use is
  * storing a promise it does not make.
  */
 export async function announceGameDay(env: Env, gameDayId: string): Promise<string | undefined> {

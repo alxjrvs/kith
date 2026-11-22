@@ -54,7 +54,7 @@ const FIELDS: Omit<SettingField, "value" | "fallback">[] = [
     key: SETTING_KEYS.guildId,
     label: "Guild",
     kind: "text",
-    help: "The Discord guild Orrey adopts. Every id in the database belongs to it.",
+    help: "The Discord guild Kith adopts. Every id in the database belongs to it.",
     caveat: "Read-only. `scripts/adopt-ids.ts` owns this — re-pointing the guild is a migration, not a setting.",
     writable: false,
   },
@@ -100,7 +100,7 @@ const FIELDS: Omit<SettingField, "value" | "fallback">[] = [
     key: SETTING_KEYS.jeopardyLeadHours,
     label: "Jeopardy check lead",
     kind: "number",
-    help: "How many hours before a session Orrey asks whether it still runs.",
+    help: "How many hours before a session Kith asks whether it still runs.",
     writable: true,
   },
   {
@@ -153,7 +153,7 @@ export async function putSetting(
   actor: string,
 ): Promise<void> {
   const field = BY_KEY.get(key);
-  if (!field) throw new InvalidSetting(`${key} is not a setting Orrey reads`);
+  if (!field) throw new InvalidSetting(`${key} is not a setting Kith reads`);
   if (!field.writable) {
     throw new InvalidSetting(
       `${field.label} is read-only here — scripts/adopt-ids.ts owns it, because re-pointing the guild is a migration and not a setting`,

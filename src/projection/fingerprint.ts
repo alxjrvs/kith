@@ -5,7 +5,7 @@
  * in Google's case an `updated` timestamp that phase 7's return path would have
  * to tell apart from a human's edit.
  *
- * So: hash the content Orrey intends the remote object to have, store the hash
+ * So: hash the content Kith intends the remote object to have, store the hash
  * next to the id it wrote, and skip when they match.
  */
 export async function fingerprint(content: unknown): Promise<string> {
@@ -19,7 +19,7 @@ export async function fingerprint(content: unknown): Promise<string> {
 /**
  * JSON with object keys sorted, so that two equal contents hash the same
  * however they were built. Undefined and null are the same absence here — a
- * field Orrey does not set and a field it sets to nothing project identically.
+ * field Kith does not set and a field it sets to nothing project identically.
  */
 function canonical(value: unknown): string {
   if (value === undefined || value === null) return "null";

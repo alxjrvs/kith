@@ -16,7 +16,7 @@ import type { CalendarEvent } from "../src/google/sync.ts";
  *
  * The two tests that matter here are the ones that say **the loop terminates**.
  * Everything else in the return path is plumbing; this is where a mistake means
- * Orrey and a human take turns rewriting the same event until somebody notices.
+ * Kith and a human take turns rewriting the same event until somebody notices.
  */
 const realFetch = globalThis.fetch;
 const START = Math.floor(Date.parse("2026-09-20T19:00:00Z") / 1000);
@@ -263,7 +263,7 @@ describe("the loop terminates", () => {
   });
 });
 
-describe("nothing Orrey adopts moved", () => {
+describe("nothing Kith adopts moved", () => {
   const retyped = () => event({ summary: "Umbra — at Ada's this week!!" });
 
   it("writes nothing to the session", async () => {
@@ -297,7 +297,7 @@ describe("nothing Orrey adopts moved", () => {
   it("and the projection that follows is recognised as an echo", async () => {
     await applyChange(outboxEnv(), SESSION_ID, retyped());
 
-    // The projector writes Orrey's title back and records the fingerprint.
+    // The projector writes Kith's title back and records the fingerprint.
     const target = (await loadProjectionTarget(env, SESSION_ID))!;
     await db(env)
       .update(schema.calendarLinks)

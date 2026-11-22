@@ -172,7 +172,7 @@ function label(hours: number): string {
 }
 
 /**
- * What a settled DM records. A DM has no id worth keeping — Orrey will never go
+ * What a settled DM records. A DM has no id worth keeping — Kith will never go
  * back to one — so the row remembers the *outcome*, which is the thing a retry
  * needs to know.
  */

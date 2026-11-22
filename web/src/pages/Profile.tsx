@@ -25,7 +25,7 @@ export function Profile() {
       <main className="page">
         <h1>Your profile</h1>
         {remove.data ? <p className="notice">{remove.data.said}</p> : null}
-        <p className="muted">Sign in to see your games, your calendar feeds and what Orrey keeps about you.</p>
+        <p className="muted">Sign in to see your games, your calendar feeds and what Kith keeps about you.</p>
         <div className="row">
           <a className="btn primary" href={signInHref()}>
             Sign in with Discord
@@ -69,11 +69,11 @@ export function Profile() {
       </section>
 
       <section className="panel">
-        <h2 className="panel-head label">You and Orrey</h2>
+        <h2 className="panel-head label">You and Kith</h2>
         <div className="panel-body">
           <p className="muted">
-            Orrey keeps your Discord id, name and avatar, your answers and seats, and your feed token.{" "}
-            <a href="/privacy">What the Orrey knows about you</a>
+            Kith keeps your Discord id, name and avatar, your answers and seats, and your feed token.{" "}
+            <a href="/privacy">What Kith knows about you</a>
           </p>
           <div className="row">
             <form method="post" action="/console/logout">
@@ -84,7 +84,7 @@ export function Profile() {
             {confirming ? (
               <>
                 <button type="button" className="btn" style={{ borderColor: "var(--out)" }} disabled={remove.isPending} onClick={() => remove.mutate()}>
-                  Yes, delete everything Orrey holds about me
+                  Yes, delete everything Kith holds about me
                 </button>
                 <button type="button" className="btn" onClick={() => setConfirming(false)}>
                   Keep it

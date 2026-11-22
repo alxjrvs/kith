@@ -3,7 +3,7 @@ import type { Env } from "../env.ts";
 import { db, schema } from "../db/index.ts";
 
 /**
- * The ledger of what Orrey has put into the world — #73.
+ * The ledger of what Kith has put into the world — #73.
  *
  * The shape of the bug this exists for: `projectDiscordEvent` POSTs a scheduled
  * event and *then* writes the id to D1. If that write fails, the queue retries,
@@ -150,7 +150,7 @@ export async function release(env: Env, ref: PublicationRef): Promise<void> {
  * purpose.
  *
  * Distinct from `retract`, which keeps the row and its remote id so a later
- * reconcile can account for an object it finds. This is for the case where Orrey
+ * reconcile can account for an object it finds. This is for the case where Kith
  * has *decided* to stop tracking what is up there — a moved session's old
  * attendance post — and the next claim must be allowed to succeed. Everything
  * else that clears a claim is `release`, which only touches unpublished ones.

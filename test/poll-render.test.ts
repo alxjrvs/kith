@@ -56,8 +56,8 @@ describe("the body", () => {
       }),
     );
 
-    // A title is somebody else's text on a post Orrey can never edit. Unescaped,
-    // it renders as a heading of Orrey's own shape.
+    // A title is somebody else's text on a post Kith can never edit. Unescaped,
+    // it renders as a heading of Kith's own shape.
     expect(content).toContain("\\*\\*Out (4)\\*\\*");
     expect(content).toContain("\\`everyone\\`");
   });

@@ -24,10 +24,10 @@ import type { MessagePayload } from "./render.ts";
  *
  * The thread hangs off the attendance post rather than being made first,
  * because that way the post *is* the thread's opening message — one object
- * instead of two, and the title is Orrey's either way since it names the thread
+ * instead of two, and the title is Kith's either way since it names the thread
  * at creation.
  *
- * Orrey never unarchives it and never edits anything in it. A thread archives
+ * Kith never unarchives it and never edits anything in it. A thread archives
  * itself after a week of quiet, which is the right amount of time after a
  * session and exactly as much attention as it deserves afterwards.
  */
@@ -126,7 +126,7 @@ export async function postToSession(
  *
  * The date is rendered in the **guild's** zone, not UTC. A thread name is plain
  * text — Discord renders no `<t:…>` in one — so this is one of the few places
- * Orrey has to pick a zone, and picking the server's would name a Friday-evening
+ * Kith has to pick a zone, and picking the server's would name a Friday-evening
  * session after Saturday for anybody far enough east. The zone arrives as an
  * argument, like every other ambient value in this repo's pure functions.
  */

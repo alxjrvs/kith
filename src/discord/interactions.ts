@@ -61,7 +61,7 @@ function ephemeral(content: string, components: Json[] = []): Json {
   };
 }
 
-/** The one write to an existing message Orrey makes: this interaction's own response. */
+/** The one write to an existing message Kith makes: this interaction's own response. */
 function rewrite(content: string, components: Json[] = []): Json {
   return { type: InteractionResponseType.UPDATE_MESSAGE, data: { content, components } };
 }
@@ -101,7 +101,7 @@ export async function handleInteraction(
       return handleModal(interaction, env);
 
     default:
-      return ephemeral("Orrey does not know what to do with that.");
+      return ephemeral("Kith does not know what to do with that.");
   }
 }
 
@@ -134,7 +134,7 @@ async function handleCommand(
  */
 async function whosInCommand(interaction: Interaction, env: Env): Promise<Json> {
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who asked.");
+  if (!actor) return ephemeral("Kith could not tell who asked.");
 
   const asOf = new Date();
   const answer = await whosIn(env, actor.id, optionOf(interaction, "event"), asOf);
@@ -158,14 +158,14 @@ async function whosInCommand(interaction: Interaction, env: Env): Promise<Json> 
  * command option is one line and a poll takes ten. Its `custom_id` is minted the
  * same way every other component id is and carries the session through the round
  * trip, which is the only thing that survives between the command and the
- * submission — Orrey holds no interaction state.
+ * submission — Kith holds no interaction state.
  */
 async function reschedule(interaction: Interaction, env: Env): Promise<Json> {
   const sessionId = optionOf(interaction, "event");
   if (!sessionId) return ephemeral("Name the session you want to move.");
 
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who asked.");
+  if (!actor) return ephemeral("Kith could not tell who asked.");
 
   if (sessionId === FIND_A_DAY) {
     // The sentinel is offered only to organisers, but a person can type any
@@ -184,7 +184,7 @@ async function reschedule(interaction: Interaction, env: Env): Promise<Json> {
   }
 
   const target = await loadProjectionTarget(env, sessionId);
-  if (!target) return ephemeral("Orrey does not know that session.");
+  if (!target) return ephemeral("Kith does not know that session.");
 
   // The autocomplete only ever offers the caller's own campaigns, and that is a
   // convenience rather than an access check — `/whos-in` says so in as many
@@ -216,7 +216,7 @@ async function handleSuggest(
   if (!sessionId) return retiredPost();
 
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who clicked that.");
+  if (!actor) return ephemeral("Kith could not tell who clicked that.");
 
   const target = await loadProjectionTarget(env, sessionId);
   if (!target) return retiredPost();
@@ -275,7 +275,7 @@ async function openDatePoll(
   sessionId: string,
 ): Promise<Json> {
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who submitted that.");
+  if (!actor) return ephemeral("Kith could not tell who submitted that.");
 
   const target = await loadProjectionTarget(env, sessionId);
   if (!target) return retiredPost();
@@ -307,7 +307,7 @@ async function openDatePoll(
       parsed.tooMany
         ? `That is ${parsed.tooMany} dates — a poll takes ten. Trim it and try again.`
         : [
-            "Orrey could not read these lines, so nothing was written:",
+            "Kith could not read these lines, so nothing was written:",
             ...parsed.unreadable.map((line) => `- \`${line}\``),
             "",
             "Try `2026-10-01 19:00`, `Thu 8 Oct 7pm`, or `15 Oct 19:00`.",
@@ -331,7 +331,7 @@ async function openDatePoll(
     return ephemeral(
       opened.reason === "already-open"
         ? "There is already a poll open for that session. Settle that one first."
-        : "Orrey has nowhere to post that — the campaign has no channel and neither does settings.",
+        : "Kith has nowhere to post that — the campaign has no channel and neither does settings.",
     );
   }
 
@@ -403,7 +403,7 @@ function optionOf(interaction: Interaction, name: string): string | undefined {
  */
 async function upcoming(interaction: Interaction, env: Env): Promise<Json> {
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who asked.");
+  if (!actor) return ephemeral("Kith could not tell who asked.");
 
   const asOf = new Date();
   const { entries, total } = await upcomingWithTotal(env, actor.id, asOf);
@@ -418,7 +418,7 @@ async function upcoming(interaction: Interaction, env: Env): Promise<Json> {
  * shortcut to it, not the only way in (see src/console/link.ts).
  *
  * The **Delete my data** button stays exactly where it is. It is the only way
- * out Orrey offers until the console has a page of its own for it, which is
+ * out Kith offers until the console has a page of its own for it, which is
  * phase 6 — losing it here in the move would quietly drop a term of service.
  */
 async function console_(
@@ -427,15 +427,15 @@ async function console_(
   ctx: InteractionContext,
 ): Promise<Json> {
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who asked.");
+  if (!actor) return ephemeral("Kith could not tell who asked.");
 
-  const linkLine = `**The Orrey console** — <${loginLink(ctx.origin)}>`;
+  const linkLine = `**The Kith console** — <${loginLink(ctx.origin)}>`;
 
   return ephemeral(
     [
       linkLine,
       "",
-      `**What Orrey knows about you** — <${ctx.origin}/privacy>`,
+      `**What Kith knows about you** — <${ctx.origin}/privacy>`,
     ].join("\n"),
     [row(button("Delete my data", encodeCustomId({ action: "privacy", arg: "delete" }), ButtonStyle.DANGER))],
   );
@@ -499,7 +499,7 @@ async function handleAttend(
   if (!sessionId) return retiredPost();
 
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who clicked that.");
+  if (!actor) return ephemeral("Kith could not tell who clicked that.");
 
   // The session is gone, so the post in front of them is about nothing.
   const target = await loadProjectionTarget(env, sessionId);
@@ -575,7 +575,7 @@ async function handleSeat(
   if (!gameDayId) return retiredPost();
 
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who clicked that.");
+  if (!actor) return ephemeral("Kith could not tell who clicked that.");
 
   const day = await db(env)
     .select({ day: schema.gameDays, game: schema.games })
@@ -590,7 +590,7 @@ async function handleSeat(
   const lock = env.SESSION_LOCK.get(env.SESSION_LOCK.idFromName(gameDayId));
 
   // A click on a day that has stopped taking seats. The post cannot say so —
-  // Orrey never edits one from the outside — so the person is told directly and
+  // Kith never edits one from the outside — so the person is told directly and
   // the message is left exactly as it was rather than rewritten to look current
   // when it is not.
   const writing = arg === "in" || arg === "wait" || arg === "out";
@@ -671,7 +671,7 @@ async function handleAttended(
   if (!userId || !sessionId) return retiredPost();
 
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who clicked that.");
+  if (!actor) return ephemeral("Kith could not tell who clicked that.");
 
   const target = await loadProjectionTarget(env, sessionId);
   if (!target) return retiredPost();
@@ -756,7 +756,7 @@ async function handlePoll(
   if (!pollId) return retiredPost();
 
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who clicked that.");
+  if (!actor) return ephemeral("Kith could not tell who clicked that.");
 
   const values = interaction.data?.values ?? [];
   const answer =
@@ -772,7 +772,7 @@ async function handlePoll(
               ? await applyOverride(env, pollId, actor, interaction)
               : undefined;
 
-  // An id Orrey minted but does not act on is the retired-post case, the same as
+  // An id Kith minted but does not act on is the retired-post case, the same as
   // an id it never minted at all.
   if (!answer) return retiredPost();
 
@@ -799,7 +799,7 @@ async function handlePoll(
  * Note opens a modal. Its id is minted the same way every other component id
  * is, so the submission that comes back minutes later is recognised — or, if it
  * comes back after a schema change, degrades to the retired-post response like
- * any other id Orrey no longer understands.
+ * any other id Kith no longer understands.
  */
 function noteModal(sessionId: string, current: string): Json {
   return {
@@ -847,7 +847,7 @@ async function handleTables(
   if (!sessionId) return retiredPost();
 
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who clicked that.");
+  if (!actor) return ephemeral("Kith could not tell who clicked that.");
 
   const refusal = await refuseUnlessHost(env, interaction, sessionId, actor.id);
   if (refusal) return refusal;
@@ -886,13 +886,13 @@ async function handleTablesWho(
   if (!sessionId) return retiredPost();
 
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who chose that.");
+  if (!actor) return ephemeral("Kith could not tell who chose that.");
 
   const refusal = await refuseUnlessHost(env, interaction, sessionId, actor.id);
   if (refusal) return refusal;
 
   const userId = interaction.data?.values?.[0];
-  if (!userId) return ephemeral("Orrey could not tell who that was.");
+  if (!userId) return ephemeral("Kith could not tell who that was.");
 
   return tablesModal(sessionId, userId, (await tablesPlayedFor(env, sessionId, userId)) ?? "");
 }
@@ -948,7 +948,7 @@ async function handleRecap(
   if (!sessionId) return retiredPost();
 
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who clicked that.");
+  if (!actor) return ephemeral("Kith could not tell who clicked that.");
 
   // Asked before the modal opens, so somebody who may not write one is told so
   // rather than typing a recap into a box that will refuse it. It is asked
@@ -1001,7 +1001,7 @@ async function submitRecap(
   if (!sessionId) return retiredPost();
 
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who submitted that.");
+  if (!actor) return ephemeral("Kith could not tell who submitted that.");
 
   const body =
     interaction.data?.components
@@ -1065,7 +1065,7 @@ async function handleModal(interaction: Interaction, env: Env): Promise<Json> {
   if (id.action !== "attend-note") return retiredPost();
 
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who submitted that.");
+  if (!actor) return ephemeral("Kith could not tell who submitted that.");
 
   const target = await loadProjectionTarget(env, id.target);
   if (!target) return retiredPost();
@@ -1096,7 +1096,7 @@ async function handleModal(interaction: Interaction, env: Env): Promise<Json> {
  */
 async function handlePing(interaction: Interaction, env: Env, target: string): Promise<Json> {
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who clicked that.");
+  if (!actor) return ephemeral("Kith could not tell who clicked that.");
 
   const lock = env.SESSION_LOCK.get(env.SESSION_LOCK.idFromName(target));
   const tally = await lock.click(target, actor);
@@ -1122,13 +1122,13 @@ async function handlePrivacy(
   arg: string | undefined,
 ): Promise<Json> {
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who clicked that.");
+  if (!actor) return ephemeral("Kith could not tell who clicked that.");
 
   switch (arg) {
     case "delete":
       return rewrite(
         [
-          "**Delete everything Orrey holds about you?**",
+          "**Delete everything Kith holds about you?**",
           "",
           "That is your row, your attendance history, and your calendar feed token —",
           "the feed stops working straight away. It does not remove you from the server,",
@@ -1179,7 +1179,7 @@ async function submitTablesPlayed(
   if (!userId || !sessionId) return retiredPost();
 
   const actor = actorOf(interaction);
-  if (!actor) return ephemeral("Orrey could not tell who submitted that.");
+  if (!actor) return ephemeral("Kith could not tell who submitted that.");
 
   const refusal = await refuseUnlessHost(env, interaction, sessionId, actor.id);
   if (refusal) return refusal;

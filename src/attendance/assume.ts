@@ -10,7 +10,7 @@ import type { ProjectionTarget } from "../projection/target.ts";
  * When the session ends, write down what happened — by assuming it was what
  * people said.
  *
- * Nobody ticks a register at a table. So Orrey assumes from intent, marks the
+ * Nobody ticks a register at a table. So Kith assumes from intent, marks the
  * assumption as an assumption (`attended_source = 'auto'`), and gives the
  * organiser a post to correct it on. The numbers matter because flake memory and
  * stats read them, and a register nobody fills in is a register full of nulls.
@@ -129,7 +129,7 @@ export async function assumeAttendance(
    *
    * A vetoed session whose reschedule poll never resolved still reaches this job at
    * its original end, and assuming from intent alone would write "four of five
-   * came" about a night Orrey's own post said could not go ahead — then hand it to
+   * came" about a night Kith's own post said could not go ahead — then hand it to
    * flake memory as a played-and-attended session.
    *
    * So the veto wins over the intents, and it wins *downwards*, which is #31's rule

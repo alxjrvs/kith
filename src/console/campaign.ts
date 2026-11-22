@@ -33,7 +33,7 @@ import { syncStateOf, type SyncState } from "./session-detail.ts";
  *
  * Nothing here calls Discord or Google. The channel link is a URL assembled from
  * ids and the sync chip is `syncStateOf` reading the `calendar_links` row that
- * the projector wrote, exactly as the session rail does it. Orrey's database is
+ * the projector wrote, exactly as the session rail does it. Kith's database is
  * the source of truth; a console that asked Google would be showing a projection
  * as though it were the thing projected.
  */

@@ -16,7 +16,7 @@ import { logsForSession, type LogEntry } from "./logs.ts";
  *
  * **Nothing here calls Discord or Google.** The links are URLs assembled from
  * ids, never a fetch, and the sync state is what `calendar_links` says with the
- * timestamp it says it at. Orrey's database is the source of truth and the
+ * timestamp it says it at. Kith's database is the source of truth and the
  * projector is what writes that row; a console that asked Google would be
  * showing a projection as though it were the thing projected.
  */
@@ -30,7 +30,7 @@ export interface RosterEntry {
    * time, because it is written when the session ends.
    */
   attended: boolean | null;
-  /** Whether a person decided that, as opposed to Orrey having assumed it. */
+  /** Whether a person decided that, as opposed to Kith having assumed it. */
   corrected: boolean;
   note: string | null;
 }

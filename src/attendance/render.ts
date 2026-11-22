@@ -10,7 +10,7 @@ import { quorumLine, quorumOf, type Quorum, type RuleKind } from "./quorum.ts";
 /**
  * The attendance post, rendered from D1 and nothing else.
  *
- * A post is a snapshot. Orrey never edits one from the outside — the only write
+ * A post is a snapshot. Kith never edits one from the outside — the only write
  * is a click rewriting the message it came from — so the post carries an as-of
  * line and a Refresh button, and that is the whole story of how a stale reading
  * becomes current.
@@ -52,7 +52,7 @@ export interface MessagePayload {
   components: Record<string, unknown>[];
   /**
    * `parse: []` is the important half: it turns off @everyone, @here and every
-   * role mention Orrey did not name on purpose. `roles` and `users` are then the
+   * role mention Kith did not name on purpose. `roles` and `users` are then the
    * exhaustive list of what may actually fire.
    */
   allowed_mentions: { parse: never[]; roles: string[]; users?: string[] };
@@ -72,7 +72,7 @@ export function renderAttendancePost({ target, rows, asOf }: AttendanceView): Me
   return {
     content,
     components: [buttons(session.id), suggestRow(session.id)],
-    // The roster is the audience, and only the roster: a mention Orrey did not
+    // The roster is the audience, and only the roster: a mention Kith did not
     // mean — @everyone, or a user id that wandered in from a note — cannot fire.
     allowed_mentions: { parse: [], roles: campaign?.discordRoleId ? [campaign.discordRoleId] : [] },
   };
@@ -377,7 +377,7 @@ function nudge(rule: RuleKind): string {
 }
 
 /**
- * The same nudge for everybody Orrey could not DM, as one message in the thread.
+ * The same nudge for everybody Kith could not DM, as one message in the thread.
  * One message and not one each: the thread is shared, so three separate mentions
  * of three people is three notifications for all of them.
  */
@@ -419,7 +419,7 @@ export interface RegisterRow {
   userId: string;
   name: string;
   attended: boolean;
-  /** Whether a person said so, as opposed to Orrey having assumed it. */
+  /** Whether a person said so, as opposed to Kith having assumed it. */
   corrected: boolean;
   /**
    * What they played on a multi day, in whoever ran it's own words. Null
@@ -432,7 +432,7 @@ export interface RegisterRow {
 /**
  * The correction post: the register, and one toggle per person.
  *
- * Orrey assumed this from what people said, and the assumption is wrong often
+ * Kith assumed this from what people said, and the assumption is wrong often
  * enough to be worth a post — somebody says in and does not come, somebody turns
  * up who never clicked. The toggles are the organiser's, and each click rewrites
  * this message as its own response, which is the one rewrite send-only allows.
@@ -534,10 +534,10 @@ function correctionBody(
     `**Who came?** ${escapeMarkdown(sessionTitle(target))}`,
     `${came.length} of ${register.length}${names}`,
     "",
-    "Orrey guessed this from what people said. Tap anybody it got wrong.",
+    "Kith guessed this from what people said. Tap anybody it got wrong.",
   ];
 
-  // Somebody else's free text on a post Orrey can never edit, so it is escaped
+  // Somebody else's free text on a post Kith can never edit, so it is escaped
   // exactly like a note is — a stray backtick would break this post's layout
   // permanently. Only the rows with a toggle on this post: a name in the block
   // that has no button beside it is a correction nobody can make from here.
@@ -627,7 +627,7 @@ function toggle(sessionId: string, row: RegisterRow): Record<string, unknown> {
   return {
     type: ComponentType.BUTTON,
     // Green for came, grey for did not. A corrected row keeps the tick that says
-    // a person decided it rather than Orrey guessing.
+    // a person decided it rather than Kith guessing.
     style: row.attended ? ButtonStyle.SUCCESS : ButtonStyle.SECONDARY,
     label: `${row.attended ? "✓" : "✗"} ${row.name}`.slice(0, 80),
     custom_id: encodeCustomId({ action: "attended", arg: row.userId, target: sessionId }),

@@ -175,7 +175,7 @@ describe("the page itself", () => {
     expect(response.status).toBe(200);
 
     const html = await response.text();
-    expect(html).toContain("Orrey console");
+    expect(html).toContain("Kith console");
     expect(html).toContain("/console/console.js");
   });
 

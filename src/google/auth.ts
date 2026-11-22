@@ -2,7 +2,7 @@
  * Service-account auth for Google Calendar, with nothing but WebCrypto — so the
  * same code runs in the Worker and in a Node script.
  *
- * The pattern: Orrey owns a calendar; the service account is granted `writer`
+ * The pattern: Kith owns a calendar; the service account is granted `writer`
  * on it (an `acl.insert`, done once by the calendar's owner). The account then
  * signs a JWT with its private key and swaps it for a short-lived access token.
  * There is no refresh token, so there is nothing to expire or re-consent.

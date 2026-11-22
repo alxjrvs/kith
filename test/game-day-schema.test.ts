@@ -77,7 +77,7 @@ describe("the columns", () => {
     });
   });
 
-  it("starts PROPOSED, which is the state Orrey does not publish", async () => {
+  it("starts PROPOSED, which is the state Kith does not publish", async () => {
     expect(await row(await day({ kind: "multi" }))).toMatchObject({ state: "PROPOSED" });
   });
 });

@@ -114,7 +114,7 @@ describe("the count", () => {
     await attended("ana", [1, 2]);
 
     // No row is missing data, not a miss. "Came to 2 of 4" about somebody nobody
-    // ever ticked off is an accusation Orrey invented — sessions played before
+    // ever ticked off is an accusation Kith invented — sessions played before
     // the register existed belong to nobody's number.
     expect(await flakeFor(env, CAMPAIGN, "ana")).toMatchObject({
       played: 2,

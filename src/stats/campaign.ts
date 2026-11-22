@@ -49,7 +49,7 @@ export interface MemberAttendance {
   /**
    * Played sessions since they joined that the register was actually written
    * for. Somebody who joined at session twenty is not rated on the first
-   * nineteen, and a session Orrey holds no answer about is not one they failed
+   * nineteen, and a session Kith holds no answer about is not one they failed
    * to come to.
    */
   played: number;

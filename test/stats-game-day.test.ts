@@ -12,7 +12,7 @@ import { claimSeat } from "../src/game-days/signups.ts";
  * differently, and null, zero and one are three different answers. A multi day
  * with a fill rate of zero reads as "nobody came" about an evening that was
  * never going to have a capacity, and that is the sentence this file exists to
- * stop Orrey saying.
+ * stop Kith saying.
  */
 const START = Math.floor(Date.parse("2026-11-07T18:00:00Z") / 1000);
 

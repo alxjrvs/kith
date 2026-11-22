@@ -62,7 +62,7 @@ export async function upcomingWithTotal(
    * roster count and one `quorumOf`, and this is a caller of it.
    *
    * It also picks up the model's rule that a campaign which is not RUNNING
-   * contributes nothing: a session Orrey is not putting on anybody's calendar is
+   * contributes nothing: a session Kith is not putting on anybody's calendar is
    * not one to put on somebody's agenda either.
    */
   const { from, to } = windowAround(asOf, HORIZON_DAYS);
@@ -137,7 +137,7 @@ async function intentsOf(
  *
  * Every time is a Discord timestamp rather than a rendered date: `<t:…:F>`
  * renders in the reader's own zone, which is the only way one line can be right
- * for a table spread over three of them. Orrey never renders a wall-clock time
+ * for a table spread over three of them. Kith never renders a wall-clock time
  * into a message it cannot take back.
  */
 export function renderUpcoming(entries: UpcomingEntry[], asOf: Date, total?: number): string {

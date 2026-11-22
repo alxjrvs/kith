@@ -12,7 +12,7 @@ import {
 /**
  * The footings (phase 0), the smallest slice of the domain that can describe one
  * session of one running campaign and who is coming (phase 1), the ledger of what
- * Orrey has put into the world (#73), and what it takes to run *several*
+ * Kith has put into the world (#73), and what it takes to run *several*
  * campaigns — the game each plays, the cadence each keeps, who is on each, and a
  * record of who changed what (phase 2).
  *
@@ -95,7 +95,7 @@ export const jobs = sqliteTable(
 export const games = sqliteTable(
   "games",
   {
-    /** A slug, like every other id Orrey mints. */
+    /** A slug, like every other id Kith mints. */
     id: text("id").primaryKey(),
     name: text("name").notNull(),
     /** Both nullable: plenty of games are happy with however many turn up. */
@@ -107,7 +107,7 @@ export const games = sqliteTable(
     category: text("category", { enum: ["ttrpg", "board"] }).notNull().default("ttrpg"),
     /** One or two sentences for the catalog card. */
     summary: text("summary"),
-    /** An https URL to a cover image. Orrey stores the link, never the image. */
+    /** An https URL to a cover image. Kith stores the link, never the image. */
     coverUrl: text("cover_url"),
     createdAt: integer("created_at").notNull().default(now),
     updatedAt: integer("updated_at").notNull().default(now),
@@ -129,14 +129,14 @@ export const games = sqliteTable(
  * Cadence is an anchor plus an interval rather than a weekday, because Discord
  * cannot own recurrence (weekly means exactly one weekday, and `count`/`end`
  * cannot be set externally) and because an anchor in the past is how a campaign
- * that started before Orrey existed keeps its rhythm. There is no per-campaign
+ * that started before Kith existed keeps its rhythm. There is no per-campaign
  * timezone: recurrence is wall-clock work in one guild's zone, and that zone is
  * already `SETTING_KEYS.timezone`.
  */
 export const campaigns = sqliteTable(
   "campaigns",
   {
-    /** A slug, not a snowflake: Orrey's own id, stable across Discord objects. */
+    /** A slug, not a snowflake: Kith's own id, stable across Discord objects. */
     id: text("id").primaryKey(),
     name: text("name").notNull(),
     /** run = we play it here, play = someone else runs it, tracked = calendar only. */
@@ -201,7 +201,7 @@ export const campaigns = sqliteTable(
     visibility: text("visibility", { enum: VISIBILITY }).notNull().default("members"),
     tagline: text("tagline"),
     pitch: text("pitch"),
-    /** https URLs. Orrey links to the hero image and the sound; it hosts neither. */
+    /** https URLs. Kith links to the hero image and the sound; it hosts neither. */
     heroUrl: text("hero_url"),
     soundUrl: text("sound_url"),
     createdAt: integer("created_at").notNull().default(now),
@@ -322,7 +322,7 @@ export const sessions = sqliteTable(
  * Exactly one parent, and the one its `kind` names.
  *
  * The campaign half is a CHECK; this is the whole rule, including the half
- * SQLite will not let Orrey add without deleting the attendance history to do
+ * SQLite will not let Kith add without deleting the attendance history to do
  * it. Every path that writes a session goes through this.
  */
 export function hasExactlyOneParent(session: {
@@ -415,10 +415,10 @@ export const sessionLogs = sqliteTable(
 );
 
 /**
- * One Google event per session, at an id Orrey mints rather than discovers
+ * One Google event per session, at an id Kith mints rather than discovers
  * (`src/google/event-id.ts`) — so an upsert is `insert`, and on 409 `update`.
  * The fingerprint is what makes the write skippable, and what phase 7 compares
- * against to tell Orrey's own echo from a human's edit.
+ * against to tell Kith's own echo from a human's edit.
  */
 export const calendarLinks = sqliteTable("calendar_links", {
   sessionId: text("session_id")
@@ -431,9 +431,9 @@ export const calendarLinks = sqliteTable("calendar_links", {
 });
 
 /**
- * Everything Orrey has put into the world, and whether it is still there.
+ * Everything Kith has put into the world, and whether it is still there.
  *
- * Orrey's database is the source of truth, so anything Orrey published must stay
+ * Kith's database is the source of truth, so anything Kith published must stay
  * findable from it. Today it is not: `calendar_links` cascades off `sessions`,
  * so deleting a session destroys the only record that a Google event exists out
  * there, and `sessions.discord_event_id` goes with it. After that no reconcile
@@ -445,7 +445,7 @@ export const calendarLinks = sqliteTable("calendar_links", {
  * schema will want to add the constraint back. Do not.
  *
  * The row is also written *before* the remote call, not after it. A `claimed`
- * row with no `remote_id` is Orrey saying "someone is already publishing this" —
+ * row with no `remote_id` is Kith saying "someone is already publishing this" —
  * which is what stands between a crash mid-POST and a second scheduled event or
  * a second attendance post with live buttons.
  */
@@ -608,7 +608,7 @@ export const auditLog = sqliteTable(
  * old refresh token is how somebody ends up permanently logged out a week later.
  *
  * It is user-keyed, so `src/privacy/delete.ts` deletes it and counts it: this is
- * the most sensitive thing Orrey holds about anybody.
+ * the most sensitive thing Kith holds about anybody.
  */
 export const discordTokens = sqliteTable("discord_tokens", {
   userId: text("user_id")
@@ -702,7 +702,7 @@ export const gameDays = sqliteTable("game_days", {
   visibility: text("visibility", { enum: VISIBILITY }).notNull().default("members"),
   tagline: text("tagline"),
   pitch: text("pitch"),
-  /** https URLs. Orrey links to the hero image and the sound; it hosts neither. */
+  /** https URLs. Kith links to the hero image and the sound; it hosts neither. */
   heroUrl: text("hero_url"),
   soundUrl: text("sound_url"),
 
@@ -777,7 +777,7 @@ export const datePolls = sqliteTable(
     openedBy: text("opened_by").references(() => users.discordId, { onDelete: "set null" }),
     /** When answering stops. Canonising does not — closing the answers is not closing the poll. */
     closesAt: integer("closes_at"),
-    /** Recorded when the post goes up, then abandoned. Orrey never goes back to it. */
+    /** Recorded when the post goes up, then abandoned. Kith never goes back to it. */
     discordChannelId: text("discord_channel_id"),
     discordMessageId: text("discord_message_id"),
     createdAt: integer("created_at").notNull().default(now),

@@ -6,7 +6,7 @@ import { db, schema } from "../db/index.ts";
  * When answering stops.
  *
  * A `jobs` row in D1 rather than a queue message, like every other timed thing
- * in Orrey: it can be looked at, cancelled and re-run, which a queue message
+ * in Kith: it can be looked at, cancelled and re-run, which a queue message
  * cannot. One standing row per poll, re-armed rather than duplicated, so moving
  * a poll's deadline moves the job instead of making a second one.
  */
