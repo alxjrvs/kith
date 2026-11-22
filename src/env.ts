@@ -15,6 +15,11 @@ export interface Env {
    * until kith-cms is set up, and in tests, the site reads as if it were empty.
    */
   CMS?: Fetcher;
+  /**
+   * Cloudflare Images, to cut each game's art into a square app icon
+   * (src/http/game-apps.ts). Optional: without it a game's app wears Kith's icon.
+   */
+  IMAGES?: ImagesBinding;
 
   // Vars
   ENVIRONMENT: "development" | "production";

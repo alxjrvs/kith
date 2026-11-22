@@ -27,6 +27,8 @@ export default defineConfig({
       "/console/me": worker,
       "/ics": worker,
       "/privacy": worker,
+      "^/games/[^/]+/manifest\\.webmanifest$": worker,
+      "^/media/[^/]+/icon/": worker,
     },
   },
 });
