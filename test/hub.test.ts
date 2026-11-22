@@ -382,7 +382,7 @@ describe("each game's home base", () => {
   it("takes a game's words, characters, sheets and pages from kith-cms", async () => {
     await runHollowmere();
     cmsEntries = {
-      games: [{ slug: "hollowmere", data: { title: "Hollowmere", tagline: "From the CMS", pitch: [{ _type: "block", style: "normal", children: [{ text: "Fog on the moor." }] }] } }],
+      games: [{ slug: "hollowmere", data: { title: "Hollowmere", tagline: "From the CMS", system: "Daggerheart", cover: { id: "m", src: "/_emdash/api/media/file/01AB.01CD.png" }, pitch: [{ _type: "block", style: "normal", children: [{ text: "Fog on the moor." }] }] } }],
       characters: [{ slug: "c", data: { name: "Vess", game: "hollowmere", player: "ada", sheet: "https://sheets.example/vess" } }],
       pages: [{ slug: "house-rules", data: { title: "House rules", game: "hollowmere", visibility: "members", content: [{ _type: "block", style: "h2", children: [{ text: "Dice" }] }] } }],
       links: [{ slug: "l", data: { label: "Foundry", url: "https://vtt.example", game: "hollowmere", kind: "vtt", visibility: "public" } }],
@@ -391,6 +391,7 @@ describe("each game's home base", () => {
     try {
       const { home } = (await (await call("GET", "/api/hub/homes/hollowmere", await as("1001"))).json()) as { home: Home };
       expect(home.listing?.tagline).toBe("From the CMS");
+      expect(home.listing).toMatchObject({ system: "Daggerheart", logoUrl: "/media/01AB.01CD.png" });
       expect(home.listing?.pitch).toBe("Fog on the moor.");
       expect(home.roster?.[1]).toMatchObject({ character: "Vess", sheetUrl: "https://sheets.example/vess" });
       expect(home.links?.map((l) => l.label)).toContain("Foundry");

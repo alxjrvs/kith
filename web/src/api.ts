@@ -27,6 +27,8 @@ export interface Listing {
   tagline: string | null;
   pitch: string | null;
   heroUrl: string | null;
+  logoUrl: string | null;
+  system: string | null;
   soundUrl: string | null;
   lead: Person | null;
   capacity: number | null;
@@ -302,6 +304,7 @@ export interface GameSummary {
   label: string | null;
   tagline: string | null;
   imageUrl: string | null;
+  logoUrl: string | null;
   lead: Person | null;
   players: number;
   capacity: number | null;

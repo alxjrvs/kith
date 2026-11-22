@@ -24,6 +24,10 @@ export interface Listing {
   tagline: string | null;
   pitch: string | null;
   heroUrl: string | null;
+  /** A game's logo: its cover in kith-cms (a campaign's crest, a board game's box). */
+  logoUrl: string | null;
+  /** The system it plays, as kith-cms names it: "Daggerheart". */
+  system: string | null;
   soundUrl: string | null;
   /** The GM of a campaign, the host of a day. */
   lead: Person | null;
@@ -149,6 +153,8 @@ async function campaignListing(
     // D1's pitch is plain text: each line stays its own line under Markdown.
     pitch: (words && toMarkdown(words.pitch)) || (campaign.pitch?.replace(/\n+/g, "\n\n") ?? null),
     heroUrl: words?.heroUrl ?? campaign.heroUrl,
+    logoUrl: words?.coverUrl ?? null,
+    system: words?.system ?? null,
     soundUrl: words?.soundUrl ?? campaign.soundUrl,
     lead: gm ? personFrom(gm.user) : null,
     capacity: campaign.capacity,
@@ -197,6 +203,8 @@ async function gameDayListing(
     tagline: day.tagline ?? words?.tagline ?? null,
     pitch: day.pitch,
     heroUrl: day.heroUrl ?? words?.heroUrl ?? null,
+    logoUrl: words?.coverUrl ?? null,
+    system: null,
     soundUrl: day.soundUrl ?? words?.soundUrl ?? null,
     lead: host ? personFrom(host) : null,
     capacity: await capacityOf(env, day.id),

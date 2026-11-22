@@ -79,7 +79,7 @@
         },
         {
           "slug": "cover",
-          "label": "Cover (its card on Games)",
+          "label": "Cover or logo (a board game's box, a campaign's logo)",
           "type": "image"
         },
         {
