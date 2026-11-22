@@ -79,13 +79,14 @@ export function Splash() {
   );
 }
 
-function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean }) {
+/** The splash's sound: off until pressed, looping once it plays. Shared with the home bases. */
+export function SoundButton({ url }: { url: string | null }) {
   const audio = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
-    if (!listing.soundUrl) return;
-    const element = new Audio(listing.soundUrl);
+    if (!url) return;
+    const element = new Audio(url);
     element.loop = true;
     element.preload = "none";
     element.addEventListener("pause", () => setPlaying(false));
@@ -95,7 +96,7 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
       element.pause();
       audio.current = null;
     };
-  }, [listing.soundUrl]);
+  }, [url]);
 
   const toggle = () => {
     const element = audio.current;
@@ -104,6 +105,31 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
     else element.pause();
   };
 
+  if (!url) return null;
+  return (
+    <button type="button" className="btn" aria-pressed={playing} onClick={toggle}>
+      {playing ? (
+        <>
+          <span aria-hidden="true" style={{ display: "inline-flex", gap: 3 }}>
+            <span style={{ width: 4, height: 12, background: "var(--in)" }} />
+            <span style={{ width: 4, height: 12, background: "var(--in)" }} />
+          </span>
+          Pause the sound
+        </>
+      ) : (
+        <>
+          <span
+            aria-hidden="true"
+            style={{ width: 0, height: 0, borderLeft: "10px solid var(--text)", borderTop: "6px solid transparent", borderBottom: "6px solid transparent" }}
+          />
+          Play the sound
+        </>
+      )}
+    </button>
+  );
+}
+
+function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean }) {
   const left = listing.capacity === null ? null : Math.max(listing.capacity - listing.taken, 0);
   const eyebrow = [
     listing.kind === "campaign" ? "New campaign" : "Game day",
@@ -116,34 +142,14 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
   return (
     <div className="splash">
       {listing.heroUrl ? <div className="hero" style={{ backgroundImage: `url("${encodeURI(listing.heroUrl)}")` }} /> : null}
-      <Table />
+      <TableMotif />
       <header>
         <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
           <img src="/mark.svg" alt="" width="26" height="26" />
           kith
         </Link>
         <div className="row" style={{ gap: 10 }}>
-          {listing.soundUrl ? (
-            <button type="button" className="btn" aria-pressed={playing} onClick={toggle}>
-              {playing ? (
-                <>
-                  <span aria-hidden="true" style={{ display: "inline-flex", gap: 3 }}>
-                    <span style={{ width: 4, height: 12, background: "var(--in)" }} />
-                    <span style={{ width: 4, height: 12, background: "var(--in)" }} />
-                  </span>
-                  Pause the sound
-                </>
-              ) : (
-                <>
-                  <span
-                    aria-hidden="true"
-                    style={{ width: 0, height: 0, borderLeft: "10px solid var(--text)", borderTop: "6px solid transparent", borderBottom: "6px solid transparent" }}
-                  />
-                  Play the sound
-                </>
-              )}
-            </button>
-          ) : null}
+          <SoundButton url={listing.soundUrl} />
           {signedIn ? (
             <Link to="/agenda" className="btn">
               Your agenda
@@ -187,9 +193,8 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
   );
 }
 
-/** The Lantern splash's orrery: three rings, the ember sun and two worlds. */
 /** The mark, at room scale: a round table seen from above, six seats, the top one lit. */
-function Table() {
+export function TableMotif() {
   const at = (size: number, style: CSSProperties, dx = 0, dy = 0) => (
     <div
       aria-hidden="true"

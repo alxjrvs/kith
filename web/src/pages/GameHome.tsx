@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useParams } from "@tanstack/react-router";
-import { useHome, type BoardHome, type CampaignHome, type AgendaRow as Row, type Seat } from "../api.ts";
+import { useHome, useMe, type BoardHome, type CampaignHome, type AgendaRow as Row, type Seat } from "../api.ts";
 import { AgendaRow } from "../components/AgendaRow.tsx";
 import { CatalogEditor } from "../components/CatalogEditor.tsx";
 import { SeatSquares, seatLine } from "../components/Squares.tsx";
@@ -8,35 +8,116 @@ import { SignupButtons } from "../components/SignupButtons.tsx";
 import { ToPage } from "../components/To.tsx";
 import { cadence, inDays, initials, stamp } from "../format.ts";
 import { LinkRow, NewLink, NewPage, VIS_LABEL } from "./Table.tsx";
+import { SoundButton, TableMotif } from "./Splash.tsx";
+import { Header } from "../components/Header.tsx";
+import { signInHref } from "../signin.ts";
+
+const STATE_EYEBROW: Record<string, string> = {
+  FORMING: "New campaign",
+  RUNNING: "Campaign",
+  HIATUS: "Campaign on hiatus",
+  CONCLUDED: "Concluded campaign",
+};
 
 /** A game's home base: `/games/<slug>`, a campaign or a board game. */
 export function GameHome() {
-  const { slug } = useParams({ from: "/shell/games/$slug" });
+  const { slug } = useParams({ from: "/games/$slug" });
   const home = useHome(slug);
 
-  if (home.isPending) return <main className="page" aria-busy="true" />;
+  if (home.isPending) return <div className="splash base" aria-busy="true" />;
   if (home.isError) {
     return (
-      <main className="page">
-        <h1>Nothing here</h1>
-        <p className="muted">
-          {home.error.message} <Link to="/games">See every game</Link>
-        </p>
-      </main>
+      <>
+        <Header />
+        <main className="page">
+          <h1>Nothing here</h1>
+          <p className="muted">
+            {home.error.message} <Link to="/games">See every game</Link>
+          </p>
+        </main>
+      </>
     );
   }
   const data = home.data.home;
   return data.kind === "campaign" ? <CampaignBase home={data} /> : <BoardBase home={data} />;
 }
 
-function Hero({ url }: { url: string | null }) {
-  if (!url) return null;
+/**
+ * The top of a home base, in the splash page's clothes: the hero image behind,
+ * the round table, a big title. A home base is the game's own front door, so it
+ * reads like one rather than like a settings page.
+ */
+function BaseHero({
+  eyebrow,
+  title,
+  tagline,
+  heroUrl,
+  soundUrl,
+  chips,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  tagline: string | null;
+  heroUrl: string | null;
+  soundUrl: string | null;
+  chips: string[];
+  children?: ReactNode;
+}) {
+  const me = useMe().data;
   return (
-    <img
-      src={url}
-      alt=""
-      style={{ display: "block", width: "100%", aspectRatio: "21 / 6", objectFit: "cover", borderRadius: "var(--radius)", border: "1px solid var(--border)" }}
-    />
+    <div className="splash base">
+      {heroUrl ? <div className="hero" style={{ backgroundImage: `url("${encodeURI(heroUrl)}")` }} /> : null}
+      <TableMotif />
+      <header>
+        <div className="row" style={{ gap: 24 }}>
+          <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
+            <img src="/mark.svg" alt="" width="26" height="26" />
+            kith
+          </Link>
+          <nav aria-label="Main" className="site-nav">
+            <Link to="/games">Games</Link>
+            <Link to="/agenda">Agenda</Link>
+          </nav>
+        </div>
+        <div className="row" style={{ gap: 10 }}>
+          <SoundButton url={soundUrl} />
+          {me && !me.signedIn ? (
+            <a className="btn" href={signInHref()}>
+              Sign in
+            </a>
+          ) : null}
+        </div>
+      </header>
+      <main>
+        <span className="label">{eyebrow}</span>
+        <h1>{title}</h1>
+        {tagline ? <p className="tagline">{tagline}</p> : null}
+        {chips.length > 0 ? (
+          <div className="row" style={{ gap: 6 }}>
+            {chips.map((chip) => (
+              <span key={chip} className="chip">
+                {chip}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        {children}
+      </main>
+    </div>
+  );
+}
+
+/** The next session, big, where the eye lands first. */
+function NextUp({ row }: { row: Row }) {
+  return (
+    <div className="next-up">
+      <span className="label">Next up · {inDays(row.startsAt)}</span>
+      <span className="mono next-stamp">{stamp(row.startsAt)}</span>
+      <div className="panel" style={{ marginTop: 4 }}>
+        <AgendaRow row={row} />
+      </div>
+    </div>
   );
 }
 
@@ -48,26 +129,34 @@ function CampaignBase({ home }: { home: CampaignHome }) {
   for (const row of upcoming) days.set(row.day, [...(days.get(row.day) ?? []), row]);
 
   return (
-    <main className="page">
-      <Hero url={listing.heroUrl} />
-      <div className="page-head">
-        <div className="stack" style={{ gap: 6 }}>
-          <span className="label">
-            Campaign · {listing.state.toLowerCase()}
-            {listing.game ? ` · ${listing.game.name}` : ""}
-          </span>
-          <h1>{listing.name}</h1>
-          {listing.tagline ? <p className="muted">{listing.tagline}</p> : null}
-        </div>
-        <div className="row">
+    <>
+      <BaseHero
+        eyebrow={[STATE_EYEBROW[listing.state] ?? "Campaign", listing.game?.name, listing.lead ? `GM ${listing.lead.name}` : null]
+          .filter(Boolean)
+          .join(" · ")}
+        title={listing.name}
+        tagline={listing.tagline}
+        heroUrl={listing.heroUrl}
+        soundUrl={listing.soundUrl}
+        chips={[...cadence(listing), listing.where === "voice" ? "Voice" : listing.where].filter((c): c is string => Boolean(c))}
+      >
+        {upcoming[0] ? <NextUp row={upcoming[0]} /> : null}
+        <div className="row" style={{ gap: "16px 24px" }}>
+          {listing.open ? <SignupButtons listing={listing} big /> : null}
+          <a href="#cast">Meet the table</a>
           {listing.open || canEdit ? (
-            <Link to="/join/$kind/$id" params={{ kind, id }} className="btn">
+            <Link to="/join/$kind/$id" params={{ kind, id }}>
               Splash page
             </Link>
           ) : null}
-          {listing.open ? <SignupButtons listing={listing} /> : null}
         </div>
-      </div>
+      </BaseHero>
+    <main className="page">
+
+      <section id="cast" className="stack" style={{ gap: 16 }}>
+        <h2 className="section-title">{listing.state === "FORMING" ? "Signed up so far" : "The table"}</h2>
+        <Cast seats={roster} empty={listing.state === "FORMING" ? "Nobody has signed up yet." : "No roster yet."} />
+      </section>
 
       <div className="split">
         <div className="main">
@@ -96,12 +185,6 @@ function CampaignBase({ home }: { home: CampaignHome }) {
             )}
           </section>
 
-          <section className="panel">
-            <h2 className="panel-head label">
-              <span>{listing.state === "FORMING" ? "Signed up so far" : "The table"} · {roster.length}</span>
-            </h2>
-            <SeatList seats={roster} empty={listing.state === "FORMING" ? "Nobody has signed up yet." : "No roster yet."} />
-          </section>
 
           {listing.pitch ? (
             <section className="stack">
@@ -166,6 +249,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
         </aside>
       </div>
     </main>
+    </>
   );
 }
 
@@ -179,22 +263,41 @@ function BoardBase({ home }: { home: BoardHome }) {
         ? `Up to ${game.maxPlayers} players`
         : null;
   const length = game.defaultDurationMinutes ? `About ${Math.round(game.defaultDurationMinutes / 60)} hours` : null;
+  const next = upcoming[0]?.listing;
 
   return (
-    <main className="page">
-      <Hero url={game.coverUrl} />
-      <div className="page-head">
-        <div className="stack" style={{ gap: 6 }}>
-          <span className="label">Board game</span>
-          <h1>{game.name}</h1>
-          {game.summary ? <p className="muted">{game.summary}</p> : null}
-        </div>
-        {canEdit && !editing ? (
-          <button type="button" className="btn" onClick={() => setEditing(true)}>
-            Edit
-          </button>
+    <>
+      <BaseHero
+        eyebrow={["Board game", next?.lead ? `Host ${next.lead.name}` : null].filter(Boolean).join(" · ")}
+        title={game.name}
+        tagline={game.summary}
+        heroUrl={next?.heroUrl ?? game.coverUrl}
+        soundUrl={next?.soundUrl ?? null}
+        chips={[players, length].filter((c): c is string => Boolean(c))}
+      >
+        {next ? (
+          <div className="next-up">
+            <span className="label">Next game day · {next.when.startsAt ? inDays(next.when.startsAt) : "date to come"}</span>
+            {next.when.startsAt ? <span className="mono next-stamp">{stamp(next.when.startsAt)}</span> : null}
+            <div className="row">
+              <SeatSquares capacity={next.capacity} taken={next.taken} big />
+              <span className="mono" style={{ fontSize: 13 }}>
+                {seatLine(next)}
+              </span>
+            </div>
+          </div>
         ) : null}
-      </div>
+        <div className="row" style={{ gap: "16px 24px" }}>
+          {next?.open ? <SignupButtons listing={next} big /> : null}
+          <a href="#days">Every day coming up</a>
+          {canEdit && !editing ? (
+            <button type="button" className="btn" onClick={() => setEditing(true)}>
+              Edit the game
+            </button>
+          ) : null}
+        </div>
+      </BaseHero>
+    <main className="page" id="days">
       {editing ? <CatalogEditor game={game} done={() => setEditing(false)} /> : null}
 
       <div className="split">
@@ -247,6 +350,7 @@ function BoardBase({ home }: { home: BoardHome }) {
         </aside>
       </div>
     </main>
+    </>
   );
 }
 
@@ -289,6 +393,35 @@ function SeatList({ seats, empty, characters = true }: { seats: Seat[]; empty: s
           {seat.state === "waitlisted" ? <span className="pill maybe">Waitlist</span> : null}
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * The campaign's cast, the way the splash would show it: each character as a
+ * card with its name big, and the person who plays it underneath.
+ */
+function Cast({ seats, empty }: { seats: Seat[]; empty: string }) {
+  if (seats.length === 0) return <p className="empty">{empty}</p>;
+  return (
+    <div className="cast">
+      {seats.map((seat, i) => {
+        const gmOnly = seat.role === "gm" && !seat.character;
+        return (
+          <article key={seat.person?.id ?? `seat-${i}`} className={`cast-card${seat.role === "gm" ? " gm" : ""}`}>
+            <span className="label">{seat.role === "gm" ? "Game master" : seat.state === "waitlisted" ? "Waitlist" : "Player"}</span>
+            <span className="cast-name">{gmOnly ? (seat.person?.name ?? "Game master") : (seat.character ?? "Character to come")}</span>
+            <div className="row" style={{ gap: 10 }}>
+              <span className="avatar" style={{ width: 28, height: 28, fontSize: 11 }} aria-hidden="true">
+                {seat.person?.avatarUrl ? <img src={seat.person.avatarUrl} alt="" /> : seat.person ? initials(seat.person.name) : "?"}
+              </span>
+              <span className="muted" style={{ fontSize: 13 }}>
+                {gmOnly ? "Runs the table" : seat.person ? `Played by ${seat.person.name}` : "Shown to the table"}
+              </span>
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 }

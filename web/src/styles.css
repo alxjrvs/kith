@@ -179,6 +179,16 @@ img { max-width: 100%; }
 .splash main { position: relative; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 24px; padding: 32px 32px 48px; max-width: 760px; }
 .splash h1 { font-size: clamp(48px, 10vw, 88px); line-height: 0.95; font-weight: 700; letter-spacing: -0.03em; }
 .splash .tagline { font-size: 22px; line-height: 1.3; }
+/* A home base wears the splash: shorter, so the table shows below the fold line. */
+.splash.base { min-height: 88vh; }
+.splash .site-nav a { color: var(--text); }
+.next-up { display: flex; flex-direction: column; gap: 6px; max-width: 640px; }
+.next-stamp { font-size: clamp(22px, 4vw, 32px); }
+.section-title { font-family: var(--font-head); font-size: clamp(26px, 4vw, 36px); font-weight: 700; letter-spacing: -0.02em; }
+.cast { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.cast-card { display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); }
+.cast-card.gm { border-color: var(--accent); }
+.cast-name { font-family: var(--font-head); font-size: 26px; font-weight: 700; line-height: 1.05; letter-spacing: -0.02em; }
 .chip { padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; }
 
 /* Prose (knowledge pages) */

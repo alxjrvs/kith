@@ -33,7 +33,8 @@ const find = createRoute({
   },
 });
 const games = createRoute({ getParentRoute: () => shell, path: "/games", component: Games });
-const gameHome = createRoute({ getParentRoute: () => shell, path: "/games/$slug", component: GameHome });
+/** A home base wears the splash, so like the splash it brings its own header. */
+const gameHome = createRoute({ getParentRoute: () => rootRoute, path: "/games/$slug", component: GameHome });
 
 /** A new page arrives with the title typed on the home base. */
 const titleSearch = (search: Record<string, unknown>): { title?: string } =>
@@ -58,7 +59,7 @@ const knowledge = createRoute({
 /** The splash is full screen and brings its own header. */
 const splash = createRoute({ getParentRoute: () => rootRoute, path: "/join/$kind/$id", component: Splash });
 
-const routeTree = rootRoute.addChildren([shell.addChildren([home, find, games, gameHome, gamePage, agenda, profile, table, knowledge]), splash]);
+const routeTree = rootRoute.addChildren([shell.addChildren([home, find, games, gamePage, agenda, profile, table, knowledge]), gameHome, splash]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });
 
