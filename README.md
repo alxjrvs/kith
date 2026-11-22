@@ -99,22 +99,22 @@ bun run stack -- push p1 --apply      # --force-with-lease, in order
 
 ## The custom domain
 
-The Worker answers at **kith.alxjrvs.com** (a Workers Custom Domain, declared in
-`wrangler.jsonc`), at **orrey.alxjrvs.com** (the old name, kept so nothing shared breaks)
-and at kith.alxjrvs.workers.dev, which stays on. Code derives its origin from the
-request. On orrey.alxjrvs.com, page loads move to kith.alxjrvs.com (a 301 from the Worker,
+The Worker answers at **kith.town** (a Workers Custom Domain, declared in
+`wrangler.jsonc`), at its two old hostnames **orrey.alxjrvs.com** and **kith.alxjrvs.com**
+(kept so nothing shared breaks) and at kith.alxjrvs.workers.dev, which stays on. Code
+derives its origin from the request. On the old hostnames, page loads move to kith.town (a 301 from the Worker,
 and a one-line hop in each static HTML page, which the Worker never sees); Discord's
 endpoints, calendar feeds, Google push, `/healthz` and the API keep answering there. The
 rule lives in `src/http/legacy-host.ts`. Steps outside the repo:
 
-- **Discord developer portal, OAuth2:** add `https://kith.alxjrvs.com/console/callback`
+- **Discord developer portal, OAuth2:** add `https://kith.town/console/callback`
   as a redirect. Keep the older ones until nothing uses them.
 - **Discord developer portal, Interactions Endpoint URL:** set it to
-  `https://kith.alxjrvs.com/interactions`. `/console` login links and the privacy link
+  `https://kith.town/interactions`. `/console` login links and the privacy link
   are built from the interaction's origin, so this is the switch that sends people to the
   new hostname. Discord validates on save, so deploy first.
-- **GitHub, production environment:** `HEALTH_URL=https://kith.alxjrvs.com/healthz`.
-- **Google:** verify kith.alxjrvs.com in the Google console, *then* change
+- **GitHub, production environment:** `HEALTH_URL=https://kith.town/healthz`.
+- **Google:** verify kith.town in the Google console, *then* change
   `PUBLIC_ORIGIN`. Google refuses push channels to an unverified domain, so changing the
   var first would break the next channel renewal.
 

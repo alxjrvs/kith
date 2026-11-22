@@ -1,6 +1,6 @@
-// kith-cms: EmDash, the CMS behind every word on kith.alxjrvs.com. Astro builds
+// kith-cms: EmDash, the CMS behind every word on kith.town. Astro builds
 // it (`bun run build`, @astrojs/cloudflare). The Kith Worker (../wrangler.jsonc)
-// reads it over a service binding; people use its admin at cms.kith.alxjrvs.com,
+// reads it over a service binding; people use its admin at cms.kith.town,
 // behind Cloudflare Access. Deployed by ../bin/deploy, before the Kith Worker.
 //
 // The D1 and KV ids below are filled in once by ../bin/cms-setup. Until they are, bin/deploy
@@ -28,9 +28,9 @@
   "kv_namespaces": [{ "binding": "SESSION", "id": "b431fba600dd4b2799bcae43532b8cba" }],
   "vars": {
     // The Application Audience (AUD) tag of the Cloudflare Access app that
-    // guards cms.kith.alxjrvs.com. Not a secret: it only names which app signed
+    // guards cms.kith.town. Not a secret: it only names which app signed
     // a token. This is the app that already guards admin.alxjrvs.com, with
-    // cms.kith.alxjrvs.com added as a second hostname (docs/CMS.md), so both
+    // cms.kith.town added as a second hostname (docs/CMS.md), so both
     // CMSes share one sign-in. Give Kith its own app and this changes.
     "CF_ACCESS_AUDIENCE": "b6b316406fef4d06b6426b1b47d30ab1359c683f3bc3c997efbae6c3463d58c9"
   },
@@ -39,7 +39,7 @@
   "triggers": { "crons": ["* * * * *"] },
   // A custom domain: the deploy creates its DNS record. Access must guard it
   // before the first deploy (docs/CMS.md).
-  "routes": [{ "pattern": "cms.kith.alxjrvs.com", "custom_domain": true }],
+  "routes": [{ "pattern": "cms.kith.town", "custom_domain": true }],
   // Only /healthz answers there (src/gateway.ts).
   "workers_dev": true
 }

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "kith.alxjrvs.com: the React site the Worker serves as its static assets.",
+  "description": "kith.town: the React site the Worker serves as its static assets.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

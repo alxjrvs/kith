@@ -7,12 +7,15 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
 
-  // kith.alxjrvs.com (and orrey.alxjrvs.com, its old name, which redirects page
-  // loads there; see src/http/legacy-host.ts) as Workers Custom Domains. `wrangler deploy` creates the
-  // DNS record and the certificate. alxjrvs.com has to be a zone in this same
-  // Cloudflare account, or the deploy fails rather than half-applying.
+  // kith.town, plus its two old hostnames (orrey.alxjrvs.com, then
+  // kith.alxjrvs.com), which redirect page loads there; see
+  // src/http/legacy-host.ts. All are Workers Custom Domains: `wrangler deploy`
+  // creates the DNS record and the certificate. kith.town and alxjrvs.com have
+  // to be zones in this same Cloudflare account, or the deploy fails rather
+  // than half-applying.
   // workers.dev stays on, so nothing pointing at it breaks.
   "routes": [
+    { "pattern": "kith.town", "custom_domain": true },
     { "pattern": "kith.alxjrvs.com", "custom_domain": true },
     { "pattern": "orrey.alxjrvs.com", "custom_domain": true }
   ],
