@@ -194,7 +194,7 @@ export const campaigns = sqliteTable(
      */
     autoResolvePolls: integer("auto_resolve_polls").notNull().default(0),
     /**
-     * The listing: what the site's Find a game and splash pages say about it.
+     * The listing: what the site's games hub, home base and splash pages say about it.
      * All optional, all organiser-written. `visibility` defaults to `members`, so
      * nothing becomes public until an organiser says so.
      */
@@ -695,7 +695,7 @@ export const gameDays = sqliteTable("game_days", {
   threadId: text("thread_id"),
 
   /**
-   * The listing: what the site's Find a game and splash pages say about it.
+   * The listing: what the site's games hub, home base and splash pages say about it.
    * All optional, all organiser-written. `visibility` defaults to `members`, so
    * nothing becomes public until an organiser says so.
    */

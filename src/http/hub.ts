@@ -8,6 +8,7 @@ import { personFrom } from "../hub/people.ts";
 import { ANONYMOUS, type Viewer } from "../hub/visibility.ts";
 import { listingFor, openListings } from "../hub/listings.ts";
 import { catalog } from "../hub/catalog.ts";
+import { gamesFor, homeBase } from "../hub/home-base.ts";
 import { agendaFor } from "../hub/agenda.ts";
 import { isMemberOf } from "../hub/membership.ts";
 import { linksFor, pageFor, pagesFor } from "../hub/knowledge.ts";
@@ -98,6 +99,17 @@ export function hubRoutes() {
   });
 
   hub.get("/games", async (c) => c.json({ games: await catalog(c.env) }));
+
+  /** The hub: one card per game the viewer may see. */
+  hub.get("/homes", async (c) => c.json({ asOf: unixNow(), games: await gamesFor(c.env, c.get("viewer")) }));
+
+  /** One game's home base: a campaign's roster and sessions, or a board game's days. */
+  hub.get("/homes/:slug", async (c) => {
+    const home = await homeBase(c.env, c.req.param("slug"), c.get("viewer"));
+    return home
+      ? c.json({ asOf: unixNow(), home })
+      : c.json({ error: "Kith has no game here, or it is not yours to see." }, 404);
+  });
 
   hub.get("/agenda", async (c) => {
     const scope = c.req.query("scope") === "public" ? "public" : "mine";

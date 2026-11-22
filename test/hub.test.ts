@@ -328,3 +328,78 @@ describe("organisers writing a listing", () => {
     expect(bad.status).toBe(400);
   });
 });
+
+describe("each game's home base", () => {
+  async function runHollowmere() {
+    await env.DB.prepare(`UPDATE campaigns SET state = 'RUNNING' WHERE id = 'hollowmere'`).run();
+    await db(env).insert(schema.campaignMembers).values([
+      { campaignId: "hollowmere", userId: "1003", role: "gm" },
+      { campaignId: "hollowmere", userId: "1001", role: "player", characterName: "Wren Ashdown" },
+    ]);
+    await db(env).insert(schema.sessions).values({
+      id: "s1",
+      kind: "campaign_session",
+      campaignId: "hollowmere",
+      startsAt: later,
+      endsAt: later + 3600,
+    });
+  }
+
+  type Home = {
+    kind: string;
+    roster?: { person: { name: string } | null; character: string | null; role: string; state: string }[];
+    upcoming: { sessionId?: string; listing?: { id: string }; seats?: { person: { name: string } | null }[] }[];
+  };
+
+  it("maps players to characters, GM first, and lists the next sessions", async () => {
+    await runHollowmere();
+    const res = await call("GET", "/api/hub/homes/hollowmere", await as("1002"));
+    expect(res.status).toBe(200);
+    const { home } = (await res.json()) as { home: Home };
+    expect(home.kind).toBe("campaign");
+    expect(home.roster).toEqual([
+      { person: expect.objectContaining({ name: "Rowan" }), character: null, role: "gm", state: "in" },
+      { person: expect.objectContaining({ name: "Ada" }), character: "Wren Ashdown", role: "player", state: "in" },
+    ]);
+    expect(home.upcoming.map((r) => r.sessionId)).toEqual(["s1"]);
+  });
+
+  it("shows a signed-out visitor the characters but not the people", async () => {
+    await runHollowmere();
+    const { home } = (await (await call("GET", "/api/hub/homes/hollowmere")).json()) as { home: Home };
+    // The GM is public already, as the listing's lead; the players are not.
+    expect(home.roster?.map((s) => [s.person?.name ?? null, s.character])).toEqual([
+      ["Rowan", null],
+      [null, "Wren Ashdown"],
+    ]);
+  });
+
+  it("answers a hidden game exactly like a missing one", async () => {
+    const hidden = await call("GET", "/api/hub/homes/secret");
+    const missing = await call("GET", "/api/hub/homes/nope");
+    expect(hidden.status).toBe(404);
+    expect(await hidden.json()).toEqual(await missing.json());
+    // A TTRPG system is a label on a campaign, not a game with a home of its own.
+    expect((await call("GET", "/api/hub/homes/daggerheart")).status).toBe(404);
+  });
+
+  it("gives a board game its upcoming days and who has a seat", async () => {
+    await db(env).insert(schema.signups).values({ targetType: "game_day", targetId: "arcs-afternoon", userId: "1002", state: "in", position: 1 });
+    const { home } = (await (await call("GET", "/api/hub/homes/arcs", await as("1001"))).json()) as { home: Home };
+    expect(home.kind).toBe("board");
+    expect(home.upcoming.map((d) => d.listing?.id)).toEqual(["arcs-afternoon"]);
+    expect(home.upcoming[0]!.seats?.map((s) => s.person?.name)).toEqual(["Grace"]);
+  });
+
+  it("lists every game the viewer may see on the hub, and nothing else", async () => {
+    const anon = (await (await call("GET", "/api/hub/homes")).json()) as { games: { slug: string; kind: string }[] };
+    expect(anon.games.map((g) => [g.kind, g.slug])).toEqual([
+      ["campaign", "hollowmere"],
+      ["board", "arcs"],
+    ]);
+
+    roles["1003"] = [ORGANISER_ROLE];
+    const boss = (await (await call("GET", "/api/hub/homes", await as("1003"))).json()) as { games: { slug: string }[] };
+    expect(boss.games.map((g) => g.slug)).toEqual(["hollowmere", "secret", "arcs"]);
+  });
+});

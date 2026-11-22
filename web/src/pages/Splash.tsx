@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { ToTable } from "../components/To.tsx";
 import { Link, useParams } from "@tanstack/react-router";
 import { useListing, useMe, type Listing } from "../api.ts";
 import { SeatSquares } from "../components/Squares.tsx";
@@ -29,7 +30,7 @@ export function Splash() {
               If it is a table you are on, <a href={signInHref()}>sign in with Discord</a>.
             </>
           ) : null}{" "}
-          <Link to="/find">See every open table</Link>
+          <Link to="/games">See every game</Link>
         </p>
       </main>
     );
@@ -177,9 +178,9 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
         </div>
         <div className="row" style={{ gap: 18, fontSize: 13 }}>
           <a href="#details">Read the full details</a>
-          <Link to="/table/$kind/$id" params={{ kind: listing.kind, id: listing.id }}>
-            Links and pages
-          </Link>
+          <ToTable kind={listing.kind} id={listing.id}>
+            {listing.kind === "campaign" ? "The game's home base" : "Links and pages"}
+          </ToTable>
         </div>
       </main>
     </div>

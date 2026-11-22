@@ -1,7 +1,7 @@
-import { Link } from "@tanstack/react-router";
 import { useIntent, type AgendaRow as Row, type Intent } from "../api.ts";
 import { time } from "../format.ts";
 import { TallySquares } from "./Squares.tsx";
+import { ToTable } from "./To.tsx";
 
 export function statusOf(row: Row): { label: string; tone: string } {
   if (row.state === "CANCELLED") return { label: "Called off", tone: "out" };
@@ -28,13 +28,13 @@ export function AgendaRow({ row, answer = true }: { row: Row; answer?: boolean }
       </span>
       <div style={{ flex: "1 1 220px", display: "flex", flexDirection: "column" }}>
         {row.campaignId || row.gameDayId ? (
-          <Link
-            to="/table/$kind/$id"
-            params={{ kind: row.campaignId ? "campaign" : "game-day", id: (row.campaignId ?? row.gameDayId)! }}
+          <ToTable
+            kind={row.campaignId ? "campaign" : "game-day"}
+            id={(row.campaignId ?? row.gameDayId)!}
             style={{ fontWeight: 600, color: "var(--text)" }}
           >
             {row.title}
-          </Link>
+          </ToTable>
         ) : (
           <span style={{ fontWeight: 600 }}>{row.title}</span>
         )}

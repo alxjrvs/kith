@@ -1,13 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { useAgenda, useListings, useMe } from "../api.ts";
-import { ListingCard } from "../components/ListingCard.tsx";
+import { useAgenda, useHomes, useMe } from "../api.ts";
+import { GameCard } from "./Games.tsx";
 import { TallySquares } from "../components/Squares.tsx";
 import { statusOf } from "../components/AgendaRow.tsx";
 import { inDays, stamp } from "../format.ts";
 
 export function Home() {
   const signedIn = useMe().data?.signedIn === true;
-  const listings = useListings().data?.listings ?? [];
+  const games = (useHomes().data?.games ?? []).filter((g) => g.state !== "CONCLUDED");
+  // Yours first, then the rest in the hub's order.
+  const shown = [...games.filter((g) => g.mine), ...games.filter((g) => !g.mine)].slice(0, 6);
   const agenda = useAgenda(signedIn ? "mine" : "public").data?.rows ?? [];
   const next = signedIn ? agenda[0] : undefined;
 
@@ -18,11 +20,11 @@ export function Home() {
           <span className="label">The Orrey of Worlds</span>
           <h1 style={{ fontSize: 40, lineHeight: 1.08, letterSpacing: "-0.02em" }}>Every game we run, in one place.</h1>
           <p className="muted" style={{ fontSize: 15, maxWidth: "50ch" }}>
-            Campaigns, game days, dates, links and what each table knows. Find a seat, or see when your games run.
+            Each game has a home base: who plays whom, when it meets next, its links and what the table knows.
           </p>
           <div className="row">
-            <Link to="/find" className="btn primary">
-              Find a game
+            <Link to="/games" className="btn primary">
+              See the games
             </Link>
             <Link to="/agenda" className="btn">
               See the agenda
@@ -52,18 +54,18 @@ export function Home() {
       <section className="stack">
         <div className="section-head">
           <h2 className="label" style={{ fontSize: 12 }}>
-            Open tables · {listings.length}
+            {signedIn && shown.some((g) => g.mine) ? "Your games and the rest" : "The games"} · {games.length}
           </h2>
-          <Link to="/find" style={{ fontSize: 13 }}>
-            See every open table
+          <Link to="/games" style={{ fontSize: 13 }}>
+            See every game
           </Link>
         </div>
-        {listings.length === 0 ? (
-          <p className="empty">No open tables right now. Running campaigns are on the agenda.</p>
+        {games.length === 0 ? (
+          <p className="empty">No games you can see yet.</p>
         ) : (
           <div className="grid">
-            {listings.slice(0, 3).map((listing) => (
-              <ListingCard key={`${listing.kind}:${listing.id}`} listing={listing} />
+            {shown.map((game) => (
+              <GameCard key={`${game.kind}:${game.slug}`} game={game} />
             ))}
           </div>
         )}

@@ -1,15 +1,24 @@
 import { useState, type FormEvent } from "react";
-import { Link, useParams } from "@tanstack/react-router";
+import { Link, Navigate, useParams } from "@tanstack/react-router";
 import { useTable, useTableEdits, type Table as TableData, type Visibility } from "../api.ts";
 import { SeatSquares, seatLine } from "../components/Squares.tsx";
 import { SignupButtons } from "../components/SignupButtons.tsx";
 import { cadence } from "../format.ts";
+import { ToPage } from "../components/To.tsx";
 
-const VIS_LABEL: Record<Visibility, string> = { public: "Anyone", members: "Table", organisers: "Organisers" };
+export const VIS_LABEL: Record<Visibility, string> = { public: "Anyone", members: "Table", organisers: "Organisers" };
 
-/** One table's home: what it is, where its links go, and what it knows. */
+/**
+ * A game day's own page: what it is, where its links go, and what it knows.
+ * A campaign's lives at its game's home base now, so an old link goes there.
+ */
 export function Table() {
   const { kind, id } = useParams({ from: "/shell/table/$kind/$id" });
+  if (kind === "campaign") return <Navigate to="/games/$slug" params={{ slug: id }} replace />;
+  return <DayTable kind={kind} id={id} />;
+}
+
+function DayTable({ kind, id }: { kind: string; id: string }) {
   const table = useTable(kind, id);
 
   if (table.isPending) return <main className="page" aria-busy="true" />;
@@ -29,7 +38,15 @@ export function Table() {
         <div className="stack" style={{ gap: 6 }}>
           <span className="label">
             {listing.kind === "campaign" ? "Campaign" : "Game day"} · {listing.state.toLowerCase()}
-            {listing.game ? ` · ${listing.game.name}` : ""}
+            {listing.game && listing.game.category !== "board" ? ` · ${listing.game.name}` : ""}
+            {listing.game?.category === "board" ? (
+              <>
+                {" · "}
+                <Link to="/games/$slug" params={{ slug: listing.game.id }}>
+                  {listing.game.name}
+                </Link>
+              </>
+            ) : null}
           </span>
           <h1>{listing.name}</h1>
           {listing.tagline ? <p className="muted">{listing.tagline}</p> : null}
@@ -55,9 +72,9 @@ export function Table() {
             ) : (
               pages.map((page) => (
                 <div key={page.slug} className="link-row">
-                  <Link to="/table/$kind/$id/$slug" params={{ kind, id, slug: page.slug }}>
+                  <ToPage kind={kind} id={id} slug={page.slug}>
                     {page.title}
-                  </Link>
+                  </ToPage>
                   <span className="pill">{VIS_LABEL[page.visibility]}</span>
                 </div>
               ))
@@ -107,7 +124,7 @@ export function Table() {
   );
 }
 
-function LinkRow({ link, canEdit, kind, id }: { link: TableData["links"][number]; canEdit: boolean; kind: string; id: string }) {
+export function LinkRow({ link, canEdit, kind, id }: { link: TableData["links"][number]; canEdit: boolean; kind: string; id: string }) {
   const edits = useTableEdits(kind, id);
   return (
     <div className="link-row">
@@ -129,7 +146,7 @@ function LinkRow({ link, canEdit, kind, id }: { link: TableData["links"][number]
   );
 }
 
-function NewLink({ kind, id }: { kind: string; id: string }) {
+export function NewLink({ kind, id }: { kind: string; id: string }) {
   const edits = useTableEdits(kind, id);
   const [label, setLabel] = useState("");
   const [url, setUrl] = useState("");
@@ -187,7 +204,7 @@ function NewLink({ kind, id }: { kind: string; id: string }) {
   );
 }
 
-function NewPage({ kind, id }: { kind: string; id: string }) {
+export function NewPage({ kind, id }: { kind: string; id: string }) {
   const [title, setTitle] = useState("");
   const slug = title
     .toLowerCase()
@@ -201,9 +218,9 @@ function NewPage({ kind, id }: { kind: string; id: string }) {
         <input id="np-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="House rules" />
       </div>
       {slug ? (
-        <Link to="/table/$kind/$id/$slug" params={{ kind, id, slug }} search={{ title }} className="btn primary">
+        <ToPage kind={kind} id={id} slug={slug} title={title} className="btn primary">
           Write it
-        </Link>
+        </ToPage>
       ) : null}
     </div>
   );
