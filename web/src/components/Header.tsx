@@ -9,7 +9,7 @@ export function Header() {
     <header className="site-header">
       <Link to="/" className="wordmark">
         <img src="/mark.svg" alt="" width="22" height="22" />
-        kith
+        Kith
       </Link>
       <nav aria-label="Main" className="site-nav">
         <Link to="/games" activeProps={{ "aria-current": "page" }}>
