@@ -257,3 +257,30 @@ export function stripComponents(env: BotAuth, channelId: string, messageId: stri
     body: { components: [] },
   });
 }
+
+/**
+ * A single-use invite to the server, made by the bot (it needs
+ * `CREATE_INSTANT_INVITE` on the channel). It is how somebody an organiser has
+ * let in gets in: the console's OAuth scope is `identify`, so Kith never holds a
+ * token that could add a person to the server itself, and never asks for one.
+ *
+ * `unique` makes a fresh code every time rather than handing back a matching
+ * invite somebody else already has.
+ */
+export interface Invite {
+  code: string;
+  /** ISO time, or null for an invite that does not run out. */
+  expires_at?: string | null;
+}
+
+export function createInvite(env: BotAuth, channelId: string, maxAgeSeconds: number) {
+  return discordFetch<Invite>(env, `/channels/${channelId}/invites`, {
+    method: "POST",
+    body: { max_age: maxAgeSeconds, max_uses: 1, unique: true },
+  });
+}
+
+/** 50013 — the bot lacks a permission, here Create Invite. */
+export function isMissingPermission(error: unknown): boolean {
+  return asDiscordFailure(error)?.code === 50013;
+}

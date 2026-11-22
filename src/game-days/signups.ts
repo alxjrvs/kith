@@ -60,7 +60,7 @@ export interface SeatClaim {
    * `unchanged` is a second click, not an error: somebody who already holds a
    * place or a queue position keeps exactly the one they had.
    */
-  outcome: "seated" | "waitlisted" | "unchanged" | "no-such-day" | "not-seating";
+  outcome: "seated" | "waitlisted" | "interested" | "unchanged" | "no-such-day" | "not-seating";
   /** Where they stand now, or null when nothing was written. */
   state: SignupState | null;
   position: number | null;
@@ -85,8 +85,12 @@ export interface ClaimOptions {
    * "I'll come if you need me". `seat` takes one if there is one and queues if
    * there is not, so **Take a seat** on a full day and **Waitlist** land in the
    * same place and the post they get back says which.
+   *
+   * `interested` is the site's other answer: "I'd like to come", holding no
+   * seat and never promoted into one. Changing it to In is un-signing up and
+   * signing up again, so it is never upgraded in place.
    */
-  prefer?: "seat" | "waitlist" | undefined;
+  prefer?: "seat" | "waitlist" | "interested" | undefined;
 }
 
 export async function claimSeat(
@@ -120,7 +124,7 @@ export async function claimSeat(
     // (Out, then Take a seat) deliberately sends them to the back of the queue.
     // The seated count is inside the statement for the same reason the claim's
     // is: two of these must not both take the last seat.
-    if (options.prefer !== "waitlist" && existing.state === "waitlisted") {
+    if ((options.prefer ?? "seat") === "seat" && existing.state === "waitlisted") {
       await db(env)
         .update(schema.signups)
         .set({ state: seatOrQueue(gameDayId, day.capacity), updatedAt: sql`(unixepoch())` })
@@ -152,9 +156,11 @@ export async function claimSeat(
       // uncapped day writes a row nothing can ever promote and no click can
       // change, on a post that reads "Room for however many turn up".
       state:
-        options.prefer === "waitlist" && day.capacity !== null
-          ? sql`'waitlisted'`
-          : seatOrQueue(gameDayId, day.capacity),
+        options.prefer === "interested"
+          ? sql`'interested'`
+          : options.prefer === "waitlist" && day.capacity !== null
+            ? sql`'waitlisted'`
+            : seatOrQueue(gameDayId, day.capacity),
       position: nextPosition(gameDayId),
       characterName,
     })
@@ -176,7 +182,7 @@ export async function claimSeat(
   // statement and running it, and the row is the only thing that knows.
   const row = await signupOf(env, gameDayId, userId);
   return {
-    outcome: row?.state === "in" ? "seated" : "waitlisted",
+    outcome: row?.state === "in" ? "seated" : row?.state === "interested" ? "interested" : "waitlisted",
     state: row?.state ?? null,
     position: row?.position ?? null,
   };

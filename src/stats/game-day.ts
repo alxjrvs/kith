@@ -29,7 +29,7 @@ export interface DayRow {
 
 export interface SeatRow {
   gameDayId: string;
-  state: "in" | "waitlisted" | "out";
+  state: "in" | "waitlisted" | "interested" | "out";
 }
 
 export interface TableRow {

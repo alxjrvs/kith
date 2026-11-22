@@ -32,7 +32,8 @@ export function TallySquares({ tally }: { tally: { in: number; out: number; mayb
   );
 }
 
-export function seatLine(listing: { capacity: number | null; taken: number; waitlist: number }): string {
+export function seatLine(listing: { capacity: number | null; taken: number; waitlist: number; interested?: number }): string {
   const seats = listing.capacity === null ? `${listing.taken} in, room for more` : `${listing.taken} / ${listing.capacity} seats`;
-  return listing.waitlist > 0 ? `${seats}, ${listing.waitlist} waiting` : seats;
+  const waiting = listing.waitlist > 0 ? `${seats}, ${listing.waitlist} waiting` : seats;
+  return listing.interested ? `${waiting}, ${listing.interested} interested` : waiting;
 }

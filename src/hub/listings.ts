@@ -7,6 +7,7 @@ import { personFrom, type Person } from "./people.ts";
 import { canSee, type Viewer } from "./visibility.ts";
 import { cmsGame, toMarkdown } from "../cms/content.ts";
 import { siteVisibility } from "../projection/staging.ts";
+import { isProvisional } from "./server-door.ts";
 
 /**
  * What the site says about a table people can join: a campaign that is still
@@ -35,6 +36,8 @@ export interface Listing {
   capacity: number | null;
   taken: number;
   waitlist: number;
+  /** Signed up as Interested: no seat held. */
+  interested: number;
   /** A campaign's cadence, or a day's start and end. Unix seconds. */
   when: {
     startsAt: number | null;
@@ -44,7 +47,12 @@ export interface Listing {
   /** "voice", a venue, or nothing said. */
   where: string | null;
   /** Where the viewer stands: null is "not signed up", or not signed in. */
-  mine: "in" | "waitlisted" | null;
+  mine: "in" | "waitlisted" | "interested" | null;
+  /**
+   * The viewer's signup is held for them until they're let into the Kith
+   * server (src/hub/server-door.ts).
+   */
+  held: boolean;
 }
 
 type CampaignRow = typeof schema.campaigns.$inferSelect;
@@ -122,7 +130,7 @@ async function campaignListing(
       and(
         eq(schema.signups.targetType, "campaign_forming"),
         eq(schema.signups.targetId, campaign.id),
-        inArray(schema.signups.state, ["in", "waitlisted"]),
+        inArray(schema.signups.state, ["in", "waitlisted", "interested"]),
       ),
     )
     .all();
@@ -165,13 +173,15 @@ async function campaignListing(
         ? claims.filter((c) => c.state === "in").length
         : members.filter((m) => m.member.role === "player").length,
     waitlist: claims.filter((c) => c.state === "waitlisted").length,
+    interested: claims.filter((c) => c.state === "interested").length,
     when: {
       startsAt: campaign.recurrenceAnchor,
       endsAt: null,
       intervalWeeks: campaign.intervalWeeks,
     },
     where: campaign.locationType === "voice" ? "voice" : null,
-    mine: mineClaim ? (mineClaim.state as "in" | "waitlisted") : null,
+    mine: mineClaim ? (mineClaim.state as Listing["mine"]) : null,
+    held: mineClaim ? await isProvisional(env, viewer.userId) : false,
   };
 }
 
@@ -211,9 +221,11 @@ async function gameDayListing(
     capacity: await capacityOf(env, day.id),
     taken: signups.filter((s) => s.state === "in").length,
     waitlist: signups.filter((s) => s.state === "waitlisted").length,
+    interested: signups.filter((s) => s.state === "interested").length,
     when: { startsAt: day.startsAt, endsAt: day.endsAt, intervalWeeks: null },
     where: day.venue,
-    mine: mine && mine.state !== "out" ? (mine.state as "in" | "waitlisted") : null,
+    mine: mine && mine.state !== "out" ? (mine.state as Listing["mine"]) : null,
+    held: mine && mine.state !== "out" ? await isProvisional(env, viewer.userId) : false,
   };
 }
 

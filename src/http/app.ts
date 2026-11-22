@@ -25,6 +25,7 @@ import { feedFor, gameFeedFor, icsResponse } from "../ics/feed.ts";
 import { feedsPanel, rotateFeedToken } from "../ics/feeds-panel.ts";
 import { NotConfigured, isOrganiser } from "../console/roles.ts";
 import { campaignSummaries, gameDaySummaries, gameSummaries } from "../console/api.ts";
+import { doorRows, letIn, turnAway } from "../hub/server-door.ts";
 import { campaignPage } from "../console/campaign.ts";
 import { campaignHistory } from "../console/campaign-history.ts";
 import { campaignStats, gameDayStats } from "../console/stats.ts";
@@ -578,6 +579,27 @@ export function createApp() {
   );
 
   app.get("/api/audit/actors", async (c) => c.json({ actors: await auditActors(c.env) }));
+
+  /**
+   * The door: people who signed up from the site and aren't in the server.
+   * The console's half of the approvals post's buttons, calling the same
+   * functions (src/hub/server-door.ts).
+   */
+  app.get("/api/door", async (c) => c.json({ asOf: Math.floor(Date.now() / 1000), rows: await doorRows(c.env) }));
+
+  app.post("/api/door/:userId/:answer", async (c) => {
+    const answer = c.req.param("answer");
+    if (answer !== "let-in" && answer !== "turn-away") return c.json({ error: "Answer let-in or turn-away." }, 404);
+    const userId = c.req.param("userId");
+    const decision =
+      answer === "let-in"
+        ? await letIn(c.env, userId, c.get("userId"))
+        : await turnAway(c.env, userId, c.get("userId"));
+    if (decision.outcome === "no-such-request") return c.json({ error: "Nobody by that id is waiting." }, 404);
+    if (decision.outcome === "no-invite") return c.json({ error: decision.reason }, 400);
+    if (decision.outcome === "already-joined") return c.json({ error: "They're already in the server." }, 400);
+    return c.json({ decision });
+  });
 
   app.get("/api/campaigns/:id/roster", async (c) =>
     c.json({ roster: await rosterRows(c.env, c.req.param("id")) }),

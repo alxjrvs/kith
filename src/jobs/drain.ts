@@ -33,6 +33,7 @@ import {
 } from "../game-days/lifecycle.ts";
 import { postDayNoticeOnce, promotedNotice } from "../game-days/notice.ts";
 import { loadProjectionTarget } from "../projection/target.ts";
+import { ASK_JOB, postAsk } from "../hub/server-door.ts";
 
 const CLAIM_SECONDS = 60;
 const BATCH = 25;
@@ -500,6 +501,14 @@ async function runJob(job: typeof schema.jobs.$inferSelect, env: Env): Promise<v
      * The job carries who moved: by the time this runs they are simply seated,
      * and indistinguishable from everybody else at the table.
      */
+    /** Somebody not in the server signed up: ask an organiser to let them in. */
+    case ASK_JOB: {
+      const { userId } = job.payload as { userId?: string };
+      if (!userId) throw new Error(`${ASK_JOB} job ${job.id} has no userId`);
+      await postAsk(env, userId);
+      return;
+    }
+
     case PROMOTED_JOB: {
       const { gameDayId, noticeId, userIds } = job.payload as {
         gameDayId?: string;

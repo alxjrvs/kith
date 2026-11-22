@@ -17,6 +17,7 @@ import { loadProjectionTarget } from "../projection/target.ts";
 import { takesIntent } from "../sessions/lifecycle.ts";
 import type { InteractionUser } from "../discord/types.ts";
 import { cmsSections, toMarkdown } from "../cms/content.ts";
+import { atTheDoor, serverStatusFor } from "../hub/server-door.ts";
 
 /**
  * `/api/hub/*`: the site's API, for everybody.
@@ -48,7 +49,13 @@ export function hubRoutes() {
     if (!viewer.userId) return c.json({ signedIn: false });
     const user = await userRow(c.env, viewer.userId);
     if (!user) return c.json({ signedIn: false });
-    return c.json({ signedIn: true, user: personFrom(user), organiser: viewer.organiser });
+    return c.json({
+      signedIn: true,
+      user: personFrom(user),
+      organiser: viewer.organiser,
+      // Whether they're in the Kith server, and their invite once let in.
+      ...(await serverStatusFor(c.env, viewer.userId)),
+    });
   });
 
   hub.get("/listings", async (c) =>
@@ -129,20 +136,21 @@ export function hubRoutes() {
   hub.post("/campaigns/:id/signup", async (c) => {
     const actor = await signedInActor(c);
     if (actor instanceof Response) return actor;
-    const action = (await body(c)).action;
+    const action = signupAction((await body(c)).action);
     const id = c.req.param("id");
 
     // Visibility first: a campaign you cannot see is not one you can join.
     const listing = await listingFor(c.env, "campaign", id, c.get("viewer"));
     if (!listing) return c.json({ error: "Kith has no listing here, or it is not public." }, 404);
 
+    if (!action) return c.json({ error: "action is in, interested or out" }, 400);
+    if (action !== "out") {
+      if (!listing.open) return c.json({ error: "That campaign has stopped taking signups." }, 409);
+      const refused = await atTheDoorOrRefusal(c, actor.id);
+      if (refused) return refused;
+    }
     const outcome =
-      action === "out"
-        ? await leaveForming(c.env, id, actor.id)
-        : action === "seat" || action === "waitlist"
-          ? await joinForming(c.env, id, actor.id, action)
-          : undefined;
-    if (!outcome) return c.json({ error: "action is seat, waitlist or out" }, 400);
+      action === "out" ? await leaveForming(c.env, id, actor.id) : await joinForming(c.env, id, actor.id, action);
     if (outcome === "not-forming") return c.json({ error: "That campaign has stopped taking signups." }, 409);
     return c.json({ outcome, listing: await listingFor(c.env, "campaign", id, c.get("viewer")) });
   });
@@ -150,23 +158,23 @@ export function hubRoutes() {
   hub.post("/game-days/:id/seat", async (c) => {
     const actor = await signedInActor(c);
     if (actor instanceof Response) return actor;
-    const action = (await body(c)).action;
+    const action = signupAction((await body(c)).action);
     const id = c.req.param("id");
 
     const listing = await listingFor(c.env, "game-day", id, c.get("viewer"));
     if (!listing) return c.json({ error: "Kith has no listing here, or it is not public." }, 404);
     if (!listing.open) return c.json({ error: "Seating for that day is closed." }, 409);
+    if (!action) return c.json({ error: "action is in, interested or out" }, 400);
+    if (action !== "out") {
+      const refused = await atTheDoorOrRefusal(c, actor.id);
+      if (refused) return refused;
+    }
 
     // Through the day's lock, the same one the Discord buttons use, so a click
     // here and a click there cannot both take the last seat.
     const lock = c.env.SESSION_LOCK.get(c.env.SESSION_LOCK.idFromName(id));
-    if (action === "seat" || action === "waitlist") {
-      await lock.takeSeat({ gameDayId: id, actor, prefer: action });
-    } else if (action === "out") {
-      await lock.leaveSeat({ gameDayId: id, actor });
-    } else {
-      return c.json({ error: "action is seat, waitlist or out" }, 400);
-    }
+    if (action === "out") await lock.leaveSeat({ gameDayId: id, actor });
+    else await lock.takeSeat({ gameDayId: id, actor, prefer: action });
     return c.json({ listing: await listingFor(c.env, "game-day", id, c.get("viewer")) });
   });
 
@@ -230,6 +238,34 @@ export async function viewerOf(env: Env, cookie: string | undefined): Promise<Vi
 /** For tests: forget every remembered organiser flag. */
 export function forgetOrganisers(): void {
   organiserSeen.clear();
+}
+
+/**
+ * The site's answers are In and Interested. `seat` and `waitlist` are the
+ * older words for In and still accepted; In on a full table is the waitlist.
+ */
+function signupAction(raw: unknown): "seat" | "waitlist" | "interested" | "out" | undefined {
+  if (raw === "in" || raw === "seat") return "seat";
+  if (raw === "waitlist" || raw === "interested" || raw === "out") return raw;
+  return undefined;
+}
+
+/**
+ * Somebody signing up who isn't in the Kith server is asked about, and their
+ * signup goes ahead, held for them. Only a "not this time" refuses it.
+ */
+async function atTheDoorOrRefusal(c: Context<HubEnv>, userId: string): Promise<Response | undefined> {
+  let standing;
+  try {
+    standing = await atTheDoor(c.env, userId);
+  } catch (error) {
+    console.error("server membership check failed", error);
+    return c.json({ error: "Kith couldn't check with Discord just now. Try again in a minute." }, 503);
+  }
+  if (standing === "declined") {
+    return c.json({ error: "Kith can't sign you up here, because you haven't been let into the Kith server." }, 403);
+  }
+  return undefined;
 }
 
 function userRow(env: Env, userId: string) {

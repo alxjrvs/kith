@@ -18,6 +18,17 @@ export const SETTING_KEYS = {
    * never fall back to the real channel.
    */
   stagingChannelId: "discord.staging_channel_id",
+  /**
+   * Where Kith asks an organiser to let somebody into the server: a post with
+   * Let them in / Not this time buttons. Unset uses the Staging channel, which
+   * only organisers can see.
+   */
+  approvalsChannelId: "discord.approvals_channel_id",
+  /**
+   * The channel an invite opens on. Unset uses the scheduling channel. The bot
+   * needs Create Invite there.
+   */
+  inviteChannelId: "discord.invite_channel_id",
   /** IANA zone for recurrence and reminders. */
   timezone: "timezone",
   /**

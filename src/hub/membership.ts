@@ -1,6 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import type { Env } from "../env.ts";
 import { db, schema } from "../db/index.ts";
+import { isProvisional } from "./server-door.ts";
 
 /**
  * Who counts as "the people on it" for `members` visibility: a campaign's
@@ -28,7 +29,9 @@ export async function isMemberOf(
       ),
     )
     .get();
-  if (claim) return true;
+  // A signup held for somebody still waiting to be let into the server is a
+  // place, not membership: members-only pages wait until they're in.
+  if (claim && !(await isProvisional(env, userId))) return true;
 
   if (kind === "campaign") {
     const member = await d

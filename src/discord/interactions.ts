@@ -47,6 +47,8 @@ import {
   type Interaction,
 } from "./types.ts";
 import { isStaging, schedulingChannel } from "../projection/staging.ts";
+import { askPayload, letIn, turnAway } from "../hub/server-door.ts";
+import { rememberUser } from "../db/users.ts";
 
 type Json = Record<string, unknown>;
 
@@ -479,9 +481,39 @@ async function handleComponent(
       return handleTablesWho(interaction, env, id.target);
     case "suggest":
       return handleSuggest(interaction, env, id.target);
+    case "door":
+      return handleDoor(interaction, env, id.arg, id.target);
     default:
       return retiredPost();
   }
+}
+
+/**
+ * Let them in / Not this time, on the approvals post for somebody who signed up
+ * from the site and isn't in the server. Organisers only, read off the roles
+ * Discord signed. The click rewrites the post into what was decided, rendered
+ * from D1 (src/hub/server-door.ts), and the buttons go with it.
+ */
+async function handleDoor(
+  interaction: Interaction,
+  env: Env,
+  arg: string | undefined,
+  userId: string | undefined,
+): Promise<Json> {
+  if (!userId || (arg !== "in" && arg !== "no")) return retiredPost();
+  const actor = actorOf(interaction);
+  if (!actor) return ephemeral("Kith could not tell who clicked that.");
+  if (!(await hasOrganiserRole(env, interaction))) return ephemeral("Only an organiser can answer this.");
+
+  // The audit row names them, and `audit_log` references `users`.
+  await rememberUser(env, actor);
+  const decision = arg === "in" ? await letIn(env, userId, actor.id) : await turnAway(env, userId, actor.id);
+  if (decision.outcome === "no-invite") return ephemeral(decision.reason);
+  if (decision.outcome === "no-such-request") return retiredPost();
+
+  const payload = await askPayload(env, userId);
+  if (!payload) return retiredPost();
+  return rewrite(payload.content, payload.components);
 }
 
 /**
