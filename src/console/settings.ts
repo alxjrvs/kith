@@ -68,6 +68,14 @@ const FIELDS: Omit<SettingField, "value" | "fallback">[] = [
     writable: true,
   },
   {
+    key: SETTING_KEYS.stagingChannelId,
+    label: "Staging scheduling channel",
+    kind: "text",
+    help: "Where a test game's posts go instead of the scheduling channel. Mark a campaign or game as a test in Organise.",
+    caveat: "While it is blank, a test game's posts wait and retry. They never fall back to the real channel.",
+    writable: true,
+  },
+  {
     key: SETTING_KEYS.organiserRoleId,
     label: "Organiser role",
     kind: "text",

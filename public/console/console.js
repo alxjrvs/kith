@@ -935,6 +935,14 @@ function campaignPageSection(plan, history, polls, stats) {
   const actions = document.createElement("p");
   actions.append(...lifecycleButtons(plan));
   if (actions.childElementCount > 0) section.append(actions);
+  section.append(
+    stagingToggle(plan.staging, (staging) =>
+      api(`/api/campaigns/${encodeURIComponent(plan.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ staging }),
+      }),
+    ),
+  );
 
   section.append(campaignFacts(plan), subheading("Roster"), memberList(plan.roster));
   section.append(subheading("Coming up"));
@@ -1492,8 +1500,43 @@ function heldBy(row, game) {
   return td;
 }
 
+/**
+ * "This is a test." Its posts go to the Staging channels, nothing reaches the
+ * calendar, and only organisers see it on the site (src/projection/staging.ts).
+ */
+function stagingToggle(checked, save) {
+  const wrap = document.createElement("p");
+  const label = document.createElement("label");
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  box.checked = checked;
+  box.addEventListener("change", async () => {
+    box.disabled = true;
+    await act(() => save(box.checked));
+    // A save that worked re-rendered the page and this box with it. One that
+    // was refused leaves it here, and it must show what is true, not what was asked.
+    box.checked = checked;
+    box.disabled = false;
+  });
+  label.append(box, document.createTextNode(" Test game (Staging)"));
+  const caveat = document.createElement("span");
+  caveat.className = "note";
+  caveat.textContent =
+    " — posts go to the Staging channels, nothing goes on the calendar, and only organisers see it on the site. Set it before anything is scheduled: it cannot change after.";
+  wrap.append(label, caveat);
+  return wrap;
+}
+
 function gameActions(row, game) {
   const td = document.createElement("td");
+  td.append(
+    stagingToggle(game.staging, (staging) =>
+      api(`/api/games/${encodeURIComponent(game.id)}`, {
+        method: "PUT",
+        body: JSON.stringify({ name: game.name, staging }),
+      }),
+    ),
+  );
   const usage = game.usage;
   // No button at all while somebody holds it. The server refuses either way —
   // the guard is a query there, not in here — but offering a button that always

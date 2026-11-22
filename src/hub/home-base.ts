@@ -118,7 +118,7 @@ export async function homeBase(
 ): Promise<HomeBase | undefined> {
   const campaign = await listingFor(env, "campaign", slug, viewer);
   if (campaign) return campaignHome(env, campaign, viewer, origin, now);
-  const game = (await catalog(env)).find((g) => g.id === slug && g.category === "board");
+  const game = (await catalog(env, viewer)).find((g) => g.id === slug && g.category === "board");
   if (game) return boardHome(env, game, viewer, origin, now);
   return undefined;
 }
@@ -344,7 +344,7 @@ export async function gamesFor(env: Env, viewer: Viewer, now = new Date()): Prom
     });
   }
 
-  const games = await catalog(env);
+  const games = await catalog(env, viewer);
   for (const game of games.filter((g) => g.category === "board")) {
     const days = await upcomingDays(env, game.id, viewer, now);
     // A board game with nothing coming and nothing played is a catalog entry, not a game here yet.

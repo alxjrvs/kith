@@ -11,6 +11,13 @@ export const SETTING_KEYS = {
   guildId: "discord.guild_id",
   /** Where anything not belonging to a campaign channel is posted. */
   schedulingChannelId: "discord.scheduling_channel_id",
+  /**
+   * The Staging copy of the scheduling channel: where a test campaign's or test
+   * game's posts go instead (`src/projection/staging.ts`). Unset means a test
+   * game has nowhere to post: its post jobs fail and retry until it is set, and
+   * never fall back to the real channel.
+   */
+  stagingChannelId: "discord.staging_channel_id",
   /** IANA zone for recurrence and reminders. */
   timezone: "timezone",
   /**

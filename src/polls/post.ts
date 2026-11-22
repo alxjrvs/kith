@@ -1,12 +1,13 @@
 import { eq, sql } from "drizzle-orm";
 import type { Env } from "../env.ts";
 import { db, schema } from "../db/index.ts";
-import { SETTING_KEYS, getSetting, requireGuildId } from "../db/settings.ts";
+import { SETTING_KEYS, requireGuildId } from "../db/settings.ts";
 import { throughGovernor } from "../discord/governor.ts";
 import { asDiscordFailure, postMessage } from "../discord/rest.ts";
 import { claim, record, recordFailure, release } from "../projection/publications.ts";
 import { gameDayAnnouncement, pollClosedNotice, renderPollPost } from "./render.ts";
 import { pollView } from "./rows.ts";
+import { isStagingParent, schedulingChannel } from "../projection/staging.ts";
 
 /**
  * Posting the poll post — once, and from a job.
@@ -165,11 +166,11 @@ export async function announceGameDay(env: Env, gameDayId: string): Promise<stri
     .get();
   if (!day) return undefined;
 
-  const channelId = await getSetting<string>(env, SETTING_KEYS.schedulingChannelId);
+  const staging = await isStagingParent(env, { gameId: day.gameId });
+  const channelId = await schedulingChannel(env, staging);
   if (!channelId) {
-    throw new Error(
-      `setting ${SETTING_KEYS.schedulingChannelId} is not seeded — there is nowhere to announce`,
-    );
+    const key = staging ? SETTING_KEYS.stagingChannelId : SETTING_KEYS.schedulingChannelId;
+    throw new Error(`setting ${key} is not seeded — there is nowhere to announce`);
   }
 
   const ref = {

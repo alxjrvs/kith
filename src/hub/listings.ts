@@ -6,6 +6,7 @@ import { capacityOf, signupsForDay } from "../game-days/signups.ts";
 import { personFrom, type Person } from "./people.ts";
 import { canSee, type Viewer } from "./visibility.ts";
 import { cmsGame, toMarkdown } from "../cms/content.ts";
+import { siteVisibility } from "../projection/staging.ts";
 
 /**
  * What the site says about a table people can join: a campaign that is still
@@ -135,7 +136,7 @@ async function campaignListing(
   const mineClaim = claims.find((c) => c.userId === viewer.userId);
   const isMember =
     mineClaim !== undefined || members.some((m) => m.member.userId === viewer.userId);
-  if (!canSee(campaign.visibility, viewer, isMember)) return undefined;
+  if (!canSee(siteVisibility(campaign.visibility, campaign.staging), viewer, isMember)) return undefined;
 
   const gm = members.find((m) => m.member.role === "gm");
   // Its words come from kith-cms (docs/CMS.md), field by field; D1's copy
@@ -183,7 +184,7 @@ async function gameDayListing(
   const signups = await signupsForDay(env, day.id);
   const mine = signups.find((s) => s.userId === viewer.userId);
   const isMember = mine !== undefined || (viewer.userId !== undefined && day.hostUserId === viewer.userId);
-  if (!canSee(day.visibility, viewer, isMember)) return undefined;
+  if (!canSee(siteVisibility(day.visibility, game?.staging), viewer, isMember)) return undefined;
 
   // A day's own words stay in D1; its board game's art (kith-cms) fills in
   // what the day doesn't say.

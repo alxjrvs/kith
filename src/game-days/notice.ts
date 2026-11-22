@@ -1,13 +1,14 @@
 import { eq } from "drizzle-orm";
 import type { Env } from "../env.ts";
 import { db, schema } from "../db/index.ts";
-import { SETTING_KEYS, getSetting, requireGuildId } from "../db/settings.ts";
+import { requireGuildId } from "../db/settings.ts";
 import { throughGovernor } from "../discord/governor.ts";
 import { escapeMarkdown } from "../discord/markdown.ts";
 import { asDiscordFailure, postMessage } from "../discord/rest.ts";
 import { claim, record, recordFailure, release } from "../projection/publications.ts";
 import { gameDayTitle } from "../projection/target.ts";
 import type { MessagePayload } from "../attendance/render.ts";
+import { isStagingParent, schedulingChannel } from "../projection/staging.ts";
 
 /**
  * A notice about a day: a new message in its thread, sent once and never
@@ -67,6 +68,7 @@ export async function destinationForDay(
     .select({
       threadId: schema.gameDays.threadId,
       discordChannelId: schema.gameDays.discordChannelId,
+      gameId: schema.gameDays.gameId,
     })
     .from(schema.gameDays)
     .where(eq(schema.gameDays.id, gameDayId))
@@ -76,7 +78,7 @@ export async function destinationForDay(
   return (
     day.threadId ??
     day.discordChannelId ??
-    (await getSetting<string>(env, SETTING_KEYS.schedulingChannelId))
+    (await schedulingChannel(env, await isStagingParent(env, { gameId: day.gameId })))
   );
 }
 

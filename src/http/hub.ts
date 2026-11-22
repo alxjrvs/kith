@@ -99,7 +99,7 @@ export function hubRoutes() {
     return page ? c.json({ page }) : missing;
   });
 
-  hub.get("/games", async (c) => c.json({ games: await catalog(c.env) }));
+  hub.get("/games", async (c) => c.json({ games: await catalog(c.env, c.get("viewer")) }));
 
   /** The site's own copy, written in kith-cms's Site copy (docs/CMS.md), by slug. */
   hub.get("/copy", async (c) => {

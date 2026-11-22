@@ -29,6 +29,9 @@ rules that are easy to violate by accident.
   and which rule applies is derived in `src/attendance/quorum.ts` rather than stored.
   Nothing else may decide it a second way.
 - **Never write to the user's Social calendar.** Orrey writes only to the Orrey calendar.
+- **Test games never reach prod.** A campaign or game marked `staging` posts only to the
+  Staging channels, stays off Google and server-wide events, and is organisers-only on the
+  site. Every read of the scheduling channel goes through `src/projection/staging.ts`.
 - Every component id goes through `src/discord/custom-id.ts`. Unknown ids must degrade to
   the retired-post response, never to "interaction failed".
 

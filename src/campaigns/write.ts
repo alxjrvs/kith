@@ -2,6 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import type { Env } from "../env.ts";
 import { db, schema } from "../db/index.ts";
 import { slugify } from "../db/seed-sql.ts";
+import { stagingIsSettled } from "../projection/staging.ts";
 
 /**
  * Creating and editing a campaign, with the audit row in the same batch as the
@@ -33,6 +34,8 @@ export interface CampaignInput {
   firstSessionNumber?: number;
   /** Whether a date poll for this campaign may close itself. Off by default. */
   autoResolvePolls?: boolean;
+  /** A test campaign: its posts go to the Staging channels (src/projection/staging.ts). */
+  staging?: boolean;
 }
 
 export class InvalidCampaign extends Error {
@@ -155,6 +158,15 @@ export async function updateCampaign(
 
   const changes = columns(input);
   if (Object.keys(changes).length === 0) return;
+  if (
+    changes.staging !== undefined &&
+    changes.staging !== before.staging &&
+    (await stagingIsSettled(env, { campaignId: id }))
+  ) {
+    throw new InvalidCampaign(
+      "a campaign with sessions or polls cannot become a test or stop being one; make a new one instead",
+    );
+  }
 
   const d = db(env);
   await d.batch([
@@ -197,6 +209,7 @@ const WRITABLE = [
   "maxSessions",
   "firstSessionNumber",
   "autoResolvePolls",
+  "staging",
 ] as const;
 
 type CampaignColumns = Partial<typeof schema.campaigns.$inferInsert>;
@@ -208,7 +221,7 @@ function columns(input: Partial<CampaignInput>): CampaignColumns {
     // The console sends a checkbox; the column is an integer, like every other
     // boolean in this schema.
     (out as Record<string, unknown>)[field] =
-      field === "autoResolvePolls" ? (input[field] ? 1 : 0) : input[field];
+      field === "autoResolvePolls" || field === "staging" ? (input[field] ? 1 : 0) : input[field];
   }
   return out;
 }
