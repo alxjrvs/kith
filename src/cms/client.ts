@@ -107,8 +107,11 @@ async function fetchAll(env: Env, collection: string): Promise<CmsEntry[]> {
   return out;
 }
 
-/** A media storage key: one path segment, a name and an optional extension. */
-export const MEDIA_KEY = /^[A-Za-z0-9_-]+(\.[A-Za-z0-9]+)?$/;
+/**
+ * A media storage key: one path segment of dot-separated parts, as EmDash
+ * writes them (`<ULID>.<ULID>.png`). No slash and no empty part, so never `..`.
+ */
+export const MEDIA_KEY = /^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)*$/;
 
 /**
  * Uploaded media (a hero, a cover, a sound), fetched from kith-cms for the
