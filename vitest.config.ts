@@ -15,6 +15,9 @@ export default defineConfig(async () => {
         wrangler: { configPath: "./wrangler.jsonc" },
         miniflare: {
           bindings: { TEST_MIGRATIONS: migrations },
+          // kith-cms isn't running in tests. Without a CMS_TOKEN nothing asks
+          // it anything; tests that read the CMS pass their own fake.
+          serviceBindings: { CMS: () => new Response("kith-cms is not running in tests", { status: 503 }) },
         },
       }),
     ],
