@@ -34,8 +34,9 @@ a rename). Kith shows the character beside the
 player on that game's roster, linking to `sheet`. Whether the player is on the
 roster at all is still D1's answer.
 
-**Where Kith reads it** (`src/cms/`): a campaign's tagline, pitch, hero and
-sound (`src/hub/listings.ts`); a board game's summary and cover, and its art on
+**Where Kith reads it** (`src/cms/`): a campaign's tagline, pitch, hero,
+sound, system and logo (its cover, worn above its title and on its card)
+(`src/hub/listings.ts`); a board game's summary and cover, and its art on
 its game days (`src/hub/catalog.ts`); characters and sheet links on rosters
 (`src/hub/home-base.ts`); a campaign's pages and links (`src/hub/knowledge.ts`);
 uploaded files at `/media/<key>`. Where a game has no entry in EmDash yet, its

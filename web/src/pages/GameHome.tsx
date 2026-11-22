@@ -54,6 +54,7 @@ function BaseHero({
   title,
   tagline,
   heroUrl,
+  logoUrl = null,
   soundUrl,
   chips,
   system = null,
@@ -63,6 +64,8 @@ function BaseHero({
   title: string;
   tagline: string | null;
   heroUrl: string | null;
+  /** The game's logo, worn above its title. */
+  logoUrl?: string | null;
   soundUrl: string | null;
   chips: string[];
   /** The game system, as its own chip: people look for it first. */
@@ -95,6 +98,7 @@ function BaseHero({
         </div>
       </header>
       <main>
+        {logoUrl ? <img className="base-logo" src={logoUrl} alt="" /> : null}
         <span className="label">{eyebrow}</span>
         <h1>{title}</h1>
         {tagline ? <p className="tagline">{tagline}</p> : null}
@@ -143,8 +147,9 @@ function CampaignBase({ home }: { home: CampaignHome }) {
         title={listing.name}
         tagline={listing.tagline}
         heroUrl={listing.heroUrl}
+        logoUrl={listing.logoUrl}
         soundUrl={listing.soundUrl}
-        system={listing.game?.name ?? null}
+        system={listing.system ?? listing.game?.name ?? null}
         chips={[...cadence(listing), listing.where === "voice" ? "Voice" : listing.where].filter((c): c is string => Boolean(c))}
       >
         {upcoming[0] ? <NextUp row={upcoming[0]} /> : null}

@@ -95,6 +95,8 @@ export interface GameSummary {
   label: string | null;
   tagline: string | null;
   imageUrl: string | null;
+  /** A campaign's logo, worn on its card over the image. */
+  logoUrl: string | null;
   lead: Person | null;
   /** How many players the roster or the next day holds. */
   players: number;
@@ -329,9 +331,10 @@ export async function gamesFor(env: Env, viewer: Viewer, now = new Date()): Prom
       slug: id,
       name: listing.name,
       state: listing.state,
-      label: listing.game?.name ?? null,
+      label: listing.system ?? listing.game?.name ?? null,
       tagline: listing.tagline,
-      imageUrl: listing.heroUrl,
+      imageUrl: listing.heroUrl ?? listing.logoUrl,
+      logoUrl: listing.heroUrl ? listing.logoUrl : null,
       lead: listing.lead,
       players: listing.taken,
       capacity: listing.capacity,
@@ -356,6 +359,7 @@ export async function gamesFor(env: Env, viewer: Viewer, now = new Date()): Prom
       label: "Board game",
       tagline: game.summary,
       imageUrl: game.coverUrl,
+      logoUrl: null,
       lead: next?.lead ?? null,
       players: next?.taken ?? 0,
       capacity: next?.capacity ?? game.maxPlayers,
@@ -383,6 +387,7 @@ export async function gamesFor(env: Env, viewer: Viewer, now = new Date()): Prom
       label: day.game?.name ?? "Game day",
       tagline: day.tagline,
       imageUrl: day.heroUrl,
+      logoUrl: null,
       lead: day.lead,
       players: day.taken,
       capacity: day.capacity,

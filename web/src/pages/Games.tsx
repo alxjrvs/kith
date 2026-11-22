@@ -129,7 +129,10 @@ export function GameCard({ game }: { game: GameSummary }) {
   return (
     <article className="panel" style={{ display: "flex", flexDirection: "column" }}>
       {game.imageUrl ? (
-        <img src={game.imageUrl} alt="" style={{ display: "block", width: "100%", aspectRatio: "16 / 7", objectFit: "cover" }} />
+        <div style={{ position: "relative" }}>
+          <img src={game.imageUrl} alt="" style={{ display: "block", width: "100%", aspectRatio: "16 / 7", objectFit: "cover" }} />
+          {game.logoUrl ? <img className="card-logo" src={game.logoUrl} alt="" /> : null}
+        </div>
       ) : null}
       <div className="panel-head label">
         <span>{STATE_LABEL[game.state] ?? game.state.toLowerCase()}</span>
