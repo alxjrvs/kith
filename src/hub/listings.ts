@@ -5,6 +5,7 @@ import type { Visibility } from "../db/schema.ts";
 import { capacityOf, signupsForDay } from "../game-days/signups.ts";
 import { personFrom, type Person } from "./people.ts";
 import { canSee, type Viewer } from "./visibility.ts";
+import { cmsGame, toMarkdown } from "../cms/content.ts";
 
 /**
  * What the site says about a table people can join: a campaign that is still
@@ -133,6 +134,9 @@ async function campaignListing(
   if (!canSee(campaign.visibility, viewer, isMember)) return undefined;
 
   const gm = members.find((m) => m.member.role === "gm");
+  // Its words come from kith-cms (docs/CMS.md), field by field; D1's copy
+  // fills in whatever EmDash doesn't say, until it is moved over.
+  const words = await cmsGame(env, campaign.id);
   return {
     kind: "campaign",
     id: campaign.id,
@@ -141,10 +145,10 @@ async function campaignListing(
     visibility: campaign.visibility,
     open: campaign.state === "FORMING",
     game: gameOf(game),
-    tagline: campaign.tagline,
-    pitch: campaign.pitch,
-    heroUrl: campaign.heroUrl,
-    soundUrl: campaign.soundUrl,
+    tagline: words?.tagline ?? campaign.tagline,
+    pitch: (words && toMarkdown(words.pitch)) || campaign.pitch,
+    heroUrl: words?.heroUrl ?? campaign.heroUrl,
+    soundUrl: words?.soundUrl ?? campaign.soundUrl,
     lead: gm ? personFrom(gm.user) : null,
     capacity: campaign.capacity,
     // While forming, the seats are the signups; once it runs, the roster.
@@ -174,6 +178,9 @@ async function gameDayListing(
   const isMember = mine !== undefined || (viewer.userId !== undefined && day.hostUserId === viewer.userId);
   if (!canSee(day.visibility, viewer, isMember)) return undefined;
 
+  // A day's own words stay in D1; its board game's art (kith-cms) fills in
+  // what the day doesn't say.
+  const words = game ? await cmsGame(env, game.id) : undefined;
   const host = day.hostUserId
     ? await db(env).select().from(schema.users).where(eq(schema.users.discordId, day.hostUserId)).get()
     : undefined;
@@ -186,10 +193,10 @@ async function gameDayListing(
     visibility: day.visibility,
     open: day.state === "SEATING",
     game: gameOf(game),
-    tagline: day.tagline,
+    tagline: day.tagline ?? words?.tagline ?? null,
     pitch: day.pitch,
-    heroUrl: day.heroUrl,
-    soundUrl: day.soundUrl,
+    heroUrl: day.heroUrl ?? words?.heroUrl ?? null,
+    soundUrl: day.soundUrl ?? words?.soundUrl ?? null,
     lead: host ? personFrom(host) : null,
     capacity: await capacityOf(env, day.id),
     taken: signups.filter((s) => s.state === "in").length,

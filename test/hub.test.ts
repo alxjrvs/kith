@@ -6,6 +6,7 @@ import { createApp } from "../src/http/app.ts";
 import { SESSION_COOKIE, issueSession } from "../src/console/cookies.ts";
 import { canSee } from "../src/hub/visibility.ts";
 import { forgetOrganisers } from "../src/http/hub.ts";
+import { resetCmsCache } from "../src/cms/client.ts";
 
 /**
  * The site's API. What matters: anybody can read what is public and nothing
@@ -19,9 +20,20 @@ const later = Math.floor(Date.now() / 1000) + 7 * 86_400;
 
 let roles: Record<string, string[]> = {};
 
+/** kith-cms's published entries, by collection, when a test sets them (src/cms/client.ts). */
+let cmsEntries: Record<string, Array<{ slug: string; data: Record<string, unknown> }>> | null = null;
+const fakeCms = {
+  fetch: async (input: RequestInfo | URL) => {
+    const collection = new URL(String(input instanceof Request ? input.url : input)).pathname.split("/").pop()!;
+    const items = (cmsEntries?.[collection] ?? []).map((e, i) => ({ id: `e${i}`, status: "published", ...e }));
+    return Response.json({ success: true, data: { items } });
+  },
+} as unknown as Fetcher;
+
 function hubEnv() {
   return {
     ...env,
+    ...(cmsEntries ? { CMS: fakeCms, CMS_TOKEN: "ec_pat_test" } : {}),
     CONSOLE_SESSION_SECRET: "a-secret",
     DISCORD_APPLICATION_ID: "app-1",
     DISCORD_CLIENT_SECRET: "shh",
@@ -347,7 +359,10 @@ describe("each game's home base", () => {
 
   type Home = {
     kind: string;
-    roster?: { person: { name: string } | null; character: string | null; role: string; state: string }[];
+    roster?: { person: { name: string } | null; character: string | null; sheetUrl?: string | null; role: string; state: string }[];
+    listing?: { tagline: string | null; pitch: string | null };
+    links?: { label: string }[];
+    pages?: { slug: string }[];
     upcoming: { sessionId?: string; listing?: { id: string }; seats?: { person: { name: string } | null }[] }[];
   };
 
@@ -358,10 +373,35 @@ describe("each game's home base", () => {
     const { home } = (await res.json()) as { home: Home };
     expect(home.kind).toBe("campaign");
     expect(home.roster).toEqual([
-      { person: expect.objectContaining({ name: "Rowan" }), character: null, role: "gm", state: "in" },
-      { person: expect.objectContaining({ name: "Ada" }), character: "Wren Ashdown", role: "player", state: "in" },
+      { person: expect.objectContaining({ name: "Rowan" }), character: null, sheetUrl: null, role: "gm", state: "in" },
+      { person: expect.objectContaining({ name: "Ada" }), character: "Wren Ashdown", sheetUrl: null, role: "player", state: "in" },
     ]);
     expect(home.upcoming.map((r) => r.sessionId)).toEqual(["s1"]);
+  });
+
+  it("takes a game's words, characters, sheets and pages from kith-cms", async () => {
+    await runHollowmere();
+    cmsEntries = {
+      games: [{ slug: "hollowmere", data: { title: "Hollowmere", tagline: "From the CMS", pitch: [{ _type: "block", style: "normal", children: [{ text: "Fog on the moor." }] }] } }],
+      characters: [{ slug: "c", data: { name: "Vess", game: "hollowmere", player: "ada", sheet: "https://sheets.example/vess" } }],
+      pages: [{ slug: "house-rules", data: { title: "House rules", game: "hollowmere", visibility: "members", content: [{ _type: "block", style: "h2", children: [{ text: "Dice" }] }] } }],
+      links: [{ slug: "l", data: { label: "Foundry", url: "https://vtt.example", game: "hollowmere", kind: "vtt", visibility: "public" } }],
+    };
+    resetCmsCache();
+    try {
+      const { home } = (await (await call("GET", "/api/hub/homes/hollowmere", await as("1001"))).json()) as { home: Home };
+      expect(home.listing?.tagline).toBe("From the CMS");
+      expect(home.listing?.pitch).toBe("Fog on the moor.");
+      expect(home.roster?.[1]).toMatchObject({ character: "Vess", sheetUrl: "https://sheets.example/vess" });
+      expect(home.links?.map((l) => l.label)).toContain("Foundry");
+      expect(home.pages?.map((p) => p.slug)).toContain("house-rules");
+      // Off the table: the members-only page is not listed.
+      const outside = (await (await call("GET", "/api/hub/homes/hollowmere")).json()) as { home: Home };
+      expect(outside.home.pages?.map((p) => p.slug) ?? []).not.toContain("house-rules");
+    } finally {
+      cmsEntries = null;
+      resetCmsCache();
+    }
   });
 
   it("shows anyone off the table the characters but not the people", async () => {

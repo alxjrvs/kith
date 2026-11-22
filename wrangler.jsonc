@@ -39,6 +39,7 @@
       "/ics/*",
       "/google/*",
       "/healthz",
+      "/media/*",
       "/privacy",
       "/me"
     ]

@@ -383,7 +383,17 @@ function RosterRows({ seats, empty, characters = true }: { seats: Seat[]; empty:
               {seat.state === "waitlisted" ? <span className="muted"> · waitlist</span> : null}
             </td>
             {characters ? (
-              <td className="roster-character">{seat.role === "gm" ? <span className="muted">GM</span> : (seat.character ?? <span className="muted">—</span>)}</td>
+              <td className="roster-character">
+                {seat.role === "gm" ? (
+                  <span className="muted">GM</span>
+                ) : seat.character && seat.sheetUrl ? (
+                  <a href={seat.sheetUrl} target="_blank" rel="noopener noreferrer">
+                    {seat.character}
+                  </a>
+                ) : (
+                  (seat.character ?? <span className="muted">—</span>)
+                )}
+              </td>
             ) : null}
           </tr>
         ))}

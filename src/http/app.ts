@@ -34,6 +34,7 @@ import { monthGrid } from "../console/month.ts";
 import { deleteGame, gameRows } from "../console/games.ts";
 import { InvalidSetting, putSetting, settingsView } from "../console/settings.ts";
 import { hubRoutes } from "./hub.ts";
+import { media } from "../cms/client.ts";
 import { InvalidListing, updateCatalogEntry, updateListing } from "../hub/write.ts";
 import { InvalidKnowledge, addLink, putPage, removeLink, removePage, tableExists } from "../hub/knowledge.ts";
 import { auditActors, auditPage } from "../console/audit.ts";
@@ -70,6 +71,18 @@ export function createApp() {
   });
 
   app.get("/healthz", (c) => c.json({ ok: true, environment: c.env.ENVIRONMENT }));
+
+  // Uploaded media from kith-cms (a hero, a cover, a sound): the URLs
+  // src/cms/content.ts's mediaUrl makes. An upload gets a fresh key, so a copy
+  // never changes, and browsers may keep it.
+  app.get("/media/:key", async (c) => {
+    const file = await media(c.env, c.req.param("key"));
+    if (!file) return c.text("Not found", 404);
+    const out = new Response(file.body, file);
+    out.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+    out.headers.delete("Set-Cookie");
+    return out;
+  });
 
   /**
    * Discord interactions. Signature first, always — Discord probes this

@@ -270,6 +270,8 @@ export function useTableEdits(kind: string, id: string) {
 export interface Seat {
   person: Person | null;
   character: string | null;
+  /** The character's sheet, written in kith-cms. */
+  sheetUrl: string | null;
   role: "gm" | "player";
   state: "in" | "waitlisted";
 }

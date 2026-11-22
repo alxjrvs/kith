@@ -10,6 +10,11 @@ export interface Env {
   GUILD: DurableObjectNamespace<GuildGovernor>;
   SESSION_LOCK: DurableObjectNamespace<SessionLock>;
   POLL_LOCK: DurableObjectNamespace<PollLock>;
+  /**
+   * kith-cms (cms/, EmDash), where every word lives (docs/CMS.md). Optional:
+   * until kith-cms is set up, and in tests, the site reads as if it were empty.
+   */
+  CMS?: Fetcher;
 
   // Vars
   ENVIRONMENT: "development" | "production";
@@ -32,6 +37,8 @@ export interface Env {
   GOOGLE_SERVICE_ACCOUNT_EMAIL: string;
   GOOGLE_SERVICE_ACCOUNT_KEY: string;
   CONSOLE_SESSION_SECRET: string;
+  /** An EmDash API token with only `content:read`, for reading kith-cms. */
+  CMS_TOKEN?: string;
 }
 
 /**

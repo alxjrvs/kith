@@ -79,7 +79,7 @@
         },
         {
           "slug": "visibility",
-          "label": "Who can see it (members: the people on the game; organisers: only organisers)",
+          "label": "Who can see it, when Kith first creates it (members: the people on the game; organisers: only organisers). Change it later in Organise.",
           "type": "select",
           "required": true,
           "defaultValue": "members",
@@ -119,7 +119,7 @@
         },
         {
           "slug": "player",
-          "label": "Player (their Discord username)",
+          "label": "Player (their Discord username, or their Discord user id, which survives a rename)",
           "type": "string",
           "required": true,
           "indexed": true
