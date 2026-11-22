@@ -29,7 +29,7 @@ export function Landing() {
       <header className="show-top">
         <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
           <img src="/mark.svg" alt="" width="26" height="26" />
-          Kith
+          Kith.town
         </Link>
       </header>
       {homes.isPending ? null : slides.length === 0 ? <Empty /> : <Slides slides={slides} />}
