@@ -3,6 +3,10 @@
  * 5–1024 chars). Kith mints one deterministically from its own session id, so
  * an upsert is `insert`, and on 409 `update` — no lookup, no duplicate, and a
  * retried queue message lands on the same event.
+ *
+ * The `orrey:` prefix is the product's old name, kept on purpose: every event
+ * already in Google was minted from it, and a new prefix would mint new ids and
+ * put every game on the calendar twice.
  */
 const ALPHABET = "0123456789abcdefghijklmnopqrstuv";
 

@@ -1,17 +1,17 @@
-# The Orrey
+# Kith
 
 Campaign and game-day scheduling for **the Orrey of Worlds** — a Discord bot and a small
 console, running as one Cloudflare Worker.
 
-Orrey's own database is the source of truth. Discord and Google Calendar are displays.
+Kith's own database is the source of truth. Discord and Google Calendar are displays.
 
 > **Status: phase 0.** Footings only. Nothing has been cut over yet.
-> The plan this is being built to is [issue #1](https://github.com/alxjrvs/orrey/issues/1)
+> The plan this is being built to is [issue #1](https://github.com/alxjrvs/kith/issues/1)
 > — the specification, with a phase epic and ordered issues under it.
 
 ## Three premises
 
-1. **Orrey is a reconciler, not a replicator** — for Google events and Discord scheduled
+1. **Kith is a reconciler, not a replicator** — for Google events and Discord scheduled
    events. Discord *messages* are send-only and are never reconciled.
 2. **There are three questions, not one.** *Which day?* → *who's in?* → *still coming?*
    Consecutive stages with different audiences; any event may skip any of them.
@@ -23,7 +23,7 @@ answer is no, the response is a date poll, not a cancellation.
 
 ## Send-only messages
 
-Orrey never edits a post it has already sent. The single exception: **a click may rewrite
+Kith never edits a post it has already sent. The single exception: **a click may rewrite
 the message it came from**, as that interaction's own response. No cron, queue consumer or
 console action ever touches a posted message.
 
@@ -101,7 +101,7 @@ bun run stack -- push p1 --apply      # --force-with-lease, in order
 
 The Worker answers at **kith.alxjrvs.com** (a Workers Custom Domain, declared in
 `wrangler.jsonc`), at **orrey.alxjrvs.com** (the old name, kept so nothing shared breaks)
-and at orrey.alxjrvs.workers.dev, which stays on. Code derives its origin from the
+and at kith.alxjrvs.workers.dev, which stays on. Code derives its origin from the
 request. On orrey.alxjrvs.com, page loads move to kith.alxjrvs.com (a 301 from the Worker,
 and a one-line hop in each static HTML page, which the Worker never sees); Discord's
 endpoints, calendar feeds, Google push, `/healthz` and the API keep answering there. The
@@ -120,7 +120,7 @@ rule lives in `src/http/legacy-host.ts`. Steps outside the repo:
 
 ## Cutover, when it comes
 
-Orrey reuses the existing **Hermuz** Discord application rather than registering a new one,
+Kith reuses the existing **Hermuz** Discord application rather than registering a new one,
 which inherits guild permissions and authorship of the scheduled events and roles Hermuz
 created. Two things about that are worth knowing before the switch is thrown:
 
@@ -139,10 +139,10 @@ per-campaign roles and channels, live scheduled events — are carried across.
 ## Platform constraints worth not rediscovering
 
 - Discord cannot own recurrence: weekly means exactly one weekday, and `count` / `end`
-  cannot be set externally. Orrey owns the cadence (anchor + interval in weeks).
+  cannot be set externally. Kith owns the cadence (anchor + interval in weeks).
 - Discord has no yes/no/maybe — the event user list has no response field.
 - Google's `syncToken` is incompatible with `timeMin`, `q` and `privateExtendedProperty`,
-  which is why Orrey has a calendar of its own.
+  which is why Kith has a calendar of its own.
 - Discord's `COMPLETED` / `CANCELED` statuses are terminal and fire automatically, so
   moving a lapsed session means minting a *new* Discord event.
 - 100 scheduled events per guild; 5 buttons per row, so a 10-date poll needs a multi-select.

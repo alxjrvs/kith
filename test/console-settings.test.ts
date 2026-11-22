@@ -35,7 +35,7 @@ function consoleEnv() {
 
 async function send(method: string, path: string, body?: unknown) {
   return app.fetch(
-    new Request(`https://orrey.test${path}`, {
+    new Request(`https://kith.test${path}`, {
       method,
       headers: {
         cookie: `${SESSION_COOKIE}=${await issueSession(consoleEnv(), "1001", new Date())}`,
@@ -101,12 +101,12 @@ afterEach(() => {
 
 describe("the allow-list", () => {
   it("refuses a key nothing reads rather than storing it", async () => {
-    const res = await put("orrey.vibes", "immaculate");
+    const res = await put("kith.vibes", "immaculate");
 
     expect(res.status).toBe(400);
     // Not stored, not even as a harmless extra row. A settings entry that
     // nothing reads is worse than no page at all.
-    expect(await getSetting(env, "orrey.vibes")).toBeUndefined();
+    expect(await getSetting(env, "kith.vibes")).toBeUndefined();
     expect(await audit()).toEqual([]);
   });
 

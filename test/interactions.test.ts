@@ -21,7 +21,7 @@ describe("POST /interactions", () => {
 
   it("returns 401 when the signature headers are absent", async () => {
     const res = await app.fetch(
-      new Request("https://orrey.test/interactions", { method: "POST", body: "{}" }),
+      new Request("https://kith.test/interactions", { method: "POST", body: "{}" }),
       discord.env(env),
     );
     expect(res.status).toBe(401);

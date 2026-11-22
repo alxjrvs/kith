@@ -34,7 +34,7 @@ function consoleEnv() {
 
 async function get(path: string) {
   return app.fetch(
-    new Request(`https://orrey.test${path}`, {
+    new Request(`https://kith.test${path}`, {
       headers: { cookie: `${SESSION_COOKIE}=${await issueSession(consoleEnv(), "1001", new Date())}` },
     }),
     consoleEnv(),
@@ -232,7 +232,7 @@ describe("the route", () => {
   it("is behind the same gate as everything else", async () => {
     await seed();
     const res = await app.fetch(
-      new Request("https://orrey.test/api/sessions/s"),
+      new Request("https://kith.test/api/sessions/s"),
       consoleEnv(),
     );
     expect(res.status).toBe(401);
@@ -244,7 +244,7 @@ describe("the three writes", () => {
 
   async function post(path: string, body: unknown = {}) {
     return app.fetch(
-      new Request(`https://orrey.test${path}`, {
+      new Request(`https://kith.test${path}`, {
         method: "POST",
         headers: {
           cookie: `${SESSION_COOKIE}=${await issueSession(consoleEnv(), "1001", NOW)}`,

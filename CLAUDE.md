@@ -1,6 +1,6 @@
 # Working in this repo
 
-Read [issue #1](https://github.com/alxjrvs/orrey/issues/1) first. It is the specification,
+Read [issue #1](https://github.com/alxjrvs/kith/issues/1) first. It is the specification,
 and the phase epics below it are the ordered work. This file is the short version of the
 rules that are easy to violate by accident.
 
@@ -9,7 +9,7 @@ rules that are easy to violate by accident.
 - **Messages are send-only.** Never call the channel message-edit endpoint. The only write
   to an existing message is `UPDATE_MESSAGE` (type 7) as the response to an interaction
   that came *from* that message. The one exception is the cutover strip-components step.
-- **Orrey's database is the source of truth.** Discord and Google are projections. Never
+- **Kith's database is the source of truth.** Discord and Google are projections. Never
   read state back out of a Discord message.
 - **Words live in EmDash; state lives in D1.** Every word a visitor reads (game copy,
   characters, knowledge pages, links, the site's own copy) is written in kith-cms
@@ -28,7 +28,7 @@ rules that are easy to violate by accident.
   forming campaign, a game day. `campaigns.quorum` is the opt-out and the only one,
   and which rule applies is derived in `src/attendance/quorum.ts` rather than stored.
   Nothing else may decide it a second way.
-- **Never write to the user's Social calendar.** Orrey writes only to the Orrey calendar.
+- **Never write to the user's Social calendar.** Kith writes only to the Kith calendar.
 - **Test games never reach prod.** A campaign or game marked `staging` posts only to the
   Staging channels, stays off Google and server-wide events, and is organisers-only on the
   site. Every read of the scheduling channel goes through `src/projection/staging.ts`.

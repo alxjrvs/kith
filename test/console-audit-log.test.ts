@@ -39,7 +39,7 @@ function consoleEnv() {
 
 async function get(path: string) {
   return app.fetch(
-    new Request(`https://orrey.test${path}`, {
+    new Request(`https://kith.test${path}`, {
       headers: {
         cookie: `${SESSION_COOKIE}=${await issueSession(consoleEnv(), "1001", new Date())}`,
       },
@@ -229,10 +229,10 @@ describe("the line", () => {
     ).toBe("18:51 alx → campaign age-of-umbra state forming");
   });
 
-  it("says orrey when the clock did it", async () => {
+  it("says kith when the clock did it", async () => {
     expect(
       auditLine({ ...base, actorUserId: null, actorName: null, detail: null }),
-    ).toContain("orrey →");
+    ).toContain("kith →");
   });
 
   it("leaves a whole-row diff out of the line", async () => {

@@ -13,6 +13,9 @@ import type { IcsEvent } from "./serialise.ts";
  * either can be answered from the other. Whether a client merges two
  * subscriptions sharing a UID is the client's business; Kith does not rely on
  * that and does not promise it.
+ *
+ * `@orrey` is the product's old name, kept on purpose: subscribed calendars
+ * already hold these UIDs, and a new suffix would show every game twice.
  */
 export async function icsEventFor(target: ProjectionTarget): Promise<IcsEvent> {
   const { session } = target;

@@ -50,7 +50,7 @@ function call(method: string, path: string, cookie?: string, body?: unknown) {
   if (cookie) headers.cookie = cookie;
   if (body !== undefined) headers["content-type"] = "application/json";
   return app.fetch(
-    new Request(`https://orrey.test${path}`, {
+    new Request(`https://kith.test${path}`, {
       method,
       headers,
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
@@ -186,7 +186,7 @@ describe("signing up from the site", () => {
   it("needs a signed-in person and a JSON body", async () => {
     expect((await call("POST", "/api/hub/campaigns/hollowmere/signup", undefined, { action: "seat" })).status).toBe(401);
     const form = await app.fetch(
-      new Request("https://orrey.test/api/hub/campaigns/hollowmere/signup", {
+      new Request("https://kith.test/api/hub/campaigns/hollowmere/signup", {
         method: "POST",
         headers: { cookie: await as("1001"), "content-type": "application/x-www-form-urlencoded" },
         body: "action=seat",
@@ -197,7 +197,7 @@ describe("signing up from the site", () => {
 
     // A media type that merely mentions JSON is a simple request a page can send cross-origin.
     const sneaky = await app.fetch(
-      new Request("https://orrey.test/api/hub/campaigns/hollowmere/signup", {
+      new Request("https://kith.test/api/hub/campaigns/hollowmere/signup", {
         method: "POST",
         headers: { cookie: await as("1001"), "content-type": "text/plain; x=application/json" },
         body: JSON.stringify({ action: "seat" }),
@@ -210,7 +210,7 @@ describe("signing up from the site", () => {
   it("refuses a write that says it came from somewhere else", async () => {
     for (const headers of [{ origin: "https://other.alxjrvs.com" }, { "sec-fetch-site": "same-site" }]) {
       const response = await app.fetch(
-        new Request("https://orrey.test/api/hub/campaigns/hollowmere/signup", {
+        new Request("https://kith.test/api/hub/campaigns/hollowmere/signup", {
           method: "POST",
           headers: { cookie: await as("1001"), "content-type": "application/json", ...headers },
           body: JSON.stringify({ action: "seat" }),
@@ -488,7 +488,7 @@ describe("each game's calendar", () => {
     expect(signedOut.home.calendarUrl).toBeNull();
 
     const { home } = (await (await call("GET", "/api/hub/homes/arcs", await as("1001"))).json()) as { home: { calendarUrl: string } };
-    expect(home.calendarUrl).toBe("https://orrey.test/ics/t-1001/game/arcs.ics");
+    expect(home.calendarUrl).toBe("https://kith.test/ics/t-1001/game/arcs.ics");
     const feed = await call("GET", "/ics/t-1001/game/arcs.ics");
     expect(feed.status).toBe(200);
     expect(await feed.text()).toContain("BEGIN:VEVENT");

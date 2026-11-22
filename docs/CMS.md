@@ -65,7 +65,7 @@ fresh database; after that, collections and fields are edited in the admin
 4. **Run the setup wizard** at cms.kith.alxjrvs.com. It applies the content
    model and makes you its admin.
 5. **Give Kith a token.** In the admin, Settings → API tokens → a token with
-   only `content:read`. Then `bunx wrangler secret put CMS_TOKEN --name orrey`.
+   only `content:read`. Then `bunx wrangler secret put CMS_TOKEN --name kith`.
 
 ## Locally
 

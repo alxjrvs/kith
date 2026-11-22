@@ -69,7 +69,7 @@ No PR lands, bottom or not, until all four hold:
   - every `custom_id` minted and parsed via `src/discord/custom-id.ts`; an
     unknown id degrades to the retired-post response
   - no schema beyond what this phase reads
-  - writes go to the Orrey calendar only
+  - writes go to the Kith calendar only
   - the command surface is still four commands
 - **A human read it.** Bot review is a floor, not the gate.
 

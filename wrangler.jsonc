@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "orrey",
+  "name": "kith",
   "main": "src/index.ts",
   // Newest date the test pool's workerd accepts; bump when @cloudflare/vitest-pool-workers does.
   "compatibility_date": "2026-08-22",
@@ -48,6 +48,7 @@
   "d1_databases": [
     {
       "binding": "DB",
+      // D1 databases cannot be renamed, so the database keeps the product's old name.
       "database_name": "orrey",
       "database_id": "6d2002e5-7c34-48ee-8177-7d29422160ce",
       "migrations_dir": "drizzle"
@@ -61,14 +62,14 @@
   "services": [{ "binding": "CMS", "service": "kith-cms" }],
 
   "queues": {
-    "producers": [{ "binding": "OUTBOX", "queue": "orrey-outbox" }],
+    "producers": [{ "binding": "OUTBOX", "queue": "kith-outbox" }],
     "consumers": [
       {
-        "queue": "orrey-outbox",
+        "queue": "kith-outbox",
         "max_batch_size": 10,
         "max_batch_timeout": 10,
         "max_retries": 5,
-        "dead_letter_queue": "orrey-outbox-dlq"
+        "dead_letter_queue": "kith-outbox-dlq"
       }
     ]
   },
@@ -100,6 +101,6 @@
     // an unverified domain — this hostname has to be verified once in the
     // Google console before a real channel can be opened, which is not code and
     // no test can stand in for it.
-    "PUBLIC_ORIGIN": "https://orrey.alxjrvs.workers.dev"
+    "PUBLIC_ORIGIN": "https://kith.alxjrvs.workers.dev"
   }
 }

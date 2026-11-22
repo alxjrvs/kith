@@ -35,7 +35,7 @@ function batchOf(...bodies: OutboxMessage[]) {
     retry: vi.fn(),
   }));
   return {
-    batch: { queue: "orrey-outbox", messages } as unknown as MessageBatch<OutboxMessage>,
+    batch: { queue: "kith-outbox", messages } as unknown as MessageBatch<OutboxMessage>,
     messages,
   };
 }

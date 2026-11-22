@@ -1,10 +1,10 @@
-# UI kit — the Orrey console
+# UI kit — the Kith console
 
 The web surface. Discord is where players answer; the console is where the organiser does
 form-shaped work a slash command models badly. Keeping administration here is what holds
 the Discord command list to four.
 
-**This is a new design, not a recreation.** `alxjrvs/orrey` is at phase 0 and ships only a
+**This is a new design, not a recreation.** `alxjrvs/kith` is at phase 0 and ships only a
 holding page (`public/index.html`); the console lands in phase 2. Every screen here is
 drawn to the specification (issue #1) and the domain model in `src/db/schema.ts`.
 
@@ -18,7 +18,7 @@ drawn to the specification (issue #1) and the domain model in `src/db/schema.ts`
 | `CampaignPage.jsx` | Cadence (anchor + interval), quorum, roster, session horizon |
 | `PollPage.jsx` | Date poll with no target — candidate dates, win rule, canonise |
 | `PlayersPage.jsx` | Known players, DM state, flake memory, ICS feed tokens |
-| `data.js` | All fixture data on `window.ORREY` |
+| `data.js` | All fixture data on `window.KITH` |
 
 ## Things the design is asserting
 

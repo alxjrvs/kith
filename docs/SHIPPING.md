@@ -1,6 +1,6 @@
 # Shipping
 
-How a change gets from a commit to kith.alxjrvs.com. Orrey follows The Gnar's
+How a change gets from a commit to kith.alxjrvs.com. Kith follows The Gnar's
 `factory:repo-ruleset` ([TheGnarCo/agent-skills](https://github.com/TheGnarCo/agent-skills/tree/main/factory/skills/repo-ruleset))
 with **merge `pr`** and **deploy `production`**. The `## Shipping` block in
 `CLAUDE.md` is the short version and wins where the two differ.
@@ -59,14 +59,14 @@ These need repo admin, which an agent here doesn't have.
    checkout of TheGnarCo/agent-skills:
 
    ```sh
-   node factory/skills/repo-ruleset/scripts/ruleset.mjs apply --repo alxjrvs/orrey \
+   node factory/skills/repo-ruleset/scripts/ruleset.mjs apply --repo alxjrvs/kith \
      --merge pr --deploy production --adopt --dry-run   # look, then drop --dry-run
    ```
 
    It also restricts the `production` environment to main, sets the workflow
    token to read-only, and turns on Dependabot and secret push protection.
    It doesn't touch the old ruleset (another name), so delete that one too:
-   `gh api -X DELETE repos/alxjrvs/orrey/rulesets/23124853`.
+   `gh api -X DELETE repos/alxjrvs/kith/rulesets/23124853`.
    Done 2026-11-21; the old `quality-checks` job is gone.
 2. **Production environment.** Move `CLOUDFLARE_API_TOKEN` and
    `CLOUDFLARE_ACCOUNT_ID` to secrets of the `production` environment (repo

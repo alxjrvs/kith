@@ -54,6 +54,9 @@ const GUILD_ONLY = 2;
  * wrong name and times, record both sessions against one remote id, and then
  * delete session 12's event when session 1 is retracted. The delimiter is what
  * makes the match exact.
+ *
+ * `orrey` is the product's old name, kept on purpose: live Discord events carry
+ * this marker, and a new one would stop Kith finding them.
  */
 export function markerFor(sessionId: string): string {
   return `[orrey:session:${sessionId}]`;

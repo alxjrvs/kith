@@ -180,8 +180,8 @@ async function actorFor(env: Env, userId: string | undefined) {
     : undefined;
 
   return {
-    id: userId ?? "orrey",
-    username: row?.username ?? userId ?? "orrey",
+    id: userId ?? "kith",
+    username: row?.username ?? userId ?? "kith",
     global_name: row?.globalName ?? null,
   };
 }

@@ -191,6 +191,7 @@ export function eventBody(
     start: { dateTime: isoOf(session.startsAt), timeZone: "UTC" },
     end: { dateTime: isoOf(session.endsAt), timeZone: "UTC" },
     extendedProperties: {
+      // Named for the product's old name and kept: existing events carry these keys.
       private: { orreySessionId: session.id, orreyFingerprint: fingerprint },
     },
   };

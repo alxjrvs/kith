@@ -118,7 +118,7 @@ export function auditLine(row: AuditRow, timeZone = "UTC"): string {
     hour12: false,
   }).format(new Date(row.createdAt * 1000));
 
-  const who = row.actorName ?? row.actorUserId ?? "orrey";
+  const who = row.actorName ?? row.actorUserId ?? "kith";
   const parts = [time, who, "→", row.targetType, row.targetId, verb(row.action)];
 
   const change = transition(row.detail);
