@@ -5,6 +5,7 @@ import { inDays, stamp } from "../format.ts";
 import { Markdown } from "../markdown.tsx";
 import { signInHref } from "../signin.ts";
 import { Header } from "../components/Header.tsx";
+import { GameMarks } from "../components/GameMarks.tsx";
 
 /** How long each game holds the screen before the next one comes in. */
 const HOLD_MS = 7000;
@@ -170,13 +171,13 @@ function Slides({ slides }: { slides: GameSummary[] }) {
  * standing still. No details beyond what the game is, and the way in at the
  * bottom (taking a seat, when it is signing up).
  */
-export function StillSlide({ game, action }: { game: GameSummary; action?: ReactNode }) {
+export function StillSlide({ game, action, soundUrl = null }: { game: GameSummary; action?: ReactNode; soundUrl?: string | null }) {
   useNoScroll();
   return (
     <div className="show">
       <Top about />
       <section className="show-slides">
-        <Slide game={game} current still position="" />
+        <Slide game={game} current still position="" soundUrl={soundUrl} />
       </section>
       <Footer action={action} hint={false} />
     </div>
@@ -191,6 +192,7 @@ function Slide({
   position,
   still = false,
   motion,
+  soundUrl = null,
 }: {
   game: GameSummary;
   current: boolean;
@@ -198,6 +200,8 @@ function Slide({
   still?: boolean;
   /** How this slide is moving: coming in, or going out, and from which side. */
   motion?: Motion | undefined;
+  /** A game's own page plays its sound; the slideshow never does. */
+  soundUrl?: string | null;
 }) {
   return (
     <article
@@ -216,7 +220,7 @@ function Slide({
         <img className="show-mark" src="/mark.svg" alt="" aria-hidden="true" />
       )}
       <div className="show-slide-words">
-        {game.label ? <span className="chip system show-system">{game.label}</span> : null}
+        <GameMarks system={game.label} soundUrl={soundUrl} />
         <h1>{still || game.state === "CONCLUDED" ? game.name : <GameLink game={game}>{game.name}</GameLink>}</h1>
         {game.tagline ? <p className="show-tagline">{game.tagline}</p> : null}
         {game.pitch ? (

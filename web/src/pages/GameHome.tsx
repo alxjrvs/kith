@@ -10,7 +10,8 @@ import { cadence, inDays, stamp } from "../format.ts";
 import { LinkRow, VIS_LABEL } from "./Table.tsx";
 import { EditInCms } from "../components/EditInCms.tsx";
 import { Markdown } from "../markdown.tsx";
-import { SoundButton, TableMotif } from "./Splash.tsx";
+import { TableMotif } from "./Splash.tsx";
+import { GameMarks } from "../components/GameMarks.tsx";
 import { StillSlide } from "./Landing.tsx";
 import { Header } from "../components/Header.tsx";
 import { signInHref } from "../signin.ts";
@@ -94,7 +95,13 @@ function PublicGame({ home }: { home: HomeBase }) {
           mine: false,
           open: listing?.open === true,
         };
-  return <StillSlide game={game} action={listing?.open ? <SignupButtons listing={listing} /> : undefined} />;
+  return (
+    <StillSlide
+      game={game}
+      action={listing?.open ? <SignupButtons listing={listing} /> : undefined}
+      soundUrl={listing?.soundUrl ?? null}
+    />
+  );
 }
 
 /**
@@ -132,18 +139,18 @@ function BaseHero({
       <Header over={Boolean(heroUrl)} />
       <main>
         {logoUrl ? <img className="base-logo" src={logoUrl} alt="" /> : null}
+        {/* The system and the sound sit above the name, where the eye starts. */}
+        <GameMarks system={system} soundUrl={soundUrl} />
         <span className="label">{eyebrow}</span>
         <h1>{title}</h1>
         {tagline ? <p className="tagline">{tagline}</p> : null}
-        {chips.length > 0 || system || soundUrl ? (
+        {chips.length > 0 ? (
           <div className="row" style={{ gap: 6 }}>
-            {system ? <span className="chip system">{system}</span> : null}
             {chips.map((chip) => (
               <span key={chip} className="chip">
                 {chip}
               </span>
             ))}
-            <SoundButton url={soundUrl} />
           </div>
         ) : null}
         {children}
