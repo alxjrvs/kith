@@ -9,7 +9,8 @@ const MINE: Record<NonNullable<Listing["mine"]>, string> = {
 
 /**
  * The one control for joining a table, used on cards and on the splash page.
- * Signed out, it is the sign-in button, and sign-in brings you back here.
+ * Signed out, the same "I Want To Play" is the sign-in button, and sign-in
+ * brings you back here.
  *
  * Every signup is In or Interested. To change one, you un-sign up and sign up
  * again. Somebody who isn't in the Kith server yet still signs up: their place
@@ -27,7 +28,7 @@ export function SignupButtons({ listing, big = false }: { listing: Listing; big?
     const here = `/join/${listing.kind}/${listing.id}`;
     return (
       <a className={`btn primary${size}`} href={signInHref(here)}>
-        {big ? `Sign in with Discord to ${full ? "join the waitlist" : "take a seat"}` : full ? "Join the waitlist" : "Take a seat"}
+        {full ? "I Want To Play (join the waitlist)" : "I Want To Play"}
       </a>
     );
   }
@@ -71,7 +72,7 @@ export function SignupButtons({ listing, big = false }: { listing: Listing; big?
           disabled={signup.isPending}
           onClick={() => signup.mutate("in")}
         >
-          {full ? "I'm in (join the waitlist)" : "I'm in"}
+          {full ? "I Want To Play (join the waitlist)" : "I Want To Play"}
         </button>
         <button type="button" className={`btn${size}`} disabled={signup.isPending} onClick={() => signup.mutate("interested")}>
           Interested
