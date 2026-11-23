@@ -80,6 +80,8 @@ export function createApp() {
   // src/cms/content.ts's mediaUrl makes. An upload gets a fresh key, so a copy
   // never changes, and browsers may keep it.
   /** A game's app icon, cut square from its art (src/http/game-apps.ts). */
+  app.get("/media/:key/app-icon/:size", (c) => squareIcon(c.env, c.req.raw, c.req.param("key"), c.req.param("size")));
+  // The path before the Kith table was drawn on: apps installed then still ask for it.
   app.get("/media/:key/icon/:size", (c) => squareIcon(c.env, c.req.raw, c.req.param("key"), c.req.param("size")));
   /** A game's link preview image, cut to 1200x630 from its art (src/http/social-card.ts). */
   app.get("/media/:key/card", (c) => cardImage(c.env, c.req.raw, c.req.param("key")));

@@ -73,8 +73,24 @@ export function mediaKeyOf(url: string | null | undefined): string | null {
   return key && MEDIA_KEY.test(key) ? key : null;
 }
 
+/**
+ * The name a game installs under: "Kith.town: The Age of Umbra", so the
+ * install prompt, the app switcher and the launcher all say whose app it is.
+ * The home-screen label is the manifest's short_name, the game's own name,
+ * because a label is cut at a dozen or so characters and every game would
+ * otherwise read "Kith.town: …". iOS has one name for both, and takes this one.
+ */
+export function installName(app: Pick<GameApp, "name">): string {
+  return `Kith.town: ${app.name}`;
+}
+
+/**
+ * The game's icon: its hero cut square with the Kith table drawn over it
+ * (src/http/game-apps.ts). The path is new with the overlay: icons cut before
+ * it are cached for a year under `/media/<key>/icon/<size>`.
+ */
 export function iconUrl(app: GameApp, size: IconSize): string {
-  return app.iconKey ? `/media/${app.iconKey}/icon/${size}` : size === 180 ? "/apple-touch-icon.png" : `/icon-${size}.png`;
+  return app.iconKey ? `/media/${app.iconKey}/app-icon/${size}` : size === 180 ? "/apple-touch-icon.png" : `/icon-${size}.png`;
 }
 
 /**
@@ -85,7 +101,7 @@ export function manifestFor(app: GameApp) {
   const scope = scopeOf(app.slug);
   return {
     id: scope,
-    name: app.name,
+    name: installName(app),
     short_name: app.name,
     ...(app.description ? { description: app.description } : {}),
     start_url: scope,

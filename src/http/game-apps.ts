@@ -2,7 +2,7 @@ import { Hono, type Context } from "hono";
 import type { Env } from "../env.ts";
 import { cutMedia } from "./media-cut.ts";
 import { withSocialCard } from "./social-card.ts";
-import { ICON_SIZES, gameApp, iconUrl, manifestFor, scopeOf, type GameApp, type IconSize } from "../hub/game-app.ts";
+import { ICON_SIZES, gameApp, iconUrl, installName, manifestFor, scopeOf, type GameApp, type IconSize } from "../hub/game-app.ts";
 import { viewerOf } from "./hub.ts";
 
 /**
@@ -52,7 +52,9 @@ export function gameAppRoutes() {
 }
 
 /**
- * A square icon cut from an uploaded image, for a game's manifest. Without the
+ * A square icon cut from an uploaded image, for a game's manifest, with the
+ * Kith table (public/icon-ring.png, the mark in outline) drawn over it so a
+ * game's app is plainly a Kith one. Without the
  * Images binding (local dev, tests) or when the cut fails, the answer is Kith's
  * own icon.
  */
@@ -60,10 +62,11 @@ export async function squareIcon(env: Env, request: Request, key: string, rawSiz
   const size = ICON_SIZES.find((s) => String(s) === rawSize);
   if (!size) return new Response("Not found", { status: 404 });
   return cutMedia(env, request, key, {
-    cachePath: `/media/${key}/icon/${size}`,
+    cachePath: `/media/${key}/app-icon/${size}`,
     width: size,
     height: size,
     format: "image/png",
+    overlay: "/icon-ring.png",
     fallback: kithIcon(size),
   });
 }
@@ -73,7 +76,7 @@ function kithIcon(size: IconSize): string {
 }
 
 function withManifest(site: Response, app: GameApp): Response {
-  const name = escapeHtml(app.name);
+  const name = escapeHtml(installName(app));
   const scope = scopeOf(app.slug);
   return new HTMLRewriter()
     .on("title", { element: (el) => void el.setInnerContent(app.name) })
