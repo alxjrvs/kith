@@ -498,7 +498,7 @@ export interface AttendanceIntent {
 export interface SeatClick {
   gameDayId: string;
   actor: InteractionUser;
-  prefer?: "seat" | "waitlist";
+  prefer?: "seat" | "waitlist" | "interested";
 }
 
 /** Everything the signup post renders, as of the click that just wrote it. */

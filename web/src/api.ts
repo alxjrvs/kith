@@ -12,7 +12,16 @@ export interface Person {
   avatarUrl: string | null;
 }
 
-export type Me = { signedIn: false } | { signedIn: true; user: Person; organiser: boolean };
+/**
+ * `server` is where they stand with the Kith Discord server: somebody who
+ * signed up from the site without being in it waits to be let in, and their
+ * signups are held until then. `invite` is theirs once they're let in.
+ */
+export type ServerStanding = "member" | "pending" | "approved" | "declined";
+
+export type Me =
+  | { signedIn: false }
+  | { signedIn: true; user: Person; organiser: boolean; server: ServerStanding; invite: string | null };
 
 export type Visibility = "public" | "members" | "organisers";
 
@@ -34,9 +43,12 @@ export interface Listing {
   capacity: number | null;
   taken: number;
   waitlist: number;
+  interested: number;
   when: { startsAt: number | null; endsAt: number | null; intervalWeeks: number | null };
   where: string | null;
-  mine: "in" | "waitlisted" | null;
+  mine: "in" | "waitlisted" | "interested" | null;
+  /** The viewer's signup is held until they're let into the Kith server. */
+  held: boolean;
 }
 
 export interface CatalogEntry {
@@ -142,11 +154,11 @@ export const useAgenda = (scope: "mine" | "public") =>
 export const useFeeds = (enabled: boolean) =>
   useQuery({ queryKey: ["feeds"], queryFn: () => api<FeedsPanel>("/console/me/feeds"), enabled });
 
-/** Take a seat, join the waitlist, or give the place back. */
+/** Sign up In or Interested, or un-sign up. In on a full table is the waitlist. */
 export function useSignup(listing: Pick<Listing, "kind" | "id">) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (action: "seat" | "waitlist" | "out") =>
+    mutationFn: (action: "in" | "interested" | "out") =>
       api<{ listing: Listing }>(
         listing.kind === "campaign"
           ? `/api/hub/campaigns/${encodeURIComponent(listing.id)}/signup`
@@ -162,6 +174,8 @@ export function useSignup(listing: Pick<Listing, "kind" | "id">) {
       void client.invalidateQueries({ queryKey: ["table", listing.kind, listing.id] });
       void client.invalidateQueries({ queryKey: ["home"] });
       void client.invalidateQueries({ queryKey: ["homes"] });
+      // A first signup from somebody outside the server makes them wait at the door.
+      void client.invalidateQueries({ queryKey: ["me"] });
     },
   });
 }

@@ -13,13 +13,13 @@ import { db, schema } from "../db/index.ts";
  */
 const TARGET = "campaign_forming";
 
-export type FormingOutcome = "seated" | "waitlisted" | "unchanged" | "withdrawn" | "not-claimed" | "not-forming" | "no-such-campaign";
+export type FormingOutcome = "seated" | "waitlisted" | "interested" | "unchanged" | "withdrawn" | "not-claimed" | "not-forming" | "no-such-campaign";
 
 export async function joinForming(
   env: Env,
   campaignId: string,
   userId: string,
-  prefer: "seat" | "waitlist" = "seat",
+  prefer: "seat" | "waitlist" | "interested" = "seat",
 ): Promise<FormingOutcome> {
   const campaign = await formingCampaign(env, campaignId);
   if (!campaign) return "no-such-campaign";
@@ -28,10 +28,14 @@ export async function joinForming(
   const existing = await claimOf(env, campaignId, userId);
   if (existing && existing.state !== "out") return "unchanged";
 
+  // Interested holds no seat, so it is never promoted and never counted, and
+  // `accepted()` in lifecycle.ts leaves it off the roster when the game starts.
   const state =
-    prefer === "waitlist" && campaign.capacity !== null
-      ? sql`'waitlisted'`
-      : seatOrQueue(campaignId, campaign.capacity);
+    prefer === "interested"
+      ? sql`'interested'`
+      : prefer === "waitlist" && campaign.capacity !== null
+        ? sql`'waitlisted'`
+        : seatOrQueue(campaignId, campaign.capacity);
 
   await db(env)
     .insert(schema.signups)
@@ -47,7 +51,7 @@ export async function joinForming(
     });
 
   const row = await claimOf(env, campaignId, userId);
-  return row?.state === "in" ? "seated" : "waitlisted";
+  return row?.state === "in" ? "seated" : row?.state === "interested" ? "interested" : "waitlisted";
 }
 
 /**

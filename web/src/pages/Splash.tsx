@@ -67,6 +67,7 @@ export function Splash() {
                   <span className="num" style={{ fontSize: 13 }}>
                     {listing.capacity === null ? `${listing.taken} in` : `${listing.taken} / ${listing.capacity}`}
                     {listing.waitlist > 0 ? `, ${listing.waitlist} waiting` : ""}
+                    {listing.interested > 0 ? `, ${listing.interested} interested` : ""}
                   </span>
                 </div>
               </div>

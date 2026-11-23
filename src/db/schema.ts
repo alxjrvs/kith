@@ -547,8 +547,14 @@ export const signups = sqliteTable(
     userId: text("user_id")
       .notNull()
       .references(() => users.discordId, { onDelete: "cascade" }),
-    /** `in` holds a place; `waitlisted` is queued behind capacity; `out` withdrew. */
-    state: text("state", { enum: ["in", "waitlisted", "out"] })
+    /**
+     * `in` holds a place; `waitlisted` is queued behind capacity; `interested`
+     * would like to come but holds no seat and is never promoted into one;
+     * `out` withdrew. The column has no CHECK, so `interested` needed no
+     * migration: switching between In and Interested is un-signing up and
+     * signing up again.
+     */
+    state: text("state", { enum: ["in", "waitlisted", "interested", "out"] })
       .notNull()
       .default("in"),
     /**
@@ -576,6 +582,42 @@ export const signups = sqliteTable(
     ),
   ],
 );
+
+/**
+ * Somebody who signed up from the site but is not in the Kith Discord server.
+ *
+ * One row per person, not per signup: the question an organiser answers is
+ * "may this person into the server", and every signup they hold waits on that
+ * one answer. While the row is `pending` their signups are written and hold
+ * their places, but they are provisional: `isProvisional` in
+ * `src/hub/server-door.ts` is the only reader of that fact.
+ *
+ * `approved` mints a single-use invite (bot token, `CREATE_INSTANT_INVITE`)
+ * which the site shows to that person alone. The console's OAuth scope stays
+ * `identify`, so Kith cannot add them to the server itself and never asks to.
+ * `declined` gives their places back. Nothing here deletes a row.
+ */
+export const serverRequests = sqliteTable("server_requests", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.discordId, { onDelete: "cascade" }),
+  state: text("state", { enum: ["pending", "approved", "declined"] })
+    .notNull()
+    .default("pending"),
+  /** The invite code (discord.gg/<code>), once approved. Replaced when it runs out. */
+  inviteCode: text("invite_code"),
+  /** Unix seconds; when the invite stops working. */
+  inviteExpiresAt: integer("invite_expires_at"),
+  /** The approvals post in Discord. Recorded, then forgotten — messages are send-only. */
+  discordMessageId: text("discord_message_id"),
+  /** Who said yes or no. Null while pending. */
+  decidedBy: text("decided_by"),
+  decidedAt: integer("decided_at"),
+  /** When Kith first saw them in the server after approval. */
+  joinedAt: integer("joined_at"),
+  createdAt: integer("created_at").notNull().default(now),
+  updatedAt: integer("updated_at").notNull().default(now),
+});
 
 /**
  * Who changed what.

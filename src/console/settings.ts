@@ -76,6 +76,21 @@ const FIELDS: Omit<SettingField, "value" | "fallback">[] = [
     writable: true,
   },
   {
+    key: SETTING_KEYS.approvalsChannelId,
+    label: "Approvals channel",
+    kind: "text",
+    help: "Where Kith asks you to let somebody into the server when they sign up from the site. Blank uses the Staging channel.",
+    writable: true,
+  },
+  {
+    key: SETTING_KEYS.inviteChannelId,
+    label: "Invite channel",
+    kind: "text",
+    help: "The channel a new person's invite opens on. Blank uses the scheduling channel.",
+    caveat: "The bot needs Create Invite in this channel, or letting somebody in fails and says so.",
+    writable: true,
+  },
+  {
     key: SETTING_KEYS.organiserRoleId,
     label: "Organiser role",
     kind: "text",

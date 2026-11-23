@@ -1825,6 +1825,75 @@ function feedsSection(panel) {
   return section;
 }
 
+/**
+ * People who signed up from the site and aren't in the Kith server. Their
+ * signups hold their places until somebody answers here or on the post in the
+ * approvals channel; both call the same functions.
+ */
+const DOOR_STATE = { pending: "Waiting", approved: "Let in, not joined yet", declined: "Not this time" };
+const SIGNUP_WORDS = { in: "In", waitlisted: "In, waitlisted", interested: "Interested" };
+
+function doorSection(door) {
+  const box = document.createElement("section");
+  if (door.rows.length === 0) {
+    const p = document.createElement("p");
+    p.className = "note";
+    p.textContent = "Nobody is waiting to be let into the server.";
+    box.append(p);
+    return box;
+  }
+  const table = document.createElement("table");
+  const head = document.createElement("tr");
+  for (const label of ["Who", "Signed up for", "Asked", "Where they are", ""]) {
+    const th = document.createElement("th");
+    th.textContent = label;
+    head.append(th);
+  }
+  table.append(head);
+  for (const row of door.rows) {
+    const tr = document.createElement("tr");
+    cell(tr, row.person.name);
+    cell(
+      tr,
+      row.signups.length === 0
+        ? "Nothing right now"
+        : row.signups.map((s) => `${s.name} (${SIGNUP_WORDS[s.state] ?? s.state})`).join(", "),
+    );
+    cell(tr, when(row.askedAt));
+    const where = document.createElement("td");
+    where.textContent = DOOR_STATE[row.state] ?? row.state;
+    if (row.invite) {
+      const link = document.createElement("a");
+      link.href = row.invite;
+      link.textContent = "Their invite";
+      link.target = "_blank";
+      link.rel = "noopener";
+      where.append(" ", link);
+    }
+    tr.append(where);
+    const actions = document.createElement("td");
+    const id = encodeURIComponent(row.person.id);
+    if (row.state !== "approved") {
+      actions.append(
+        action("Let them in", `Let ${row.person.name} into the Kith server? Kith makes them a one-use invite.`, () =>
+          api(`/api/door/${id}/let-in`, { method: "POST", body: "{}" }),
+        ),
+      );
+    }
+    if (row.state !== "declined") {
+      actions.append(
+        action("Not this time", `Turn ${row.person.name} away? Their places are given back.`, () =>
+          api(`/api/door/${id}/turn-away`, { method: "POST", body: "{}" }),
+        ),
+      );
+    }
+    tr.append(actions);
+    table.append(tr);
+  }
+  box.append(table);
+  return box;
+}
+
 function heading(label) {
   const h = document.createElement("h2");
   h.textContent = label;
@@ -1844,6 +1913,7 @@ async function load() {
       { actors },
       feeds,
       dayStats,
+      door,
     ] = await Promise.all([
       api("/api/me"),
       api("/api/agenda"),
@@ -1861,6 +1931,7 @@ async function load() {
       api("/api/audit/actors").catch(() => ({ actors: [] })),
       api("/console/me/feeds").catch(() => null),
       api("/api/game-days/stats").catch(() => null),
+      api("/api/door").catch(() => null),
     ]);
 
     // The rail is a second read rather than part of the agenda's: one session's
@@ -1894,6 +1965,7 @@ async function load() {
     split.className = "split";
     split.append(agendaSection(agenda), detailRail(detail));
     main.replaceChildren(split);
+    if (door) main.prepend(heading("Waiting to join the server"), doorSection(door));
     main.append(heading("Campaigns"), campaignsTable(campaigns));
     if (plan) main.append(campaignPageSection(plan.campaign, history, polls, stats));
     main.append(heading("Game days"), gameDaysTable(gameDays));

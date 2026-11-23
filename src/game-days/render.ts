@@ -68,6 +68,8 @@ function compose({ day, game, signups, capacity, asOf }: SignupView, detail: Det
 
   const seated = signups.filter((signup) => signup.state === "in");
   const queued = signups.filter((signup) => signup.state === "waitlisted");
+  // Signed up from the site as Interested: holding no seat, never promoted.
+  const interested = signups.filter((signup) => signup.state === "interested");
 
   // A `single` day is a table: the question is whether there is a seat, and the
   // count is the answer. A `multi` day is a hangout, and the question is whether
@@ -78,6 +80,7 @@ function compose({ day, game, signups, capacity, asOf }: SignupView, detail: Det
   const of = capacity === null ? `${seated.length}` : `${seated.length}/${capacity}`;
   lines.push(`**${multi ? "Coming" : "Seated"} (${of})**${named(seated, detail)}`);
   if (queued.length > 0) lines.push(`**Waitlist (${queued.length})**${named(queued, detail)}`);
+  if (interested.length > 0) lines.push(`**Interested (${interested.length})**${named(interested, detail)}`);
 
   if (signups.length === 0) {
     lines.push(multi ? "*Nobody has said yet.*" : "*Nobody has taken a seat yet.*");
