@@ -138,7 +138,8 @@ export function PublicDay({ id }: { id: string }) {
  * reads like one rather than like a settings page.
  */
 function BaseHero({
-  eyebrow,
+  kind,
+  lead,
   title,
   tagline,
   heroUrl,
@@ -147,10 +148,13 @@ function BaseHero({
   calendarUrl,
   chips,
   system = null,
+  actions,
   children,
 }: {
-  /** What the game is and who runs it, as a small pill under the tagline. */
-  eyebrow: string;
+  /** What kind of game it is, the first of its chips. */
+  kind: string;
+  /** Who runs it ("GM: Jrvs"), its own chip after the system. */
+  lead: string | null;
   title: string;
   tagline: string | null;
   heroUrl: string | null;
@@ -162,6 +166,8 @@ function BaseHero({
   chips: string[];
   /** The game system, as its own chip: people look for it first. */
   system?: string | null;
+  /** The way in ("I Want To Play"), set in one row after the game's chips. */
+  actions?: ReactNode;
   children?: ReactNode;
 }) {
   return (
@@ -171,13 +177,8 @@ function BaseHero({
       <Header over={Boolean(heroUrl)} />
       <main>
         {logoUrl ? <img className="base-logo" src={logoUrl} alt="" /> : null}
-        {/* The system and the sound sit above the name, where the eye starts. */}
-        <GameMarks system={system} soundUrl={soundUrl}>
-          {calendarUrl ? <CalendarLink url={calendarUrl} /> : null}
-        </GameMarks>
         <h1>{title}</h1>
         {tagline ? <p className="tagline">{tagline}</p> : null}
-        <span className="pill lead">{eyebrow}</span>
         {chips.length > 0 ? (
           <div className="row" style={{ gap: 6 }}>
             {chips.map((chip) => (
@@ -188,6 +189,13 @@ function BaseHero({
           </div>
         ) : null}
         {children}
+        {/* The game's chips on the left, then the way in, in one row. */}
+        <div className="row hero-actions">
+          <GameMarks kind={kind} system={system} lead={lead} soundUrl={soundUrl}>
+            {calendarUrl ? <CalendarLink url={calendarUrl} /> : null}
+          </GameMarks>
+          {actions}
+        </div>
       </main>
     </div>
   );
@@ -216,7 +224,8 @@ function CampaignBase({ home }: { home: CampaignHome }) {
   return (
     <>
       <BaseHero
-        eyebrow={`${STATE_EYEBROW[listing.state] ?? "Campaign"}${listing.lead ? ` run by ${listing.lead.name}` : ""}`}
+        kind={STATE_EYEBROW[listing.state] ?? "Campaign"}
+        lead={listing.lead ? `GM: ${listing.lead.name}` : null}
         title={listing.name}
         tagline={listing.tagline}
         heroUrl={listing.heroUrl}
@@ -225,14 +234,10 @@ function CampaignBase({ home }: { home: CampaignHome }) {
         calendarUrl={home.calendarUrl}
         system={listing.system ?? listing.game?.name ?? null}
         chips={[...cadence(listing), listing.where === "voice" ? "Voice" : listing.where].filter((c): c is string => Boolean(c))}
+        actions={listing.open ? <SignupButtons listing={listing} big /> : null}
       >
         {upcoming[0] ? <NextUp row={upcoming[0]} /> : null}
-        {listing.open || !home.calendarUrl ? (
-          <div className="row" style={{ gap: "16px 24px" }}>
-            {listing.open ? <SignupButtons listing={listing} big /> : null}
-            {home.calendarUrl ? null : <CalendarLink url={null} />}
-          </div>
-        ) : null}
+        {home.calendarUrl ? null : <CalendarLink url={null} />}
       </BaseHero>
     <main className="page">
 
@@ -340,13 +345,24 @@ function BoardBase({ home }: { home: BoardHome }) {
   return (
     <>
       <BaseHero
-        eyebrow={`Board game${next?.lead ? ` hosted by ${next.lead.name}` : ""}`}
+        kind="Board game"
+        lead={next?.lead ? `Host: ${next.lead.name}` : null}
         title={game.name}
         tagline={game.summary}
         heroUrl={next?.heroUrl ?? game.coverUrl}
         soundUrl={next?.soundUrl ?? null}
         calendarUrl={home.calendarUrl}
         chips={[players, length, played > 0 ? `Played ${played}×` : null].filter((c): c is string => Boolean(c))}
+        actions={
+          <>
+            {next?.open ? <SignupButtons listing={next} big /> : null}
+            {canEdit && !editing ? (
+              <button type="button" className="btn" onClick={() => setEditing(true)}>
+                Edit the game
+              </button>
+            ) : null}
+          </>
+        }
       >
         {next ? (
           <div className="next-up">
@@ -362,15 +378,7 @@ function BoardBase({ home }: { home: BoardHome }) {
             ) : null}
           </div>
         ) : null}
-        <div className="row" style={{ gap: "16px 24px" }}>
-          {next?.open ? <SignupButtons listing={next} big /> : null}
-          {home.calendarUrl ? null : <CalendarLink url={null} />}
-          {canEdit && !editing ? (
-            <button type="button" className="btn" onClick={() => setEditing(true)}>
-              Edit the game
-            </button>
-          ) : null}
-        </div>
+        {home.calendarUrl ? null : <CalendarLink url={null} />}
       </BaseHero>
     <main className="page" id="days">
       {editing ? <CatalogEditor game={game} done={() => setEditing(false)} /> : null}
@@ -546,7 +554,7 @@ function RosterRows({ seats, empty, characters = true }: { seats: Seat[]; empty:
       <tbody>
         {seats.map((seat, i) => (
           <tr key={`${seat.role}-${seat.person?.id ?? i}`} className={seat.role === "gm" ? "gm" : undefined}>
-            <td style={{ width: 44 }}>
+            <td className="roster-face">
               <img
                 className="discord-avatar"
                 src={seat.person?.avatarUrl ?? ANONYMOUS_AVATAR}

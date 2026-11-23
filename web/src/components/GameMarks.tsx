@@ -4,17 +4,33 @@ import { youTubeVideo } from "../sound-link.ts";
 import { youTubePlayer } from "../youtube.ts";
 
 /**
- * What sits above a game's name everywhere the game is shown big: its system,
- * as a chip, and its sound. The home base, the splash, a game's own page and
- * the slideshow all wear this, so a game looks like itself wherever it is.
- * The slideshow passes no sound: it never plays one. A home base adds its
- * calendar link to the end of the row.
+ * A game's chips, in one row, the same everywhere the game is shown big: what
+ * kind of game it is, its system, who runs it, and its sound. A home base sets
+ * them beside "I Want To Play", a game's own page signed out sets them beside
+ * its way in, and the slideshow sets them above the name. The slideshow passes
+ * no sound: it never plays one. A home base adds its calendar link at the end.
  */
-export function GameMarks({ system, soundUrl = null, children }: { system: string | null; soundUrl?: string | null; children?: ReactNode }) {
-  if (!system && !soundUrl && !children) return null;
+export function GameMarks({
+  kind = null,
+  system,
+  lead = null,
+  soundUrl = null,
+  children,
+}: {
+  kind?: string | null;
+  system: string | null;
+  lead?: string | null;
+  soundUrl?: string | null;
+  children?: ReactNode;
+}) {
+  // A board game's system is "Board game" already: say it once.
+  const what = kind && kind !== system ? kind : null;
+  if (!what && !system && !lead && !soundUrl && !children) return null;
   return (
     <div className="game-marks">
+      {what ? <span className="chip">{what}</span> : null}
       {system ? <span className="chip system">{system}</span> : null}
+      {lead ? <span className="chip lead">{lead}</span> : null}
       <SoundButton url={soundUrl} />
       {children}
     </div>

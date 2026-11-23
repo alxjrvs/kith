@@ -182,8 +182,6 @@ img { max-width: 100%; }
 .pill.maybe { --pill: var(--maybe); }
 .pill.out { --pill: var(--out); }
 .pill.accent { --pill: var(--accent); }
-/* Who runs a game: a small brass pill under its description. */
-.pill.lead { --pill: var(--lead); align-self: flex-start; border-color: var(--lead-edge); background: var(--lead-wash); color: var(--lead); }
 
 /* Seat and attendance squares */
 .squares { display: inline-flex; flex-wrap: wrap; gap: 3px; }
@@ -254,7 +252,9 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 .panel > .character-ask { border-top: 1px solid var(--rule); padding-top: 14px; }
 .panel > .character-form { border-top: 1px solid var(--rule); }
 .character-form .field textarea { min-height: 88px; }
-.discord-avatar { display: block; width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: var(--raised); }
+/* The face column is exactly one face wide: as a percentage, the global img max-width let the table squeeze it to an oval. */
+.roster td.roster-face { width: 28px; }
+.discord-avatar { display: block; width: 28px; height: 28px; min-width: 28px; max-width: none; border-radius: 50%; object-fit: cover; background: var(--raised); }
 .chip { padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); font-family: var(--font-small); font-size: 13px; font-weight: 500; }
 
 /* Prose (knowledge pages) */
@@ -288,12 +288,33 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 
 /* The game system, first among the chips and lit like the table's top seat. */
 .chip.system { border-color: var(--accent); color: var(--link); }
+/* Who runs a game, in brass beside the ember of its system. */
+.chip.lead { border-color: var(--lead-edge); background: var(--lead-wash); color: var(--lead); }
+/* A home base's chips, then its way in, in one row on the left. */
+.hero-actions { gap: 16px 24px; align-items: center; width: max-content; max-width: calc(100vw - 64px); }
+.game-marks .btn.sound { white-space: nowrap; }
+@media (max-width: 640px) {
+  .hero-actions { max-width: 100%; }
+  /* Signed out on a phone the way in stacks under the game's chips, not over them. */
+  .show-bottom > .game-marks { order: 1; }
+  /* On a phone a game's chips sit above the way in and stretch to fill each row. */
+  .hero-actions { width: 100%; }
+  .hero-actions > .game-marks, .show-bottom > .game-marks { width: 100%; }
+  .game-marks > :is(.chip, .btn) { flex: 1 1 auto; justify-content: center; }
+  /* Its chips and the way in take two or three rows down there: keep the words above them. */
+  .show-slide[data-still] .show-slide-words { padding-bottom: 208px; }
+}
 /* Above a game's name: its system and its sound, the same size side by side. */
 .game-marks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .game-marks .chip, .game-marks .btn.sound, .game-marks .btn.calendar { min-height: 36px; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: var(--radius-sm); font-size: 13px; }
 /* The sound never plays by itself: until it is pressed, its button glows faintly in ember. */
 .game-marks .btn.sound[data-unheard] { border-color: var(--accent); box-shadow: 0 0 14px 2px color-mix(in srgb, var(--accent) 40%, transparent); }
 .game-marks .btn.calendar { justify-content: center; width: 36px; padding: 0; line-height: 0; }
+/* Beside the way in, the chips stand as tall as its buttons: big on a home base, plain in the signed-out footer. */
+.hero-actions .game-marks :is(.chip, .btn) { min-height: 56px; padding: 0 20px; border-radius: var(--radius); font-size: 15px; }
+.hero-actions .game-marks .btn.calendar { width: 56px; padding: 0; }
+.show-bottom .game-marks :is(.chip, .btn) { min-height: 44px; padding: 0 16px; border-radius: var(--radius); font-size: 14px; }
+.show-bottom .game-marks .btn.calendar { width: 44px; padding: 0; }
 
 /*
  * The landing, for someone not signed in: one screen tall and never scrolls.
