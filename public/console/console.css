@@ -1,14 +1,40 @@
 /* The console's own layout. Everything else is a token. */
-.bar {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3, 12px);
-  padding: var(--space-3, 12px) var(--space-4, 16px);
-  border-bottom: var(--border-structural);
+/*
+ * The site header, the same one every signed-in page wears. Its values are the
+ * site's Ember Table tokens (web/src/styles.css), written out here because the
+ * console keeps its own tokens and has no build step.
+ */
+.site-header {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px;
+  padding: 0 18px; min-height: 52px;
+  background: #2a2522; border-bottom: 1px solid #181513;
+  font-family: "Hanken Grotesk", system-ui, sans-serif; font-size: 14px; line-height: 1.45; font-feature-settings: normal;
 }
-.mark { font: var(--type-title, inherit); letter-spacing: 0.02em; }
-.who { color: var(--text-secondary); font: var(--type-caption, inherit); }
+.site-header .wordmark {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: "Schibsted Grotesk", "Hanken Grotesk", system-ui, sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.03em;
+  color: #f4eee8; text-decoration: none;
+}
+.site-nav { display: flex; flex-wrap: wrap; gap: 4px 22px; flex-grow: 1; font-size: 13px; }
+.site-nav a { display: inline-flex; align-items: center; min-height: 52px; color: #c4b8ad; text-decoration: none; }
+.site-nav a:hover { color: #fff; }
+.site-nav a[aria-current="page"] { color: #f4eee8; box-shadow: inset 0 -2px 0 #ff8a4c; }
+.site-header .avatar {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; border-radius: 8px;
+  background: #342e2a; color: #f4eee8;
+  font-size: 13px; font-weight: 600; text-decoration: none; overflow: hidden;
+}
+.site-header .avatar:empty { visibility: hidden; }
+.site-header .avatar img { width: 100%; height: 100%; object-fit: cover; }
+.site-header :focus-visible { outline: 2px solid #ff8a4c; outline-offset: 2px; }
+/* On a phone: the wordmark and the avatar share the top line, the links run below. */
+@media (max-width: 640px) {
+  .site-header { column-gap: 12px; }
+  .site-header > .avatar, .site-header > .btn { margin-left: auto; }
+  .site-nav { order: 3; flex-basis: 100%; }
+  .site-nav a { min-height: 40px; }
+}
 
 main { padding: var(--space-4, 16px); }
 .note { color: var(--text-secondary); }

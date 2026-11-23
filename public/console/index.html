@@ -23,11 +23,25 @@
     <link rel="stylesheet" href="/console/tokens/motion.css" />
     <link rel="stylesheet" href="/console/tokens/base.css" />
     <link rel="stylesheet" href="/console/console.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600&family=Schibsted+Grotesk:wght@800&display=swap" />
   </head>
   <body>
-    <header class="bar">
-      <span class="mark">Kith</span>
-      <span class="who" id="who"></span>
+    <!--
+      The site's header, written out by hand: the same header every signed-in
+      page of the site wears (web/src/components/Header.tsx). Keep the two alike.
+    -->
+    <header class="site-header">
+      <a href="/" class="wordmark"><img src="/mark.svg" alt="" width="22" height="22" />Kith.town</a>
+      <nav aria-label="Main" class="site-nav">
+        <a href="/games">Games</a>
+        <a href="/agenda">Agenda</a>
+        <a href="/coc">Rules</a>
+        <a href="/slideshow">Slideshow</a>
+        <a href="/console" aria-current="page">Organise</a>
+      </nav>
+      <a href="/profile" class="avatar" id="avatar" aria-label="Your profile"></a>
     </header>
 
     <main id="main" aria-busy="true">

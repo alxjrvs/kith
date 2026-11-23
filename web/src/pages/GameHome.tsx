@@ -125,38 +125,17 @@ function BaseHero({
   system?: string | null;
   children?: ReactNode;
 }) {
-  const me = useMe().data;
   return (
     <div className="splash base">
       {heroUrl ? <div className="hero" style={{ backgroundImage: `url("${encodeURI(heroUrl)}")` }} /> : null}
       {heroUrl ? null : <TableMotif />}
-      <header>
-        <div className="row" style={{ gap: 24 }}>
-          <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
-            <img src="/mark.svg" alt="" width="26" height="26" />
-            Kith.town
-          </Link>
-          <nav aria-label="Main" className="site-nav">
-            <Link to="/games">Games</Link>
-            <Link to="/agenda">Agenda</Link>
-            <Link to="/slideshow">Slideshow</Link>
-          </nav>
-        </div>
-        <div className="row" style={{ gap: 10 }}>
-          <SoundButton url={soundUrl} />
-          {me && !me.signedIn ? (
-            <a className="btn" href={signInHref()}>
-              Sign in
-            </a>
-          ) : null}
-        </div>
-      </header>
+      <Header over={Boolean(heroUrl)} />
       <main>
         {logoUrl ? <img className="base-logo" src={logoUrl} alt="" /> : null}
         <span className="label">{eyebrow}</span>
         <h1>{title}</h1>
         {tagline ? <p className="tagline">{tagline}</p> : null}
-        {chips.length > 0 || system ? (
+        {chips.length > 0 || system || soundUrl ? (
           <div className="row" style={{ gap: 6 }}>
             {system ? <span className="chip system">{system}</span> : null}
             {chips.map((chip) => (
@@ -164,6 +143,7 @@ function BaseHero({
                 {chip}
               </span>
             ))}
+            <SoundButton url={soundUrl} />
           </div>
         ) : null}
         {children}

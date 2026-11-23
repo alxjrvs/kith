@@ -4,6 +4,7 @@ import { useHomes, useMe, type GameSummary } from "../api.ts";
 import { inDays, stamp } from "../format.ts";
 import { Markdown } from "../markdown.tsx";
 import { signInHref } from "../signin.ts";
+import { Header } from "../components/Header.tsx";
 
 /** How long each game holds the screen before the next one comes in. */
 const HOLD_MS = 7000;
@@ -33,8 +34,14 @@ export function Landing() {
   );
 }
 
-/** The name, and on the slides what Kith is (the empty room says it larger). */
+/**
+ * Signed out: the name, and on the slides what Kith is (the empty room says it
+ * larger). Signed in, the slideshow is one more page of the site, so it wears
+ * the site header, floating over the art as text.
+ */
 function Top({ about }: { about: boolean }) {
+  const signedIn = useMe().data?.signedIn === true;
+  if (signedIn) return <Header over />;
   return (
     <header className="show-top">
       <Link to="/" className="wordmark" style={{ fontSize: 26 }}>

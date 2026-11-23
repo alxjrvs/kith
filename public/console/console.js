@@ -7,7 +7,33 @@
  */
 const main = document.getElementById("main");
 const status = document.getElementById("status");
-const who = document.getElementById("who");
+
+/**
+ * The header's avatar, as the site shows it: their Discord picture, or their
+ * initials. Read once, on its own, so the rest of the page never waits on it.
+ */
+async function fillHeader() {
+  const avatar = document.getElementById("avatar");
+  const me = await fetch("/api/hub/me", { credentials: "same-origin" })
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
+  if (!avatar || !me?.signedIn) return;
+  avatar.setAttribute("aria-label", `Your profile, ${me.user.name}`);
+  if (me.user.avatarUrl) {
+    const img = document.createElement("img");
+    img.src = me.user.avatarUrl;
+    img.alt = "";
+    avatar.replaceChildren(img);
+  } else {
+    avatar.textContent = me.user.name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("");
+  }
+}
+void fillHeader();
 
 /** Every response is JSON; the interesting part is what a refusal means. */
 async function api(path, init) {
@@ -2053,7 +2079,6 @@ async function load() {
         ])
       : [null, null, null, null];
 
-    who.textContent = `signed in as ${me.userId}`;
     const split = document.createElement("div");
     split.className = "split";
     split.append(agendaSection(agenda), detailRail(detail));
