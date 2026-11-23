@@ -4,6 +4,7 @@
  * SoundCloud and plays with its credit there; Kith never copies the audio.
  * https://developers.soundcloud.com/docs/api/html5-widget
  */
+import { startMs } from "./sound-link.ts";
 
 /** A SoundCloud track's address, and where to start in it (`#t=0:09`, `#t=9`, `?t=1m30s`). */
 export interface SoundCloudTrack {
@@ -27,13 +28,6 @@ export function soundCloudTrack(link: string): SoundCloudTrack | null {
   return { url: parsed.toString(), startMs: start ? startMs(start) : 0 };
 }
 
-/** `0:09`, `1:02:03`, `9`, `1m30s` → milliseconds; anything else is the start. */
-function startMs(t: string): number {
-  if (/^\d+(?::\d{1,2}){0,2}$/.test(t)) return t.split(":").reduce((s, part) => s * 60 + Number(part), 0) * 1000;
-  const m = t.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
-  if (m && t) return ((Number(m[1] ?? 0) * 60 + Number(m[2] ?? 0)) * 60 + Number(m[3] ?? 0)) * 1000;
-  return 0;
-}
 
 interface Widget {
   play(): void;
@@ -64,7 +58,7 @@ function loadApi(): Promise<void> {
   return api;
 }
 
-/** What the sound button drives: an <audio> element or SoundCloud's player. */
+/** What the sound button drives: an <audio> element, SoundCloud's player or YouTube's. */
 export interface Player {
   play(): void;
   pause(): void;
