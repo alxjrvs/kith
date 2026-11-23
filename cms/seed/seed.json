@@ -338,6 +338,184 @@
             }
           ]
         }
+      },
+      {
+        "id": "conduct",
+        "slug": "conduct",
+        "status": "published",
+        "data": {
+          "title": "The rules",
+          "body": [
+            {
+              "_type": "block",
+              "_key": "r00",
+              "style": "h2",
+              "markDefs": [],
+              "children": [
+                {
+                  "_type": "span",
+                  "_key": "r00s",
+                  "text": "1. Respect the game",
+                  "marks": []
+                }
+              ]
+            },
+            {
+              "_type": "block",
+              "_key": "r01",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_type": "span",
+                  "_key": "r01s",
+                  "text": "It is a privilege to come together and play games like this. Take everyone as they are, and interact with the story we are telling collectively. Lean in. Dork out. Bring your shit. Let's get weird.",
+                  "marks": []
+                }
+              ]
+            },
+            {
+              "_type": "block",
+              "_key": "r10",
+              "style": "h2",
+              "markDefs": [],
+              "children": [
+                {
+                  "_type": "span",
+                  "_key": "r10s",
+                  "text": "2. Respect each other's time",
+                  "marks": []
+                }
+              ]
+            },
+            {
+              "_type": "block",
+              "_key": "r11",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_type": "span",
+                  "_key": "r11s",
+                  "text": "We get precious few opportunities to spend time with each other. Needing to step away for a day, from a game, running late, had a tough one, etc. All human. Just let us know ASAP rather than letting guilt linger.",
+                  "marks": []
+                }
+              ]
+            },
+            {
+              "_type": "block",
+              "_key": "r20",
+              "style": "h2",
+              "markDefs": [],
+              "children": [
+                {
+                  "_type": "span",
+                  "_key": "r20s",
+                  "text": "3. Give each other grace",
+                  "marks": []
+                }
+              ]
+            },
+            {
+              "_type": "block",
+              "_key": "r21",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_type": "span",
+                  "_key": "r21s",
+                  "text": "It's all our first time being alive. We will make mistakes, we will annoy each other, and we may even hurt each other's feelings. This is the bargain we make when we want to play games that make us feel things. Keep it on the court, and remember that we are all friends.",
+                  "marks": []
+                }
+              ]
+            },
+            {
+              "_type": "block",
+              "_key": "r30",
+              "style": "h2",
+              "markDefs": [],
+              "children": [
+                {
+                  "_type": "span",
+                  "_key": "r30s",
+                  "text": "4. Don't be an asshole",
+                  "marks": []
+                }
+              ]
+            },
+            {
+              "_type": "block",
+              "_key": "r31",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_type": "span",
+                  "_key": "r31s",
+                  "text": "Bigotry, harassment, continued patterns of breaking boundaries and agreed upon rules, and overall being an unpleasant games partner will get you un-invited and kicked out.",
+                  "marks": []
+                }
+              ]
+            },
+            {
+              "_type": "block",
+              "_key": "r40",
+              "style": "h2",
+              "markDefs": [],
+              "children": [
+                {
+                  "_type": "span",
+                  "_key": "r40s",
+                  "text": "5. Say if it sucks",
+                  "marks": []
+                }
+              ]
+            },
+            {
+              "_type": "block",
+              "_key": "r41",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_type": "span",
+                  "_key": "r41s",
+                  "text": "This is fun make believe time. If we ever cross the line into real hurtful experiences, traumas, we stop and take some time. We have a universal stop sign button on every game's page in the app, and a suggestion box for private communication. I am always available to chat about anything.",
+                  "marks": []
+                }
+              ]
+            },
+            {
+              "_type": "block",
+              "_key": "r50",
+              "style": "h2",
+              "markDefs": [],
+              "children": [
+                {
+                  "_type": "span",
+                  "_key": "r50s",
+                  "text": "6. I'm God, fuck you",
+                  "marks": []
+                }
+              ]
+            },
+            {
+              "_type": "block",
+              "_key": "r51",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_type": "span",
+                  "_key": "r51s",
+                  "text": "At the end of the day, this is my server, and I'll kick you out if you suck. I doubt I'll have to, but, live in fear.",
+                  "marks": []
+                }
+              ]
+            }
+          ]
+        }
       }
     ]
   }
