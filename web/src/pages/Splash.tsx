@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ToTable } from "../components/To.tsx";
+import { Header } from "../components/Header.tsx";
 import { Link, useParams } from "@tanstack/react-router";
 import { useListing, useMe, type Listing } from "../api.ts";
 import { SeatSquares } from "../components/Squares.tsx";
@@ -21,6 +22,8 @@ export function Splash() {
   if (query.isPending) return <div className="splash" aria-busy="true" />;
   if (query.isError) {
     return (
+      <>
+      {me?.signedIn ? <Header /> : null}
       <main className="page">
         <h1>Nothing to join here</h1>
         <p className="muted">
@@ -33,6 +36,7 @@ export function Splash() {
           {me?.signedIn ? <Link to="/games">See every game</Link> : <Link to="/">Back to the front page</Link>}
         </p>
       </main>
+      </>
     );
   }
 
@@ -141,24 +145,22 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
     <div className="splash">
       {listing.heroUrl ? <div className="hero" style={{ backgroundImage: `url("${encodeURI(listing.heroUrl)}")` }} /> : null}
       {listing.heroUrl ? null : <TableMotif />}
-      <header>
-        <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
-          <img src="/mark.svg" alt="" width="26" height="26" />
-          Kith.town
-        </Link>
-        <div className="row" style={{ gap: 10 }}>
-          <SoundButton url={listing.soundUrl} />
-          {signedIn ? (
-            <Link to="/agenda" className="btn">
-              Your agenda
-            </Link>
-          ) : (
+      {signedIn ? (
+        <Header over={Boolean(listing.heroUrl)} />
+      ) : (
+        <header>
+          <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
+            <img src="/mark.svg" alt="" width="26" height="26" />
+            Kith.town
+          </Link>
+          <div className="row" style={{ gap: 10 }}>
+            <SoundButton url={listing.soundUrl} />
             <a className="btn" href={signInHref()}>
               Sign in
             </a>
-          )}
-        </div>
-      </header>
+          </div>
+        </header>
+      )}
       <main>
         <span className="label">{eyebrow}</span>
         <h1>{listing.name}</h1>
@@ -170,6 +172,7 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
               {chip}
             </span>
           ))}
+          {signedIn ? <SoundButton url={listing.soundUrl} /> : null}
         </div>
         <div className="row" style={{ gap: "16px 24px" }}>
           <SignupButtons listing={listing} big />

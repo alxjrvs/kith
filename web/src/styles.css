@@ -95,6 +95,20 @@ img { max-width: 100%; }
   font-size: 13px; font-weight: 600; text-decoration: none; overflow: hidden;
 }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
+/*
+ * Over a hero image the same header floats as text only: no bar, no rule, the
+ * words carrying their own shadow so they read on any picture.
+ */
+.site-header.over { position: relative; z-index: 2; background: transparent; border-bottom-color: transparent; text-shadow: 0 1px 3px #000c, 0 2px 18px #000a, 0 0 42px #0008; }
+.site-header.over .site-nav a { color: var(--text); }
+.site-header.over .avatar, .site-header.over .btn { text-shadow: none; }
+/* On a phone: the wordmark and the avatar share the top line, the links run below. */
+@media (max-width: 640px) {
+  .site-header { column-gap: 12px; }
+  .site-header > .avatar, .site-header > .btn { margin-left: auto; }
+  .site-nav { order: 3; flex-basis: 100%; }
+  .site-nav a { min-height: 40px; }
+}
 
 /* Layout */
 .page { max-width: 1120px; margin: 0 auto; padding: 28px var(--gutter) 48px; display: flex; flex-direction: column; gap: 28px; }
@@ -188,13 +202,13 @@ img { max-width: 100%; }
  * never greyed where it shows.
  */
 .splash .hero { position: absolute; inset: 0; background-size: cover; background-position: center right; }
-.splash header, .splash main { text-shadow: 0 1px 3px #000c, 0 2px 18px #000a, 0 0 42px #0008; }
+.splash header:not(.site-header), .splash main { text-shadow: 0 1px 3px #000c, 0 2px 18px #000a, 0 0 42px #0008; }
 /* The picture is shown whole, so the words carry their own soft shadow, and controls keep their own faces. */
 .splash .btn, .splash .chip, .splash .pill, .splash .panel { text-shadow: none; }
 .splash main > .label { color: var(--text); }
 /* No picture: the Kith mark, big, in the right half. */
 .splash .logo-art { position: absolute; right: 8%; top: 50%; transform: translateY(-50%); width: min(40vw, 72vh, 620px); height: auto; opacity: 0.9; pointer-events: none; }
-.splash header { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 32px; }
+.splash header:not(.site-header) { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 32px; }
 .splash main { position: relative; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 24px; padding: 32px 32px 48px; max-width: 760px; }
 .splash h1 { font-size: clamp(48px, 10vw, 88px); line-height: 0.95; font-weight: 800; letter-spacing: -0.035em; }
 .splash .tagline { font-size: 22px; line-height: 1.3; }
@@ -202,7 +216,6 @@ img { max-width: 100%; }
 .card-logo { position: absolute; left: 12px; bottom: 12px; width: auto; height: auto; max-height: 56px; max-width: 60%; object-fit: contain; border-radius: 8px; filter: drop-shadow(0 2px 6px #0009); }
 /* A home base wears the splash: shorter, so the table shows below the fold line. */
 .splash.base { min-height: 88vh; }
-.splash .site-nav a { color: var(--text); }
 .next-up { display: flex; flex-direction: column; gap: 6px; max-width: 640px; }
 .next-stamp { font-size: clamp(22px, 4vw, 32px); font-weight: 600; letter-spacing: -0.01em; }
 .section-title { font-family: var(--font-head); font-size: clamp(26px, 4vw, 36px); font-weight: 800; letter-spacing: -0.03em; }
@@ -224,7 +237,7 @@ img { max-width: 100%; }
 .prose code { font-family: var(--font-mono); background: var(--deep); padding: 1px 4px; border-radius: 4px; }
 
 @media (max-width: 640px) {
-  .splash header, .splash main { padding-left: 16px; padding-right: 16px; }
+  .splash header:not(.site-header), .splash main { padding-left: 16px; padding-right: 16px; }
   .page { padding-left: 16px; padding-right: 16px; }
 }
 
