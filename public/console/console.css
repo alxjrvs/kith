@@ -35,6 +35,9 @@
   .site-nav { order: 3; flex-basis: 100%; }
   .site-nav a { min-height: 40px; }
 }
+@media (max-width: 360px) {
+  .site-nav { column-gap: 14px; }
+}
 
 main { padding: var(--space-4, 16px); }
 .note { color: var(--text-secondary); }
@@ -182,3 +185,26 @@ ul.log li { padding: var(--space-1, 4px) 0; border-bottom: var(--border-hair); c
 form.recap { margin-block: var(--space-4, 16px); display: grid; gap: var(--space-2, 8px); }
 form.recap textarea { display: block; width: 100%; margin-block-start: var(--space-1, 4px); }
 form.recap button[disabled] { opacity: 0.6; }
+
+/*
+ * On a phone. The console's tables are wider than a phone however they wrap,
+ * so each one scrolls sideways inside itself and the page stays put; the
+ * header never moves. Buttons and checkboxes grow to a thumb's size.
+ */
+@media (max-width: 640px) {
+  main table { display: block; max-width: 100%; overflow-x: auto; }
+  main th, main td { min-width: 6.5rem; }
+  main th.numeric, main td.numeric { min-width: 0; }
+  /* A cell holding a sentence (the staging caveat, a suggestion) gets room to read it. */
+  main td:has(> p), main td[style*="pre-wrap"], main td:last-child:not(:empty) { min-width: 14rem; }
+  main button.link { text-align: left; }
+  .rail { border-left: 0; padding-left: 0; border-top: var(--border-structural); padding-top: var(--space-4, 16px); }
+  .controls .primary { margin-left: 0; }
+}
+@media (pointer: coarse) {
+  main button { min-height: 40px; }
+  main button.link { min-height: 0; }
+  main :is(input:not([type="checkbox"]), select) { min-height: 40px; }
+  main td > button { margin-block: 2px; }
+  main input[type="checkbox"] { width: 20px; height: 20px; vertical-align: middle; }
+}

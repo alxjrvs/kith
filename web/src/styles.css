@@ -109,6 +109,10 @@ img { max-width: 100%; }
   .site-nav { order: 3; flex-basis: 100%; }
   .site-nav a { min-height: 40px; }
 }
+/* The narrowest phones: closer links, so the five still fit on one line. */
+@media (max-width: 360px) {
+  .site-nav { column-gap: 14px; }
+}
 
 /* Layout */
 .page { max-width: 1120px; margin: 0 auto; padding: 28px var(--gutter) 48px; display: flex; flex-direction: column; gap: 28px; }
@@ -191,6 +195,15 @@ img { max-width: 100%; }
   border-radius: var(--radius); background: var(--deep);
 }
 .field textarea { min-height: 120px; resize: vertical; }
+/*
+ * A field grows along a row. Down a column (a form, a panel's body) its 180px
+ * basis would be its height, leaving a tall empty gap above the input.
+ */
+:is(.stack, .panel > .panel-body:not(.row)) > .field { flex: none; }
+.panel > .panel-body.row { flex-direction: row; flex-wrap: wrap; }
+/* A checkbox big enough for a thumb, and its whole line is the target. */
+input[type="checkbox"] { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
+label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 .notice { padding: 10px 14px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--deep); }
 .notice.error { border-color: var(--out); }
 
@@ -231,7 +244,7 @@ img { max-width: 100%; }
 .chip { padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); font-family: var(--font-small); font-size: 13px; font-weight: 500; }
 
 /* Prose (knowledge pages) */
-.prose { font-size: 15px; line-height: 1.6; max-width: 72ch; }
+.prose { font-size: 15px; line-height: 1.6; max-width: 72ch; overflow-wrap: anywhere; }
 .prose h1, .prose h2, .prose h3 { font-family: var(--font-head); margin: 1.2em 0 0.4em; }
 .prose p, .prose ul, .prose ol { margin: 0 0 0.9em; }
 .prose code { font-family: var(--font-mono); background: var(--deep); padding: 1px 4px; border-radius: 4px; }
@@ -252,7 +265,11 @@ img { max-width: 100%; }
 .prose h4 { font-family: var(--font-head); margin: 1em 0 0.3em; }
 .link-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 14px; border-bottom: 1px solid var(--rule); }
 .link-row:last-child { border-bottom: 0; }
-.link-row a { font-weight: 600; }
+.link-row a { font-weight: 600; overflow-wrap: anywhere; }
+/* On a touch screen a link standing on its own line gets a finger-sized target without moving anything. */
+@media (pointer: coarse) {
+  :is(.link-row, .panel-head, .section-head) a { display: inline-block; padding-block: 12px; margin-block: -12px; }
+}
 .prose > :first-child { margin-top: 0; }
 
 /* The game system, first among the chips and lit like the table's top seat. */
@@ -306,12 +323,12 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
 .show-pitch p + p { margin-top: 0.6em; }
 .show-bottom { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 20px 32px 28px; }
 .show-dots { display: flex; flex-wrap: wrap; gap: 8px; }
-.show-dots button { position: relative; overflow: hidden; width: 36px; height: 6px; padding: 0; border: 0; border-radius: 3px; background: color-mix(in srgb, var(--text) 28%, transparent); cursor: pointer; }
-/* A larger target than the bar itself, for fingers. */
-.show-dots button::before { content: ""; position: absolute; inset: -12px -2px; }
+.show-dots button { position: relative; width: 36px; height: 6px; padding: 0; border: 0; border-radius: 3px; background: color-mix(in srgb, var(--text) 28%, transparent); cursor: pointer; }
+/* A larger target than the bar itself, for fingers. (The bar must not clip it, or the extra target is dead.) */
+.show-dots button::before { content: ""; position: absolute; inset: -19px -4px; }
 .show-dots button[aria-current="true"] { background: color-mix(in srgb, var(--text) 45%, transparent); }
 .show-dots button[aria-current="true"]:not(:has(.fill)) { background: var(--accent); }
-.show-dots .fill { position: absolute; inset: 0; background: var(--accent); transform-origin: left; animation: show-fill linear both; }
+.show-dots .fill { position: absolute; inset: 0; border-radius: inherit; background: var(--accent); transform-origin: left; animation: show-fill linear both; }
 @keyframes show-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes show-drift { from { transform: scale(1.1); } to { transform: scale(1.04); } }
 
@@ -330,6 +347,13 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
   .show-mark { right: -15%; top: 30%; width: 90vw; opacity: 0.2; }
   .show-hint { display: none; }
   .show-bottom .btn { flex: 1; justify-content: center; }
+  /* The words grow up from the bottom; a long description would climb under the header. */
+  .show-pitch { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
+}
+/* A shorter phone (an SE, or a browser with its bars showing): the name and tagline are enough. */
+@media (max-width: 640px) and (max-height: 760px) {
+  .show-pitch { display: none; }
+  .show-slide-words { gap: 16px; }
 }
 
 /* Very short screens (a phone on its side): the words shrink before anything scrolls. */
@@ -368,8 +392,15 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
 .stop-dialog p { margin: 0; line-height: 1.5; }
 .btn.stop-confirm { background: #c8322a; border-color: #c8322a; color: #fff; }
 .btn.stop-confirm:hover { filter: brightness(1.1); color: #fff; }
+/*
+ * On a phone the page runs the full width under it, so the sign is the octagon
+ * alone: still the one red thing in the corner, without sitting on the buttons
+ * of every row it scrolls past. Its name stays for screen readers.
+ */
 @media (max-width: 640px) {
-  .stop-sign { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .stop-sign { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); padding: 6px; }
+  .stop-sign .stop-octagon { width: 40px; height: 40px; }
+  .stop-sign .stop-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
 /* Room under the last panel, so the stop sign never sits on top of it. */
 body:has(.stop-sign) main.page { padding-bottom: 96px; }

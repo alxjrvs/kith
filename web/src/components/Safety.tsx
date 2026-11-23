@@ -24,7 +24,7 @@ export function StopSign({ slug, game }: { slug: string; game: string }) {
         <span className="stop-octagon" aria-hidden="true">
           STOP
         </span>
-        <span>Stop sign</span>
+        <span className="stop-label">Stop sign</span>
       </button>
       <dialog ref={dialog} className="stop-dialog" aria-labelledby="stop-title" onClick={(e) => e.target === dialog.current && close()}>
         {sent ? (
