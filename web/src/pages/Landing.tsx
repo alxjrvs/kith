@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { useHomes, type GameSummary } from "../api.ts";
+import { useHomes, useMe, type GameSummary } from "../api.ts";
 import { inDays, stamp } from "../format.ts";
 import { Markdown } from "../markdown.tsx";
 import { signInHref } from "../signin.ts";
@@ -234,8 +234,9 @@ function Slide({
 
 function GameLink({ game, children }: { game: GameSummary; children: ReactNode }) {
   // Signed out, a game day's page is its splash: the only page of it that is public.
+  const signedIn = useMe().data?.signedIn === true;
   return game.kind === "day" ? (
-    <Link to="/join/$kind/$id" params={{ kind: "game-day", id: game.slug }}>
+    <Link to={signedIn ? "/table/$kind/$id" : "/join/$kind/$id"} params={{ kind: "game-day", id: game.slug }}>
       {children}
     </Link>
   ) : (
@@ -246,6 +247,16 @@ function GameLink({ game, children }: { game: GameSummary; children: ReactNode }
 }
 
 function Footer({ children, action, hint = true }: { children?: ReactNode; action?: ReactNode; hint?: boolean }) {
+  // Signed in, the slideshow is at /slideshow, and the way out is back to Kith.
+  const signedIn = useMe().data?.signedIn === true;
+  if (signedIn && !action) {
+    action = (
+      <Link to="/" className="btn">
+        Back to Kith
+      </Link>
+    );
+    hint = false;
+  }
   return (
     <footer className="show-bottom">
       {children ?? <span />}

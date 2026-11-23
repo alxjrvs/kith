@@ -139,6 +139,7 @@ function BaseHero({
           <nav aria-label="Main" className="site-nav">
             <Link to="/games">Games</Link>
             <Link to="/agenda">Agenda</Link>
+            <Link to="/slideshow">Slideshow</Link>
           </nav>
         </div>
         <div className="row" style={{ gap: 10 }}>
