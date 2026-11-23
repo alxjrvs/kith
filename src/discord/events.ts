@@ -5,6 +5,7 @@ import { requireGuildId } from "../db/settings.ts";
 import {
   discordFingerprint,
   locationOf,
+  sessionLink,
   sessionTitle,
   type ProjectionTarget,
 } from "../projection/target.ts";
@@ -66,6 +67,17 @@ export function isMarkedFor(event: { description?: string | null }, sessionId: s
   return (event.description ?? "").includes(markerFor(sessionId));
 }
 
+/**
+ * What a person reads under the event: where to go on Kith, then the marker.
+ * The marker stays last and on its own line, so it reads as a tag rather than
+ * as part of the sentence.
+ */
+export function eventDescription(target: ProjectionTarget): string {
+  const link = sessionLink(target);
+  const marker = markerFor(target.session.id);
+  return link ? `Who's coming, and everything else: ${link}\n\n${marker}` : marker;
+}
+
 export function scheduledEventBody(target: ProjectionTarget): Record<string, unknown> {
   const { session, campaign } = target;
   const base = {
@@ -73,7 +85,7 @@ export function scheduledEventBody(target: ProjectionTarget): Record<string, unk
     privacy_level: GUILD_ONLY,
     scheduled_start_time: isoOf(session.startsAt),
     scheduled_end_time: isoOf(session.endsAt),
-    description: markerFor(session.id),
+    description: eventDescription(target),
   };
 
   // A VOICE event lives in a channel and needs no location; an EXTERNAL one is
@@ -117,6 +129,11 @@ function refFor(sessionId: string): PublicationRef {
 
 async function upsert(env: Env, target: ProjectionTarget, guildId: string): Promise<void> {
   const { session } = target;
+
+  // A cancelled session has no evening to point at. Its cancel already asked
+  // for the event to come down; an upsert arriving after it (a redelivery, or
+  // the hourly reconcile racing the cancel) must not put it back up.
+  if (session.state === "CANCELLED") return unproject(env, target, guildId);
   const fingerprint = await discordFingerprint(target);
 
   // The redelivery case, and the "nothing actually changed" case: a write that

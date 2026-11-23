@@ -126,11 +126,32 @@ export function discordProjectedContent(target: ProjectionTarget) {
      * once — one PATCH each, on the first upsert after this lands.
      */
     sessionId: session.id,
+    // The link back to the game, which the description also carries.
+    link: sessionLink(target),
     // Decides EXTERNAL vs VOICE, and which of the two fields the event carries.
     locationType: campaign?.locationType ?? "external",
     voiceChannelId: campaign?.discordVoiceChannelId ?? null,
   };
 }
+
+/**
+ * Where on the site a session's people go to see who is coming: the game's home
+ * base for a campaign or a single-game day, the day's own page otherwise. The
+ * Discord event links here, so the event is the way in and Kith stays the
+ * place things are decided.
+ */
+export function sessionLink({ campaign, gameDay, game }: ProjectionTarget): string | null {
+  if (campaign) return `${SITE}/games/${encodeURIComponent(campaign.id)}`;
+  if (gameDay) {
+    return gameDay.kind === "single" && game
+      ? `${SITE}/games/${encodeURIComponent(game.id)}`
+      : `${SITE}/table/game-day/${encodeURIComponent(gameDay.id)}`;
+  }
+  return null;
+}
+
+/** The site people use. Not PUBLIC_ORIGIN, which is where Google pushes to. */
+const SITE = "https://kith.town";
 
 export function googleProjectedContent(target: ProjectionTarget) {
   const { session } = target;
@@ -169,10 +190,11 @@ export function googleFingerprint(target: ProjectionTarget): Promise<string> {
  * on that list — `PROPOSED`, `CANCELLED`, and anything a later phase adds —
  * answers no.
  */
-const DAY_PUBLISHES = new Set(["SEATING", "LOCKED", "PLAYED"]);
+export const DAY_PUBLISHES = ["SEATING", "LOCKED", "PLAYED"] as const;
+const DAY_PUBLISHES_SET = new Set<string>(DAY_PUBLISHES);
 
 export function isProjectable({ campaign, gameDay }: ProjectionTarget): boolean {
   if (campaign) return campaign.state === "RUNNING";
-  if (gameDay) return DAY_PUBLISHES.has(gameDay.state);
+  if (gameDay) return DAY_PUBLISHES_SET.has(gameDay.state);
   return false;
 }
