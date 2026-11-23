@@ -295,8 +295,12 @@ export function useTableEdits(kind: string, id: string) {
 export interface Seat {
   person: Person | null;
   character: string | null;
-  /** The character's sheet, written in kith-cms. */
+  /** The character's sheet: the player's own link, or kith-cms's. */
   sheetUrl: string | null;
+  /** A few words about the character, as the player wrote them. */
+  description: string | null;
+  /** The viewer's own seat, whose character they can write. */
+  mine: boolean;
   role: "gm" | "player";
   state: "in" | "waitlisted";
 }
@@ -388,5 +392,17 @@ export function useSuggestion(slug: string) {
   return useMutation({
     mutationFn: (input: { body: string; anonymous: boolean }) =>
       api<{ ok: true }>(`/api/hub/homes/${encodeURIComponent(slug)}/suggestions`, { method: "POST", body: input }),
+  });
+}
+
+/** A player's own character on a campaign they're on the roster of. */
+export function useCharacter(slug: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { name: string; sheetUrl: string; description: string }) =>
+      api<{ ok: true }>(`/api/hub/homes/${encodeURIComponent(slug)}/character`, { method: "PUT", body: input }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["home", slug] });
+    },
   });
 }

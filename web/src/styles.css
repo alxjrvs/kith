@@ -247,6 +247,14 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 .roster tr.gm td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .roster-user { font-family: var(--font-small); }
 .roster-character { font-weight: 600; text-align: right; }
+.roster-character .character-description {
+  display: block; margin-top: 2px; font-size: 12px; font-weight: 400; color: var(--muted);
+  overflow-wrap: anywhere;
+}
+/* A player's own character, under the roster it sits on. */
+.panel > .character-ask { border-top: 1px solid var(--rule); padding-top: 14px; }
+.panel > .character-form { border-top: 1px solid var(--rule); }
+.character-form .field textarea { min-height: 88px; }
 /* The face column is exactly one face wide: as a percentage, the global img max-width let the table squeeze it to an oval. */
 .roster td.roster-face { width: 28px; }
 .discord-avatar { display: block; width: 28px; height: 28px; min-width: 28px; max-width: none; border-radius: 50%; object-fit: cover; background: var(--raised); }

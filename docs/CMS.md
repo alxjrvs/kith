@@ -34,6 +34,14 @@ a rename). Kith shows the character beside the
 player on that game's roster, linking to `sheet`. Whether the player is on the
 roster at all is still D1's answer.
 
+**A player can write their own character.** Players can't reach the CMS
+admin, so a player on a campaign's roster can add their character from the
+game's home base: a name, and optionally a link to their sheet and a few
+words about them. That is kept in D1 on their roster row
+(`campaign_members.character_*`), since it belongs to the seat. Once a player
+has saved theirs it wins over a CMS entry for the same player; until then the
+CMS entry shows (`src/hub/characters.ts`).
+
 **Where Kith reads it** (`src/cms/`): a campaign's tagline, pitch, hero,
 sound, system and logo (its cover, worn above its title and on its card)
 (`src/hub/listings.ts`); a board game's summary and cover, and its art on
