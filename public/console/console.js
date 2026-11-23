@@ -826,9 +826,9 @@ function lifecycleButtons(campaign) {
         }),
       );
     });
-    td.append(button);
+    buttons.push(button);
   }
-  row.append(td);
+  return buttons;
 }
 
 const FIELDS = [
