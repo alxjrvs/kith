@@ -90,7 +90,7 @@ export function toGame(e: CmsEntry): CmsGame | null {
     heroUrl: mediaUrl(e.data.hero),
     coverUrl: mediaUrl(e.data.cover),
     // An uploaded file wins; otherwise a link, such as a SoundCloud track.
-    soundUrl: mediaUrl(e.data.sound) ?? mediaUrl(str(e.data.soundLink)),
+    soundUrl: mediaUrl(e.data.sound) ?? mediaUrl(str(e.data.sound_link)),
     visibility: vis(e.data.visibility),
   };
 }

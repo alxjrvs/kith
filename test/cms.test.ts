@@ -70,9 +70,9 @@ describe("reading kith-cms", () => {
   it("plays a game's sound from a link, such as a SoundCloud track, when no file is uploaded", async () => {
     const track = "https://soundcloud.com/someone/a-track#t=0:09";
     collections.games = [
-      { slug: "linked", data: { title: "Linked", soundLink: track } },
-      { slug: "both", data: { title: "Both", soundLink: track, sound: { id: "x", src: "/_emdash/api/media/file/01ABC.mp3" } } },
-      { slug: "insecure", data: { title: "Insecure", soundLink: "http://soundcloud.com/someone/a-track" } },
+      { slug: "linked", data: { title: "Linked", sound_link: track } },
+      { slug: "both", data: { title: "Both", sound_link: track, sound: { id: "x", src: "/_emdash/api/media/file/01ABC.mp3" } } },
+      { slug: "insecure", data: { title: "Insecure", sound_link: "http://soundcloud.com/someone/a-track" } },
     ];
     expect((await cmsGames(cmsEnv())).map((g) => g.soundUrl)).toEqual([track, "/media/01ABC.mp3", undefined]);
   });
