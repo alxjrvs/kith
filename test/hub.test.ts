@@ -8,6 +8,7 @@ import { SESSION_COOKIE, issueSession } from "../src/console/cookies.ts";
 import { canSee } from "../src/hub/visibility.ts";
 import { forgetOrganisers } from "../src/http/hub.ts";
 import { resetCmsCache } from "../src/cms/client.ts";
+import { plain } from "../src/hub/public-campaigns.ts";
 
 /**
  * The site's API. What matters: anybody can read what is public and nothing
@@ -713,6 +714,7 @@ describe("the public campaigns feed", () => {
         open: false,
         system: "Daggerheart",
         tagline: null,
+        description: null,
         url: "https://kith.test/games/ember",
         imageUrl: "https://art.example/ember.jpg",
         logoUrl: null,
@@ -731,5 +733,16 @@ describe("the public campaigns feed", () => {
     await env.DB.prepare(`UPDATE campaigns SET state = 'RUNNING' WHERE id = 'secret'`).run();
     expect(await feed(await as("1003"))).toEqual(await feed());
     expect((await feed()).campaigns.map((c) => c.slug)).toEqual(["hollowmere"]);
+  });
+});
+
+describe("a pitch made plain for other sites", () => {
+  it("keeps the words and drops the Markdown", () => {
+    expect(plain("## The drylands\n\nA **colossus** walks. [Join us](https://kith.town/x)!\n\n- _bring_ a hat")).toBe(
+      "The drylands A colossus walks. Join us! bring a hat",
+    );
+    expect(plain("Ask my_handle: is 5 * 3 __really__ ~~fifteen~~ `15`?")).toBe("Ask my_handle: is 5 * 3 really fifteen 15?");
+    expect(plain(null)).toBeNull();
+    expect(plain("  \n ")).toBeNull();
   });
 });
