@@ -178,6 +178,8 @@ function BaseHero({
       {heroUrl ? null : <TableMotif />}
       <Header over={Boolean(heroUrl)} />
       <main>
+        {/* Over a picture the words sit on a soft frosted card, so bright art can't wash them out. */}
+        <div className={heroUrl ? "hero-words words-card" : "hero-words"}>
         {logoUrl ? <img className="base-logo" src={logoUrl} alt="" /> : null}
         <h1>{title}</h1>
         {tagline ? <p className="tagline">{tagline}</p> : null}
@@ -191,6 +193,7 @@ function BaseHero({
           </div>
         ) : null}
         {children}
+        </div>
         {/* The game's chips on the left, the way in on the right, in one row. */}
         <div className="row hero-actions">
           <GameMarks kind={kind} system={system} lead={lead} soundUrl={soundUrl}>
