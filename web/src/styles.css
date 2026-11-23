@@ -287,7 +287,10 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
   .hero-actions { max-width: 100%; }
   /* Signed out on a phone the way in stacks under the game's chips, not over them. */
   .show-bottom > .game-marks { order: 1; }
-  .show-bottom .game-marks .btn { flex: none; }
+  /* On a phone a game's chips sit above the way in and stretch to fill each row. */
+  .hero-actions { width: 100%; }
+  .hero-actions > .game-marks, .show-bottom > .game-marks { width: 100%; }
+  .game-marks > :is(.chip, .btn) { flex: 1 1 auto; justify-content: center; }
   /* Its chips and the way in take two or three rows down there: keep the words above them. */
   .show-slide[data-still] .show-slide-words { padding-bottom: 208px; }
 }
@@ -297,6 +300,11 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 /* The sound never plays by itself: until it is pressed, its button glows faintly in ember. */
 .game-marks .btn.sound[data-unheard] { border-color: var(--accent); box-shadow: 0 0 14px 2px color-mix(in srgb, var(--accent) 40%, transparent); }
 .game-marks .btn.calendar { justify-content: center; width: 36px; padding: 0; line-height: 0; }
+/* Beside the way in, the chips stand as tall as its buttons: big on a home base, plain in the signed-out footer. */
+.hero-actions .game-marks :is(.chip, .btn) { min-height: 56px; padding: 0 20px; border-radius: var(--radius); font-size: 15px; }
+.hero-actions .game-marks .btn.calendar { width: 56px; padding: 0; }
+.show-bottom .game-marks :is(.chip, .btn) { min-height: 44px; padding: 0 16px; border-radius: var(--radius); font-size: 14px; }
+.show-bottom .game-marks .btn.calendar { width: 44px; padding: 0; }
 
 /*
  * The landing, for someone not signed in: one screen tall and never scrolls.
