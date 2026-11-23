@@ -799,9 +799,9 @@ function dayLifecycleCell(row, day) {
         }),
       );
     });
-    buttons.push(button);
+    td.append(button);
   }
-  return buttons;
+  row.append(td);
 }
 
 /** What a campaign in this state may do next. The map that says so lives in
