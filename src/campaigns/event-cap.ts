@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, isNotNull } from "drizzle-orm";
+import { and, asc, eq, gte, isNotNull, ne } from "drizzle-orm";
 import type { Env } from "../env.ts";
 import { db, schema } from "../db/index.ts";
 import { enqueueProjection, enqueueUnprojection, type ProjectionSurface } from "../projection/outbox.ts";
@@ -89,6 +89,8 @@ function upcoming(env: Env, campaignId: string, now: Date, limit: number) {
       and(
         eq(schema.sessions.campaignId, campaignId),
         gte(schema.sessions.startsAt, Math.floor(now.getTime() / 1000)),
+        // A cancelled session is not one of the next two: it is not happening.
+        ne(schema.sessions.state, "CANCELLED"),
       ),
     )
     .orderBy(asc(schema.sessions.startsAt))

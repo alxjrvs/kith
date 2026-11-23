@@ -1,6 +1,7 @@
 import type { Env } from "../env.ts";
 import { drainJobs } from "../jobs/drain.ts";
 import { materialiseHorizon } from "../campaigns/materialise.ts";
+import { reconcileDiscordEvents } from "../discord/reconcile.ts";
 import { renewWatchIfDue } from "../google/watch.ts";
 import { reconcile } from "../google/sync.ts";
 import { syncGamesFromCms } from "../cms/sync.ts";
@@ -48,6 +49,15 @@ export async function handleScheduled(event: ScheduledController, env: Env): Pro
         // and never updates, and the ids are derived, so running it twice in an
         // hour is free and running it after an outage catches up by itself.
         await materialiseHorizon(env, new Date(event.scheduledTime));
+        // Then the server's event list is made to match: every upcoming
+        // session that should have an event gets one (or keeps it in step),
+        // and every event that should not be there comes down. Hourly, so
+        // anything missed, lost or deleted by hand is back within the hour.
+        try {
+          await reconcileDiscordEvents(env, new Date(event.scheduledTime));
+        } catch (error) {
+          console.error("discord: event reconcile failed", error);
+        }
         break;
 
       case "watch-renew":

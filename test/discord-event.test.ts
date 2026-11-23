@@ -144,7 +144,7 @@ describe("projecting a session to Discord", () => {
       { method: "GET", path: `/guilds/${guildId}/scheduled-events` },
       { method: "POST", path: `/guilds/${guildId}/scheduled-events` },
     ]);
-    expect(calls[1]?.body).toMatchObject({ description: `[orrey:session:${SESSION_ID}]` });
+    expect(calls[1]?.body).toMatchObject({ description: expect.stringMatching(new RegExp(`\\n\\[orrey:session:${SESSION_ID}\\]$`)) });
 
     const stored = await storedSession();
     expect(stored?.discordEventId).toBe("evt-1");
@@ -367,7 +367,7 @@ describe("not losing what was published", () => {
     await upsert();
 
     expect(calls.map((c) => c.method)).toEqual(["PATCH"]);
-    expect(calls[0]?.body).toMatchObject({ description: `[orrey:session:${SESSION_ID}]` });
+    expect(calls[0]?.body).toMatchObject({ description: expect.stringMatching(new RegExp(`\\n\\[orrey:session:${SESSION_ID}\\]$`)) });
 
     // And then it is stable: the marker is constant, so this is one PATCH per
     // live event and never a rewrite loop.
@@ -402,5 +402,22 @@ describe("not losing what was published", () => {
 
     // No ledger row, so no DELETE for an event Kith never made.
     expect(calls).toEqual([]);
+  });
+});
+
+describe("what a person reads under the event", () => {
+  it("links back to the game's page, with Kith's marker last", async () => {
+    await db(env).insert(schema.campaigns).values({ ...campaign, id: "age-of-umbra", state: "RUNNING" });
+    await db(env).insert(schema.sessions).values({
+      id: "age-of-umbra-s3",
+      kind: "campaign_session",
+      campaignId: "age-of-umbra",
+      startsAt: 1_900_000_000,
+      endsAt: 1_900_014_400,
+    });
+    const target = await loadProjectionTarget(env, "age-of-umbra-s3");
+    expect(scheduledEventBody(target!).description).toBe(
+      "Who's coming, and everything else: https://kith.town/games/age-of-umbra\n\n[orrey:session:age-of-umbra-s3]",
+    );
   });
 });
