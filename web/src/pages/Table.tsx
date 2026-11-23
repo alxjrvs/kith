@@ -5,6 +5,7 @@ import { SeatSquares, seatLine } from "../components/Squares.tsx";
 import { SignupButtons } from "../components/SignupButtons.tsx";
 import { cadence } from "../format.ts";
 import { ToPage } from "../components/To.tsx";
+import { ListingEditor } from "../components/ListingEditor.tsx";
 
 export const VIS_LABEL: Record<Visibility, string> = { public: "Anyone", members: "Table", organisers: "Organisers" };
 
@@ -52,9 +53,6 @@ function DayTable({ kind, id }: { kind: string; id: string }) {
           {listing.tagline ? <p className="muted">{listing.tagline}</p> : null}
         </div>
         <div className="row">
-          <Link to="/join/$kind/$id" params={{ kind, id }} className="btn">
-            Splash page
-          </Link>
           {listing.open ? <SignupButtons listing={listing} /> : null}
         </div>
       </div>
@@ -120,6 +118,7 @@ function DayTable({ kind, id }: { kind: string; id: string }) {
           </section>
         </aside>
       </div>
+      {canEdit ? <ListingEditor listing={listing} /> : null}
     </main>
   );
 }

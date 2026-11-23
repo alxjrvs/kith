@@ -245,10 +245,9 @@ function Slide({
 }
 
 function GameLink({ game, children }: { game: GameSummary; children: ReactNode }) {
-  // Signed out, a game day's page is its splash: the only page of it that is public.
-  const signedIn = useMe().data?.signedIn === true;
+  // Signed out, a game day's page shows its slide: the only part of it that is public.
   return game.kind === "day" ? (
-    <Link to={signedIn ? "/table/$kind/$id" : "/join/$kind/$id"} params={{ kind: "game-day", id: game.slug }}>
+    <Link to="/table/$kind/$id" params={{ kind: "game-day", id: game.slug }}>
       {children}
     </Link>
   ) : (

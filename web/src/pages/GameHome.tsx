@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "@tanstack/react-router";
-import { useCancelSession, useHome, useMe, type BoardHome, type CampaignHome, type GameSummary, type HomeBase, type AgendaRow as Row, type Seat } from "../api.ts";
+import { useCancelSession, useHome, useListing, useMe, type BoardHome, type CampaignHome, type GameSummary, type HomeBase, type Listing, type AgendaRow as Row, type Seat } from "../api.ts";
 import { AgendaRow } from "../components/AgendaRow.tsx";
 import { CatalogEditor } from "../components/CatalogEditor.tsx";
 import { SeatSquares, seatLine } from "../components/Squares.tsx";
@@ -10,7 +10,8 @@ import { cadence, inDays, stamp } from "../format.ts";
 import { LinkRow, VIS_LABEL } from "./Table.tsx";
 import { EditInCms } from "../components/EditInCms.tsx";
 import { Markdown } from "../markdown.tsx";
-import { TableMotif } from "./Splash.tsx";
+import { TableMotif } from "../components/TableMotif.tsx";
+import { ListingEditor } from "../components/ListingEditor.tsx";
 import { GameMarks } from "../components/GameMarks.tsx";
 import { StillSlide } from "./Landing.tsx";
 import { Header } from "../components/Header.tsx";
@@ -53,48 +54,51 @@ export function GameHome() {
   return data.kind === "campaign" ? <CampaignBase home={data} /> : <BoardBase home={data} />;
 }
 
+/** What a slide says about nobody in particular: no lead, no seats, no dates. */
+const BLANK = { pitch: null, logoUrl: null, lead: null, players: 0, capacity: null, next: null, mine: false } as const;
+
 /**
  * Signed out, a home base is the game's slide from the front page, standing
  * still: what the game is and the way in, nothing about who plays or when.
+ * This is also what a game's join link shows: there is no separate splash. If
+ * the game is taking signups, "I Want To Play" is on it; if not, nothing is.
  */
 function PublicGame({ home }: { home: HomeBase }) {
-  const listing = home.kind === "campaign" ? home.listing : home.upcoming[0]?.listing;
-  const game: GameSummary =
-    home.kind === "campaign"
-      ? {
-          kind: "campaign",
-          slug: home.slug,
-          name: home.listing.name,
-          state: home.listing.state,
-          label: home.listing.system ?? home.listing.game?.name ?? null,
-          tagline: home.listing.tagline,
-          pitch: home.listing.pitch,
-          imageUrl: home.listing.heroUrl ?? home.listing.logoUrl,
-          logoUrl: null,
-          lead: null,
-          players: 0,
-          capacity: null,
-          next: null,
-          mine: false,
-          open: home.listing.open,
-        }
-      : {
-          kind: "board",
-          slug: home.slug,
-          name: home.game.name,
-          state: "IDLE",
-          label: "Board game",
-          tagline: home.game.summary,
-          pitch: null,
-          imageUrl: listing?.heroUrl ?? home.game.coverUrl,
-          logoUrl: null,
-          lead: null,
-          players: 0,
-          capacity: null,
-          next: null,
-          mine: false,
-          open: listing?.open === true,
-        };
+  if (home.kind === "campaign") return <PublicSlide listing={home.listing} />;
+  const listing = home.upcoming[0]?.listing;
+  const game: GameSummary = {
+    ...BLANK,
+    kind: "board",
+    slug: home.slug,
+    name: home.game.name,
+    state: "IDLE",
+    label: "Board game",
+    tagline: home.game.summary,
+    imageUrl: listing?.heroUrl ?? home.game.coverUrl,
+    open: listing?.open === true,
+  };
+  return <PublicSlide listing={listing} game={game} />;
+}
+
+/** A listing as a slide: what it is, with nothing about who plays or when. */
+function listingSlide(listing: Listing): GameSummary {
+  return {
+    ...BLANK,
+    kind: listing.kind === "campaign" ? "campaign" : "day",
+    slug: listing.id,
+    name: listing.name,
+    state: listing.state,
+    label: listing.system ?? listing.game?.name ?? null,
+    tagline: listing.tagline,
+    pitch: listing.pitch,
+    imageUrl: listing.heroUrl ?? listing.logoUrl,
+    open: listing.open,
+  };
+}
+
+/** A slide standing still, with the listing's signup when it is open. */
+function PublicSlide({ listing, game = listing ? listingSlide(listing) : undefined }: { listing: Listing | undefined; game?: GameSummary | undefined }) {
+  if (!game) return null;
   return (
     <StillSlide
       game={game}
@@ -105,7 +109,28 @@ function PublicGame({ home }: { home: HomeBase }) {
 }
 
 /**
- * The top of a home base, in the splash page's clothes: the hero image behind,
+ * A game day with no board game behind it (a one-shot, say) has no home base,
+ * so signed out its page is its own slide, the same way a home base is.
+ */
+export function PublicDay({ id }: { id: string }) {
+  const query = useListing("game-day", id);
+  if (query.isPending) return <div className="show" aria-busy="true" />;
+  if (query.isError) {
+    return (
+      <main className="page">
+        <h1>Nothing here</h1>
+        <p className="muted">
+          {query.error.message} If it is a table you are on, <a href={signInHref()}>sign in with Discord</a>.{" "}
+          <Link to="/">Back to the front page</Link>
+        </p>
+      </main>
+    );
+  }
+  return <PublicSlide listing={query.data.listing} />;
+}
+
+/**
+ * The top of a home base: the hero image behind,
  * the round table, a big title. A home base is the game's own front door, so it
  * reads like one rather than like a settings page.
  */
@@ -195,11 +220,6 @@ function CampaignBase({ home }: { home: CampaignHome }) {
         <div className="row" style={{ gap: "16px 24px" }}>
           {listing.open ? <SignupButtons listing={listing} big /> : null}
           <CalendarLink url={home.calendarUrl} />
-          {listing.open || canEdit ? (
-            <Link to="/join/$kind/$id" params={{ kind, id }}>
-              Splash page
-            </Link>
-          ) : null}
         </div>
       </BaseHero>
     <main className="page">
@@ -285,6 +305,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
           <SuggestionBox slug={home.slug} />
         </aside>
       </div>
+      {canEdit ? <ListingEditor listing={listing} /> : null}
     </main>
     <StopSign slug={home.slug} game={listing.name} />
     </>

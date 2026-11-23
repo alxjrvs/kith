@@ -3,10 +3,10 @@ import { useState } from "react";
 import { Header } from "./components/Header.tsx";
 import { Home } from "./pages/Home.tsx";
 import { Games } from "./pages/Games.tsx";
-import { GameHome } from "./pages/GameHome.tsx";
+import { GameHome, PublicDay } from "./pages/GameHome.tsx";
+import { Join } from "./pages/Join.tsx";
 import { Agenda } from "./pages/Agenda.tsx";
 import { Profile } from "./pages/Profile.tsx";
-import { Splash } from "./pages/Splash.tsx";
 import { Landing } from "./pages/Landing.tsx";
 import { useMe } from "./api.ts";
 import { Table } from "./pages/Table.tsx";
@@ -15,10 +15,11 @@ import { NotFound } from "./pages/NotFound.tsx";
 import { Rules } from "./pages/Rules.tsx";
 
 /**
- * Every page but the splash wears the site header, and every one of them is for
- * people who have signed in. Signed out, the only pages are the front page (the
- * slideshow) and each game's own pages: a home base and its splash. Anything
- * else goes to the nearest of those rather than showing the app around it.
+ * Every page here wears the site header, and every one of them is for people
+ * who have signed in. Signed out, the only pages are the front page (the
+ * slideshow) and each game's own page, as somebody not on it sees it. A game
+ * day's own page is one of those. Anything else goes to the nearest of them
+ * rather than showing the app around it.
  */
 function Shell() {
   const me = useMe();
@@ -37,7 +38,7 @@ function PublicOnly() {
   // already the target, and reading it again would send a game day on to "/".
   const [path] = useState(() => window.location.pathname);
   const day = path.match(/^\/table\/game-day\/([^/]+)/);
-  if (day) return <Navigate to="/join/$kind/$id" params={{ kind: "game-day", id: decodeURIComponent(day[1]!) }} replace />;
+  if (day) return <PublicDay id={decodeURIComponent(day[1]!)} />;
   const game = path.match(/^\/(?:games|table\/campaign)\/([^/]+)/);
   if (game) return <Navigate to="/games/$slug" params={{ slug: decodeURIComponent(game[1]!) }} replace />;
   return <Navigate to="/" replace />;
@@ -72,7 +73,7 @@ const find = createRoute({
   },
 });
 const games = createRoute({ getParentRoute: () => shell, path: "/games", component: Games });
-/** A home base wears the splash, so like the splash it brings its own header. */
+/** A home base is full screen at the top, so it brings its own header. */
 const gameHome = createRoute({ getParentRoute: () => rootRoute, path: "/games/$slug", component: GameHome });
 
 /** A new page arrives with the title typed on the home base. */
@@ -104,13 +105,17 @@ const knowledge = createRoute({
   validateSearch: titleSearch,
 });
 
-/** The splash is full screen and brings its own header. */
 /** The slideshow, for anyone: signed out it is also the front page; signed in, the header links here. */
 const slideshow = createRoute({ getParentRoute: () => rootRoute, path: "/slideshow", component: Landing });
 
-const splash = createRoute({ getParentRoute: () => rootRoute, path: "/join/$kind/$id", component: Splash });
+/**
+ * A join link used to open a separate splash page. There is no splash now: a
+ * game's join link is just its page, so links already shared in Discord land
+ * there.
+ */
+const join = createRoute({ getParentRoute: () => rootRoute, path: "/join/$kind/$id", component: Join });
 
-const routeTree = rootRoute.addChildren([shell.addChildren([find, games, gamePage, agenda, coc, rules, profile, table, knowledge]), home, slideshow, gameHome, splash]);
+const routeTree = rootRoute.addChildren([shell.addChildren([find, games, gamePage, agenda, coc, rules, profile, table, knowledge]), home, slideshow, gameHome, join]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });
 
