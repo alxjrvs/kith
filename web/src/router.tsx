@@ -12,6 +12,7 @@ import { useMe } from "./api.ts";
 import { Table } from "./pages/Table.tsx";
 import { GameKnowledgePage, TableKnowledgePage } from "./pages/KnowledgePage.tsx";
 import { NotFound } from "./pages/NotFound.tsx";
+import { Rules } from "./pages/Rules.tsx";
 
 /**
  * Every page but the splash wears the site header, and every one of them is for
@@ -85,6 +86,7 @@ const gamePage = createRoute({
   validateSearch: titleSearch,
 });
 const agenda = createRoute({ getParentRoute: () => shell, path: "/agenda", component: Agenda });
+const rules = createRoute({ getParentRoute: () => shell, path: "/rules", component: Rules });
 const profile = createRoute({ getParentRoute: () => shell, path: "/profile", component: Profile });
 const table = createRoute({ getParentRoute: () => shell, path: "/table/$kind/$id", component: Table });
 const knowledge = createRoute({
@@ -97,7 +99,7 @@ const knowledge = createRoute({
 /** The splash is full screen and brings its own header. */
 const splash = createRoute({ getParentRoute: () => rootRoute, path: "/join/$kind/$id", component: Splash });
 
-const routeTree = rootRoute.addChildren([shell.addChildren([find, games, gamePage, agenda, profile, table, knowledge]), home, gameHome, splash]);
+const routeTree = rootRoute.addChildren([shell.addChildren([find, games, gamePage, agenda, rules, profile, table, knowledge]), home, gameHome, splash]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });
 

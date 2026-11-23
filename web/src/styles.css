@@ -353,3 +353,10 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
 }
 /* Room under the last panel, so the stop sign never sits on top of it. */
 body:has(.stop-sign) main.page { padding-bottom: 96px; }
+
+/* The rules: numbered, each with its own heading. */
+.rules { margin: 0; padding: 0; list-style: none; counter-reset: rule; display: flex; flex-direction: column; gap: 28px; }
+.rules li { counter-increment: rule; display: grid; grid-template-columns: 2.2em 1fr; column-gap: 12px; }
+.rules li::before { content: counter(rule); grid-row: span 2; font-size: 28px; font-weight: 800; line-height: 1.1; color: var(--accent); font-variant-numeric: tabular-nums; }
+.rules h2 { font-size: 22px; line-height: 1.2; margin: 0 0 6px; }
+.rules p { margin: 0; line-height: 1.55; max-width: 62ch; }
