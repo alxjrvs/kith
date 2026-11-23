@@ -260,13 +260,26 @@ function gamesTable(games) {
   return wrapTable(table);
 }
 
-/** Minutes as somebody would say them: "2½ hours", not "150 min". */
+/** Minutes as somebody would say them, and exactly: "2½ hours", "1 hour 15 minutes". */
 function lengthOf(minutes) {
   if (minutes < 60) return `${minutes} minutes`;
-  const hours = minutes / 60;
-  const whole = Math.floor(hours);
-  const half = hours - whole >= 0.5 ? "½" : "";
-  return `${whole}${half} ${whole === 1 && !half ? "hour" : "hours"}`;
+  const whole = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (rest === 30) return `${whole}½ hours`;
+  const hours = `${whole} ${whole === 1 ? "hour" : "hours"}`;
+  return rest === 0 ? hours : `${hours} ${rest} minutes`;
+}
+
+/**
+ * Open a session in the rail. The page is rebuilt by `load`, so focus and the
+ * scroll are put back on the new elements once it has finished.
+ */
+async function pickSession(sessionId, scroll) {
+  agendaState.selected = sessionId;
+  await load();
+  if (scroll) document.getElementById("agenda")?.scrollIntoView({ behavior: "smooth" });
+  const row = main.querySelector(`#agenda tr[data-session="${CSS.escape(sessionId)}"]`);
+  row?.focus({ preventScroll: Boolean(scroll) });
 }
 
 /**
@@ -393,10 +406,8 @@ function agendaTable(rows) {
     const tr = document.createElement("tr");
     tr.tabIndex = 0;
     if (agendaState.selected === row.sessionId) tr.setAttribute("aria-selected", "true");
-    const pick = () => {
-      agendaState.selected = row.sessionId;
-      load();
-    };
+    tr.dataset.session = row.sessionId;
+    const pick = () => void pickSession(row.sessionId, false);
     tr.addEventListener("click", pick);
     tr.addEventListener("keydown", (event) => {
       if (event.key === "Enter") pick();
@@ -1148,11 +1159,7 @@ function upcomingTable(rows) {
     tr.tabIndex = 0;
     // The rail is the one place a session is read in full, wherever it was
     // clicked from.
-    const pick = () => {
-      agendaState.selected = row.sessionId;
-      load();
-      document.getElementById("agenda")?.scrollIntoView({ behavior: "smooth" });
-    };
+    const pick = () => void pickSession(row.sessionId, true);
     tr.addEventListener("click", pick);
     tr.addEventListener("keydown", (event) => {
       if (event.key === "Enter") pick();
@@ -1249,11 +1256,7 @@ function playedTable(sessions) {
   for (const played of sessions) {
     const tr = document.createElement("tr");
     tr.tabIndex = 0;
-    const pick = () => {
-      agendaState.selected = played.sessionId;
-      load();
-      document.getElementById("agenda")?.scrollIntoView({ behavior: "smooth" });
-    };
+    const pick = () => void pickSession(played.sessionId, true);
     tr.addEventListener("click", pick);
     tr.addEventListener("keydown", (event) => {
       if (event.key === "Enter") pick();
@@ -1327,6 +1330,9 @@ function autoResolveToggle(polls) {
           body: JSON.stringify({ autoResolvePolls: box.checked }),
         }),
       );
+      // A save that worked re-rendered the page; one that was refused must show what is true.
+      box.checked = polls.autoResolvePolls;
+      box.disabled = false;
     },
   );
 }
@@ -1662,11 +1668,11 @@ function deleteMeSection() {
 function feedsSection(feeds) {
   const section = el("div", "settings");
 
-  for (const link of feeds.links) {
+  for (const [index, link] of feeds.links.entries()) {
     const row = el("div", "setting");
     const about = el("div", "about");
     const label = el("label", null, link.label);
-    const id = `feed-${link.label.replace(/\W+/g, "-").toLowerCase()}`;
+    const id = `feed-${index}`;
     label.htmlFor = id;
     about.append(label);
 
@@ -1683,6 +1689,7 @@ function feedsSection(feeds) {
       try {
         await navigator.clipboard.writeText(link.url);
         copy.textContent = "Copied";
+        setTimeout(() => (copy.textContent = "Copy"), 2000);
       } catch {
         input.focus();
       }
