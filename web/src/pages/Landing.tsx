@@ -220,8 +220,10 @@ function Slide({
         <img className="show-mark" src="/mark.svg" alt="" aria-hidden="true" />
       )}
       <div className="show-slide-words">
-        <GameMarks system={game.label} soundUrl={soundUrl} />
-        {game.lead ? <span className="label">{leadLine(game)}</span> : null}
+        <div className="game-tags">
+          {game.lead ? <span className="chip lead">{leadLine(game)}</span> : null}
+          <GameMarks system={game.label} soundUrl={soundUrl} />
+        </div>
         <h1>{still || game.state === "CONCLUDED" ? game.name : <GameLink game={game}>{game.name}</GameLink>}</h1>
         {game.tagline ? <p className="show-tagline">{game.tagline}</p> : null}
         {game.pitch ? (

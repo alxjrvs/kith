@@ -20,6 +20,10 @@
   --in: #5fbf7a;
   --maybe: #f2c94c;
   --out: #ff7a7a;
+  /* Brass: who runs a game, on its own chip beside the ember of its system. */
+  --lead: #e2c48e;
+  --lead-wash: #3a3122;
+  --lead-edge: #a88d5e;
 
   --font-body: "Hanken Grotesk", system-ui, sans-serif;
   --font-head: "Schibsted Grotesk", "Hanken Grotesk", system-ui, sans-serif;
@@ -274,9 +278,17 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 
 /* The game system, first among the chips and lit like the table's top seat. */
 .chip.system { border-color: var(--accent); color: var(--link); }
+.chip.lead { border-color: var(--lead-edge); background: var(--lead-wash); color: var(--lead); }
+/* Who runs a game sits just above its system and sound, closer to them than to the name. */
+.game-tags { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.game-tags:empty { display: none; }
+.game-tags > .chip.lead { min-height: 36px; display: inline-flex; align-items: center; padding: 0 12px; }
 /* Above a game's name: its system and its sound, the same size side by side. */
 .game-marks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.game-marks .chip, .game-marks .btn.sound { min-height: 36px; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: var(--radius-sm); font-size: 13px; }
+.game-marks .chip, .game-marks .btn.sound, .game-marks .btn.calendar { min-height: 36px; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: var(--radius-sm); font-size: 13px; }
+/* The sound never plays by itself: until it is pressed, its button glows faintly in ember. */
+.game-marks .btn.sound[data-unheard] { border-color: var(--accent); box-shadow: 0 0 14px 2px color-mix(in srgb, var(--accent) 40%, transparent); }
+.game-marks .btn.calendar { justify-content: center; width: 36px; padding: 0; line-height: 0; }
 
 /*
  * The landing, for someone not signed in: one screen tall and never scrolls.
