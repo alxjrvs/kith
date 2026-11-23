@@ -182,8 +182,6 @@ img { max-width: 100%; }
 .pill.maybe { --pill: var(--maybe); }
 .pill.out { --pill: var(--out); }
 .pill.accent { --pill: var(--accent); }
-/* Who runs a game: a small brass pill under its description. */
-.pill.lead { --pill: var(--lead); align-self: flex-start; border-color: var(--lead-edge); background: var(--lead-wash); color: var(--lead); }
 
 /* Seat and attendance squares */
 .squares { display: inline-flex; flex-wrap: wrap; gap: 3px; }
@@ -280,6 +278,19 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 
 /* The game system, first among the chips and lit like the table's top seat. */
 .chip.system { border-color: var(--accent); color: var(--link); }
+/* Who runs a game, in brass beside the ember of its system. */
+.chip.lead { border-color: var(--lead-edge); background: var(--lead-wash); color: var(--lead); }
+/* A home base's chips, then its way in, in one row on the left. */
+.hero-actions { gap: 16px 24px; align-items: center; width: max-content; max-width: calc(100vw - 64px); }
+.game-marks .btn.sound { white-space: nowrap; }
+@media (max-width: 640px) {
+  .hero-actions { max-width: 100%; }
+  /* Signed out on a phone the way in stacks under the game's chips, not over them. */
+  .show-bottom > .game-marks { order: 1; }
+  .show-bottom .game-marks .btn { flex: none; }
+  /* Its chips and the way in take two or three rows down there: keep the words above them. */
+  .show-slide[data-still] .show-slide-words { padding-bottom: 208px; }
+}
 /* Above a game's name: its system and its sound, the same size side by side. */
 .game-marks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .game-marks .chip, .game-marks .btn.sound, .game-marks .btn.calendar { min-height: 36px; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: var(--radius-sm); font-size: 13px; }
