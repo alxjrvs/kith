@@ -226,6 +226,24 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 /* The picture is shown whole, so the words carry their own soft shadow, and controls keep their own faces. */
 .splash .btn, .splash .chip, .splash .pill, .splash .panel, .show-slide-words :is(.btn, .chip, .pill) { text-shadow: none; }
 .splash main > .label, .show-slide-words > .label { color: var(--text); }
+/*
+ * Over a picture the words sit on a frosted card: the art behind them blurs and
+ * dims a little, and the rest of the picture shows at full strength. The card
+ * has no edge: it reaches --bleed past the words and fades out over --feather
+ * on every side, so it reads as a soft patch of shade rather than a box. Its
+ * bottom spacing is a margin, so the card is only as tall as the words.
+ */
+.words-card { --feather: 64px; --bleed: 24px; position: relative; isolation: isolate; text-shadow: 0 1px 2px #0008; }
+.words-card::before {
+  content: ""; position: absolute; inset: calc(var(--bleed) * -1); z-index: -1; pointer-events: none;
+  border-radius: calc(var(--feather) * 1.5);
+  background: color-mix(in srgb, var(--deep) 50%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15); backdrop-filter: blur(16px) saturate(1.15);
+  --fade-x: linear-gradient(to right, transparent, #000 var(--feather), #000 calc(100% - var(--feather)), transparent);
+  --fade-y: linear-gradient(to bottom, transparent, #000 var(--feather), #000 calc(100% - var(--feather)), transparent);
+  -webkit-mask-image: var(--fade-x), var(--fade-y); -webkit-mask-composite: source-in;
+  mask-image: var(--fade-x), var(--fade-y); mask-composite: intersect;
+}
 /* No picture: the Kith mark, big, in the right half. */
 .splash .logo-art { position: absolute; right: 8%; top: 50%; transform: translateY(-50%); width: min(40vw, 72vh, 620px); height: auto; opacity: 0.9; pointer-events: none; }
 .splash header:not(.site-header) { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 32px; }
@@ -300,6 +318,12 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 /* The words keep their measure; only the chip row runs the full width, so the way in reaches the right edge. */
 .splash.base main { max-width: none; }
 .splash.base main > :not(.hero-actions) { max-width: 728px; }
+/* A home base's words, as one column. Over a picture they sit on the frosted card, reaching back so its solid part lines up with the header. */
+.hero-words { display: flex; flex-direction: column; gap: 24px; }
+.splash.base main > .words-card { max-width: 792px; margin-left: -32px; padding: 40px 48px 40px 64px; }
+@media (max-width: 640px) {
+  .splash.base main > .words-card { --feather: 40px; --bleed: 12px; margin-left: -16px; margin-right: -16px; padding: 32px 28px 32px 32px; }
+}
 .game-marks .btn.sound { white-space: nowrap; }
 @media (max-width: 640px) {
   /* On a phone a game's chips sit above the way in and stretch to fill each row. */
@@ -332,6 +356,8 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
 .show { position: relative; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: var(--deep); }
 .show-top { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; }
 .show-about { margin: 0; font-size: 15px; color: color-mix(in srgb, var(--text) 85%, transparent); text-shadow: 0 1px 6px var(--deep); }
+/* Over bright art Kith's own line gets a small patch of the same frosted shade. */
+.show-about.words-card { --feather: 14px; --bleed: 10px; padding: 4px 10px; color: var(--text); }
 .show-slides { position: absolute; inset: 0; }
 .show-slides { overflow: hidden; }
 .show-slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; visibility: hidden; overflow: hidden; }
@@ -417,6 +443,19 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
   .show-slide-words h1 { font-size: clamp(32px, 7vh, 56px); }
   .show-pitch { display: none; }
   }
+
+/*
+ * On a slide with art, the words' bottom spacing moves outside the card (a
+ * margin), and the card's padding leaves room for its fade: its solid part
+ * starts where the words used to, and the words sit a little further in.
+ */
+.show-slide .words-card { padding: 48px 48px 48px 64px; margin-bottom: 120px; }
+@media (max-width: 640px) {
+  .show-slide .words-card { --feather: 40px; --bleed: 12px; padding: 32px 28px 32px 32px; margin-bottom: 200px; }
+}
+@media (max-height: 520px) {
+  .show-slide .words-card { --feather: 24px; --bleed: 8px; padding: 20px 24px 20px 32px; margin-bottom: 64px; }
+}
 
 /*
  * The stop sign: always in the corner of a signed-in home base, the one red

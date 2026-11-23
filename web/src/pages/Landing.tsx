@@ -49,7 +49,7 @@ function Top({ about }: { about: boolean }) {
         <img src="/mark.svg" alt="" width="26" height="26" />
         Kith.town
       </Link>
-      {about ? <p className="show-about">An invite-only community of gamers.</p> : null}
+      {about ? <p className="show-about words-card">An invite-only community of gamers.</p> : null}
     </header>
   );
 }
@@ -216,7 +216,8 @@ function Slide({
       ) : (
         <img className="show-mark" src="/mark.svg" alt="" aria-hidden="true" />
       )}
-      <div className="show-slide-words">
+      {/* Over a picture the words sit on a soft frosted card, so bright art can't wash them out. */}
+      <div className={game.imageUrl ? "show-slide-words words-card" : "show-slide-words"}>
         <h1>{still || game.state === "CONCLUDED" ? game.name : <GameLink game={game}>{game.name}</GameLink>}</h1>
         {game.tagline ? <p className="show-tagline">{game.tagline}</p> : null}
         {game.pitch ? (
