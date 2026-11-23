@@ -221,7 +221,8 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
  * full strength on the right. A mask rather than an overlay, so the image is
  * never greyed where it shows.
  */
-.splash .hero { position: absolute; inset: 0; background-size: cover; background-position: center right; }
+.splash .hero { position: absolute; inset: 0; overflow: hidden; }
+.splash .hero .pan-art { object-position: center right; }
 .splash header:not(.site-header), .splash main, .show-top, .show-slide-words { text-shadow: 0 1px 3px #000c, 0 2px 18px #000a, 0 0 42px #0008; }
 /* The picture is shown whole, so the words carry their own soft shadow, and controls keep their own faces. */
 .splash .btn, .splash .chip, .splash .pill, .splash .panel, .show-slide-words :is(.btn, .chip, .pill) { text-shadow: none; }
@@ -376,7 +377,7 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
 @keyframes show-in-prev { from { transform: translateX(-100%); } to { transform: translateX(0); } }
 @keyframes show-out-next { from { transform: translateX(0); } to { transform: translateX(-100%); } }
 @keyframes show-out-prev { from { transform: translateX(0); } to { transform: translateX(100%); } }
-.show-art { position: absolute; inset: 0; background-size: cover; background-position: center; transform: scale(1.04); }
+.show-art { position: absolute; inset: 0; transform: scale(1.04); }
 .show-slide[data-current] .show-art { animation: show-drift 14s ease-out both; }
 /* A game's own page is its slide holding still: no drift. */
 .show-slide[data-still] .show-art { animation: none; transform: none; }
@@ -415,6 +416,25 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
 .show-dots .fill { position: absolute; inset: 0; border-radius: inherit; background: var(--accent); transform-origin: left; animation: show-fill linear both; }
 @keyframes show-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes show-drift { from { transform: scale(1.1); } to { transform: scale(1.04); } }
+
+/*
+ * A hero's art fills its box, cropped to fit. On a screen taller than it is
+ * wide that crop throws away most of a wide picture, so there the art is drawn
+ * at its own width, the full height of the screen, and pans slowly across:
+ * once from one edge to the other while a slide holds (the slideshow holds
+ * longer for it, --hold), and back and forth for good on a page that stands
+ * still, starting from the middle. Art no wider than the screen still fills
+ * it and has nowhere to pan. The slide clips the overhang, as it does the
+ * drift's. Someone who asked for less motion sees the plain crop.
+ */
+.pan-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+@media (orientation: portrait) and (prefers-reduced-motion: no-preference) {
+  .pan-art { width: auto; min-width: 100%; max-width: none; right: auto; will-change: transform; }
+  .show-art, .show-slide[data-current] .show-art { animation: none; transform: none; }
+  .show-slide[data-current]:not([data-still]) .pan-art { animation: pan-across calc(var(--hold, 14s) + 800ms) ease-in-out both; }
+  :is(.show-slide[data-still], .splash .hero) .pan-art { animation: pan-across 40s ease-in-out -20s infinite alternate; }
+}
+@keyframes pan-across { from { transform: translateX(0); } to { transform: translateX(calc(100vw - 100%)); } }
 
 @media (prefers-reduced-motion: reduce) {
   .show-slide[data-motion] { animation: none; }

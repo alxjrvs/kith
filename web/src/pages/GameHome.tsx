@@ -174,7 +174,11 @@ function BaseHero({
 }) {
   return (
     <div className="splash base">
-      {heroUrl ? <div className="hero" style={{ backgroundImage: `url("${encodeURI(heroUrl)}")` }} /> : null}
+      {heroUrl ? (
+        <div className="hero">
+          <img className="pan-art" src={heroUrl} alt="" />
+        </div>
+      ) : null}
       {heroUrl ? null : <TableMotif />}
       <Header over={Boolean(heroUrl)} />
       <main>

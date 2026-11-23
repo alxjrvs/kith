@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useHomes, useMe, type GameSummary } from "../api.ts";
 import { inDays, kindWord, leadChip, stamp } from "../format.ts";
 import { Markdown } from "../markdown.tsx";
@@ -9,6 +9,12 @@ import { GameMarks } from "../components/GameMarks.tsx";
 
 /** How long each game holds the screen before the next one comes in. */
 const HOLD_MS = 7000;
+/**
+ * On a tall screen the art pans across its width while the game holds, so it
+ * holds twice as long: wide art crossing a phone in seven seconds is a rush,
+ * not a look around.
+ */
+const PAN_HOLD_MS = 14000;
 
 /**
  * The front door for someone who has not signed in: one screen, no scrolling,
@@ -74,6 +80,8 @@ function Slides({ slides }: { slides: GameSummary[] }) {
   const [turn, setTurn] = useState<{ at: number; from: number | null; dir: 1 | -1 }>({ at: 0, from: null, dir: 1 });
   const [held, setHeld] = useState(false);
   const calm = useReducedMotion();
+  const tall = useMedia(TALL);
+  const hold = tall ? PAN_HOLD_MS : HOLD_MS;
   const count = slides.length;
   const at = turn.at;
   const index = at % count;
@@ -96,9 +104,9 @@ function Slides({ slides }: { slides: GameSummary[] }) {
     if (held || calm || count < 2) return;
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible") go(1);
-    }, HOLD_MS);
+    }, hold);
     return () => window.clearInterval(timer);
-  }, [at, held, calm, count, go]);
+  }, [at, held, calm, count, go, hold]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -115,6 +123,7 @@ function Slides({ slides }: { slides: GameSummary[] }) {
     <>
       <section
         className="show-slides"
+        style={{ "--hold": `${hold}ms` } as CSSProperties}
         aria-roledescription="carousel"
         aria-label="The games"
         onFocus={(e) => {
@@ -156,7 +165,7 @@ function Slides({ slides }: { slides: GameSummary[] }) {
                 aria-current={i === index ? "true" : undefined}
                 onClick={() => jump(i)}
               >
-                {i === index && !held && !calm ? <span key={at} className="fill" style={{ animationDuration: `${HOLD_MS}ms` }} /> : null}
+                {i === index && !held && !calm ? <span key={at} className="fill" style={{ animationDuration: `${hold}ms` }} /> : null}
               </button>
             ))}
           </div>
@@ -212,7 +221,9 @@ function Slide({
       inert={current ? undefined : true}
     >
       {game.imageUrl ? (
-        <div className="show-art" style={{ backgroundImage: `url("${encodeURI(game.imageUrl)}")` }} />
+        <div className="show-art">
+          <img className="pan-art" src={game.imageUrl} alt="" />
+        </div>
       ) : (
         <img className="show-mark" src="/mark.svg" alt="" aria-hidden="true" />
       )}
@@ -301,14 +312,21 @@ function useNoScroll() {
 }
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
+/** A screen taller than it is wide, where wide art is cropped hardest. Matches `.pan-art` in styles.css. */
+const TALL = "(orientation: portrait)";
 
 function useReducedMotion(): boolean {
-  const [calm, setCalm] = useState(() => window.matchMedia(REDUCE).matches);
+  return useMedia(REDUCE);
+}
+
+function useMedia(media: string): boolean {
+  const [matches, setMatches] = useState(() => window.matchMedia(media).matches);
   useEffect(() => {
-    const query = window.matchMedia(REDUCE);
-    const update = () => setCalm(query.matches);
+    const query = window.matchMedia(media);
+    const update = () => setMatches(query.matches);
+    update();
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
-  }, []);
-  return calm;
+  }, [media]);
+  return matches;
 }
