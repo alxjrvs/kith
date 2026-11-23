@@ -88,6 +88,11 @@
           "type": "file"
         },
         {
+          "slug": "soundLink",
+          "label": "Sound link, instead of a file (a SoundCloud track; end it with #t=0:09 to start 9 seconds in)",
+          "type": "url"
+        },
+        {
           "slug": "visibility",
           "label": "Who can see it, when Kith first creates it (members: the people on the game; organisers: only organisers). Change it later in Organise.",
           "type": "select",

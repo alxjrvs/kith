@@ -91,7 +91,7 @@ function DayListingEditor({ listing }: { listing: Listing }) {
             <input id="le-hero" type="url" value={heroUrl} onChange={(e) => setHeroUrl(e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="le-sound">Sound URL (https, mp3 or ogg)</label>
+            <label htmlFor="le-sound">Sound URL (https: an mp3 or ogg, or a SoundCloud track, with #t=0:09 to start partway)</label>
             <input id="le-sound" type="url" value={soundUrl} onChange={(e) => setSoundUrl(e.target.value)} />
           </div>
         </div>
