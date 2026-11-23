@@ -70,6 +70,11 @@
   // (src/http/game-apps.ts). Cached per upload, so a handful of cuts a month.
   "images": { "binding": "IMAGES" },
 
+  // Cloudflare Email, for the stop sign's email to the organiser
+  // (src/hub/safety.ts). Email Routing is on for kith.town and the address is a
+  // verified destination; it is the STOP_SIGN_EMAIL_TO secret, not written here.
+  "send_email": [{ "name": "EMAIL" }],
+
   "queues": {
     "producers": [{ "binding": "OUTBOX", "queue": "kith-outbox" }],
     "consumers": [
