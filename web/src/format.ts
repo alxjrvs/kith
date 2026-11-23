@@ -56,3 +56,14 @@ export function leadLine(game: Pick<GameSummary, "kind" | "lead">): string {
   if (!game.lead) return "";
   return game.kind === "campaign" ? `Campaign run by ${game.lead.name}` : `${game.kind === "board" ? "Board game" : "Game day"} hosted by ${game.lead.name}`;
 }
+
+/** What kind of game it is, as the first of its chips. */
+export function kindWord(kind: GameSummary["kind"]): string {
+  return kind === "campaign" ? "Campaign" : kind === "board" ? "Board game" : "Game day";
+}
+
+/** Who runs it, as its own chip: a campaign's GM, or a game day's host. */
+export function leadChip(game: Pick<GameSummary, "kind" | "lead">): string | null {
+  if (!game.lead) return null;
+  return `${game.kind === "campaign" ? "GM" : "Host"}: ${game.lead.name}`;
+}

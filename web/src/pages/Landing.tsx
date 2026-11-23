@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useHomes, useMe, type GameSummary } from "../api.ts";
-import { inDays, leadLine, stamp } from "../format.ts";
+import { inDays, kindWord, leadChip, stamp } from "../format.ts";
 import { Markdown } from "../markdown.tsx";
 import { signInHref } from "../signin.ts";
 import { Header } from "../components/Header.tsx";
@@ -177,9 +177,12 @@ export function StillSlide({ game, action, soundUrl = null }: { game: GameSummar
     <div className="show">
       <Top about />
       <section className="show-slides">
-        <Slide game={game} current still position="" soundUrl={soundUrl} />
+        <Slide game={game} current still position="" />
       </section>
-      <Footer action={action} hint={false} />
+      {/* Its chips sit on the left of the way in, the same row a home base gives them. */}
+      <Footer action={action} hint={false}>
+        <GameMarks kind={kindWord(game.kind)} system={game.label} lead={leadChip(game)} soundUrl={soundUrl} />
+      </Footer>
     </div>
   );
 }
@@ -192,7 +195,6 @@ function Slide({
   position,
   still = false,
   motion,
-  soundUrl = null,
 }: {
   game: GameSummary;
   current: boolean;
@@ -200,8 +202,6 @@ function Slide({
   still?: boolean;
   /** How this slide is moving: coming in, or going out, and from which side. */
   motion?: Motion | undefined;
-  /** A game's own page plays its sound; the slideshow never does. */
-  soundUrl?: string | null;
 }) {
   return (
     <article
@@ -220,7 +220,7 @@ function Slide({
         <img className="show-mark" src="/mark.svg" alt="" aria-hidden="true" />
       )}
       <div className="show-slide-words">
-        <GameMarks system={game.label} soundUrl={soundUrl} />
+        {still ? null : <GameMarks kind={kindWord(game.kind)} system={game.label} lead={leadChip(game)} />}
         <h1>{still || game.state === "CONCLUDED" ? game.name : <GameLink game={game}>{game.name}</GameLink>}</h1>
         {game.tagline ? <p className="show-tagline">{game.tagline}</p> : null}
         {game.pitch ? (
@@ -228,7 +228,6 @@ function Slide({
             <Markdown source={game.pitch} />
           </div>
         ) : null}
-        {game.lead ? <span className="pill lead">{leadLine(game)}</span> : null}
         {still ? null : (
         <div className="row" style={{ gap: "8px 18px", fontSize: 14 }}>
           {game.next ? (
