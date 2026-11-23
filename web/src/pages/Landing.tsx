@@ -27,19 +27,21 @@ export function Landing() {
 
   return (
     <div className="show">
-      <Top />
+      <Top about={!homes.isPending && slides.length > 0} />
       {homes.isPending ? null : slides.length === 0 ? <Empty /> : <Slides slides={slides} />}
     </div>
   );
 }
 
-function Top() {
+/** The name, and on the slides what Kith is (the empty room says it larger). */
+function Top({ about }: { about: boolean }) {
   return (
     <header className="show-top">
       <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
         <img src="/mark.svg" alt="" width="26" height="26" />
         Kith.town
       </Link>
+      {about ? <p className="show-about">An invite-only community of gamers.</p> : null}
     </header>
   );
 }
@@ -50,7 +52,7 @@ function Empty() {
     <>
       <img className="show-mark" src="/mark.svg" alt="" aria-hidden="true" />
       <div className="show-slide-words" style={{ position: "relative" }}>
-        <h1>Every game we run, in one place.</h1>
+        <h1>An invite-only community of gamers.</h1>
         <p className="show-tagline">Most tables show only to the people on them.</p>
       </div>
       <Footer />
@@ -165,7 +167,7 @@ export function StillSlide({ game, action }: { game: GameSummary; action?: React
   useNoScroll();
   return (
     <div className="show">
-      <Top />
+      <Top about />
       <section className="show-slides">
         <Slide game={game} current still position="" />
       </section>
