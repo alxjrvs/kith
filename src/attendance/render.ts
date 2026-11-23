@@ -119,9 +119,11 @@ function compose(
   detail: Detail,
 ): string {
   const { session } = target;
+  const verdict = quorumOf(target, rows);
+  const off = detail.dayOf ? calledOff(verdict) : null;
   const lines = detail.dayOf
     ? [
-        `${heading(target)} starts <t:${session.startsAt}:R>!`,
+        off ? `**CANCELLED** ${heading(target)}` : `${heading(target)} starts <t:${session.startsAt}:R>!`,
         `<t:${session.startsAt}:t> → <t:${session.endsAt}:t>`,
       ]
     : [heading(target), when(session.startsAt, session.endsAt)];
@@ -175,8 +177,18 @@ function compose(
   // working — and it survives every truncation pass, because a post shortened
   // past the one line that answers the question is a post worth nothing. In the
   // words of the button the reader actually has.
-  const quorum = quorumLine(quorumOf(target, rows), detail.dayOf ? CANT_MAKE_IT : "Out");
-  if (quorum) lines.push("", quorum);
+  //
+  // Except on the day, under the veto rule. A running table is on unless it is
+  // not, so the reminder says nothing about it until it is not — and then the
+  // heading itself says CANCELLED. A line saying "on" was the post saying the
+  // thing everybody already assumed. A campaign that opted into a quorum still
+  // gets its tally, because there "on" is not the default.
+  if (detail.dayOf && verdict.rule === "unanimous") {
+    if (off === "veto") lines.push("", "-# Somebody can't make it, so we'll find another date in the thread.");
+  } else {
+    const quorum = quorumLine(verdict, detail.dayOf ? CANT_MAKE_IT : "Out");
+    if (quorum) lines.push("", quorum);
+  }
 
   // The day-of post has no Refresh: every click rewrites it with a fresh reading.
   lines.push(
@@ -210,9 +222,18 @@ export function renderDayOfPost({ target, rows, asOf }: AttendanceView): Message
   if (content.length > LIMIT) content = compose(target, rows, asOf, { notes: false, names: true, ...dayOf });
   if (content.length > LIMIT) content = compose(target, rows, asOf, { notes: false, names: false, ...dayOf });
 
+  // A called-off session takes no answers (`takesIntent` refuses them), so it
+  // offers none. Otherwise **Hell yeah** goes once the whole roster has said it:
+  // the buttons are one row shared by everybody reading the message, so "gone
+  // for the person who clicked it" is not something a channel message can do,
+  // and gone for everybody after the first click would take it from the rest.
+  const closed = session.state === "CANCELLED" || session.state === "PLAYED";
+  const roster = rows.filter((row) => row.onRoster);
+  const allIn = roster.length > 0 && roster.every((row) => row.intent === "in");
+
   return {
     content,
-    components: [dayOfButtons(session.id)],
+    components: closed ? [] : [dayOfButtons(session.id, { hellYeah: !allIn })],
     allowed_mentions: { parse: [], roles: campaign?.discordRoleId ? [campaign.discordRoleId] : [] },
   };
 }
@@ -220,14 +241,25 @@ export function renderDayOfPost({ target, rows, asOf }: AttendanceView): Message
 export const HELL_YEAH = "Hell yeah";
 export const CANT_MAKE_IT = "I can't make it";
 
-function dayOfButtons(sessionId: string): Record<string, unknown> {
+function dayOfButtons(sessionId: string, { hellYeah }: { hellYeah: boolean }): Record<string, unknown> {
   return {
     type: ComponentType.ACTION_ROW,
     components: [
-      button(HELL_YEAH, sessionId, "in", ButtonStyle.SUCCESS),
+      ...(hellYeah ? [button(HELL_YEAH, sessionId, "in", ButtonStyle.SUCCESS)] : []),
       button(CANT_MAKE_IT, sessionId, "out", ButtonStyle.DANGER),
     ],
   };
+}
+
+/**
+ * Whether tonight is off, and why. Called off outright, or — under the veto rule
+ * — a roster member is out, which moves the evening to a date poll. Tonight is
+ * off either way, and that is what the reminder is about.
+ */
+function calledOff(verdict: Quorum): "cancelled" | "veto" | null {
+  if (verdict.state === "CANCELLED") return "cancelled";
+  if (verdict.rule === "unanimous" && !verdict.met) return "veto";
+  return null;
 }
 
 /** The five buttons, in one row — Discord allows five, which is exactly enough. */

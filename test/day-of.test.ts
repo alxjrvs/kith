@@ -92,13 +92,16 @@ describe("the reminder itself", () => {
 
     const rows: AttendanceRow[] = [
       { userId: "1", name: "Ada", intent: "in", note: null, onRoster: true },
-      { userId: "2", name: "Bob", intent: "out", note: null, onRoster: true },
+      { userId: "2", name: "Bob", intent: null, note: null, onRoster: true },
     ];
     const payload = renderAttendancePost({ target, rows, asOf: new Date("2026-11-22T14:00:00Z") });
 
     expect(payload.content).toContain("<@&umbra-role> **Age of Umbra — Session 12** starts <t:");
     expect(payload.content).toContain("**Hell yeah (1)** — Ada");
-    expect(payload.content).toContain("**Can't make it (1)** — Bob");
+    expect(payload.content).toContain("**Not heard from (1)** — Bob");
+    // It's on by default, so the post doesn't say so.
+    expect(payload.content).not.toContain("**On**");
+    expect(payload.content).not.toContain("CANCELLED");
     expect(payload.allowed_mentions.roles).toEqual(["umbra-role"]);
 
     const buttons = (payload.components[0] as { components: { label: string; custom_id: string }[] })
@@ -110,6 +113,57 @@ describe("the reminder itself", () => {
       { action: "attend", arg: "out", target: SESSION_ID },
     ]);
     expect(payload.components).toHaveLength(1);
+  });
+});
+
+describe("the reminder once people answer", () => {
+  const asOf = new Date("2026-11-22T14:00:00Z");
+  const labels = (payload: { components: Record<string, unknown>[] }) =>
+    payload.components.flatMap((row) =>
+      (row as { components: { label: string }[] }).components.map((b) => b.label),
+    );
+
+  it("reads CANCELLED once somebody on the roster can't make it", async () => {
+    await seed(Date.parse("2026-11-23T01:30:00Z") / 1000);
+    const target = (await loadProjectionTarget(env, SESSION_ID))!;
+    const rows: AttendanceRow[] = [
+      { userId: "1", name: "Ada", intent: "in", note: null, onRoster: true },
+      { userId: "2", name: "Bob", intent: "out", note: null, onRoster: true },
+    ];
+    const payload = renderAttendancePost({ target, rows, asOf });
+
+    expect(payload.content.split("\n")[0]).toBe("**CANCELLED** <@&umbra-role> **Age of Umbra — Session 12**");
+    expect(payload.content).toContain("**Can't make it (1)** — Bob");
+    expect(payload.content).toContain("another date");
+    // Bob can still take it back.
+    expect(labels(payload)).toEqual(["Hell yeah", "I can't make it"]);
+  });
+
+  it("drops Hell yeah once the whole roster has said it", async () => {
+    await seed(Date.parse("2026-11-23T01:30:00Z") / 1000);
+    const target = (await loadProjectionTarget(env, SESSION_ID))!;
+    const rows: AttendanceRow[] = [
+      { userId: "1", name: "Ada", intent: "in", note: null, onRoster: true },
+      { userId: "2", name: "Bob", intent: "in", note: null, onRoster: true },
+    ];
+    const payload = renderAttendancePost({ target, rows, asOf });
+
+    expect(payload.content).toContain("**Hell yeah (2)** — Ada, Bob");
+    expect(labels(payload)).toEqual(["I can't make it"]);
+  });
+
+  it("reads CANCELLED with no buttons when the session was called off", async () => {
+    await seed(Date.parse("2026-11-23T01:30:00Z") / 1000);
+    await db(env).update(schema.sessions).set({ state: "CANCELLED" }).where(eq(schema.sessions.id, SESSION_ID));
+    const target = (await loadProjectionTarget(env, SESSION_ID))!;
+    const rows: AttendanceRow[] = [
+      { userId: "1", name: "Ada", intent: "in", note: null, onRoster: true },
+    ];
+    const payload = renderAttendancePost({ target, rows, asOf });
+
+    expect(payload.content.startsWith("**CANCELLED** ")).toBe(true);
+    expect(payload.content).not.toContain("another date");
+    expect(payload.components).toEqual([]);
   });
 });
 
