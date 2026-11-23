@@ -23,6 +23,7 @@ export function Header() {
         <Link to="/coc" activeProps={{ "aria-current": "page" }}>
           Rules
         </Link>
+        <Link to="/slideshow">Slideshow</Link>
         {me.organiser ? <a href="/console">Organise</a> : null}
       </nav>
       ) : <span />}

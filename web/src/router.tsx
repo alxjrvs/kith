@@ -105,9 +105,12 @@ const knowledge = createRoute({
 });
 
 /** The splash is full screen and brings its own header. */
+/** The slideshow, for anyone: signed out it is also the front page; signed in, the header links here. */
+const slideshow = createRoute({ getParentRoute: () => rootRoute, path: "/slideshow", component: Landing });
+
 const splash = createRoute({ getParentRoute: () => rootRoute, path: "/join/$kind/$id", component: Splash });
 
-const routeTree = rootRoute.addChildren([shell.addChildren([find, games, gamePage, agenda, coc, rules, profile, table, knowledge]), home, gameHome, splash]);
+const routeTree = rootRoute.addChildren([shell.addChildren([find, games, gamePage, agenda, coc, rules, profile, table, knowledge]), home, slideshow, gameHome, splash]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });
 
