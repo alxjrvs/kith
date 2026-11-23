@@ -508,3 +508,54 @@ describe("each game's calendar", () => {
     expect((await call("GET", "/ics/t-1002/campaign/secret.ics")).status).toBe(200);
   });
 });
+
+describe("the public campaigns feed", () => {
+  type Feed = { campaigns: Array<Record<string, unknown>> };
+  const feed = async (cookie?: string) => (await (await call("GET", "/api/hub/campaigns", cookie)).json()) as Feed;
+
+  it("lists public campaigns that are running or signing up, with no people in them", async () => {
+    await db(env).insert(schema.campaigns).values([
+      { id: "ember", name: "Ember", kind: "run", gameId: "daggerheart", state: "RUNNING", visibility: "public", heroUrl: "https://art.example/ember.jpg" },
+      { id: "done", name: "Done", kind: "run", gameId: "daggerheart", state: "CONCLUDED", visibility: "public" },
+      { id: "resting", name: "Resting", kind: "run", gameId: "daggerheart", state: "HIATUS", visibility: "public" },
+      { id: "test-run", name: "Test run", kind: "run", gameId: "daggerheart", state: "RUNNING", visibility: "public", staging: 1 },
+    ]);
+    await db(env).insert(schema.campaignMembers).values([
+      { campaignId: "ember", userId: "1003", role: "gm" },
+      { campaignId: "ember", userId: "1001", role: "player" },
+    ]);
+    await db(env).insert(schema.sessions).values({ id: "e1", kind: "campaign_session", campaignId: "ember", startsAt: later, endsAt: later + 3600 });
+
+    const res = await call("GET", "/api/hub/campaigns");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe("public, max-age=300");
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    const { campaigns } = (await res.json()) as Feed;
+    expect(campaigns).toEqual([
+      {
+        slug: "ember",
+        name: "Ember",
+        state: "RUNNING",
+        open: false,
+        system: "Daggerheart",
+        tagline: null,
+        url: "https://kith.test/games/ember",
+        imageUrl: "https://art.example/ember.jpg",
+        logoUrl: null,
+        next: later,
+        players: 1,
+        capacity: null,
+      },
+      expect.objectContaining({ slug: "hollowmere", state: "FORMING", open: true, tagline: "Fog on the water." }),
+    ]);
+    // Nobody's name or face, the GM's included.
+    expect(JSON.stringify(campaigns)).not.toMatch(/Rowan|Ada|lead|avatar/);
+  });
+
+  it("is the stranger's list whoever asks, an organiser included", async () => {
+    roles["1003"] = [ORGANISER_ROLE];
+    await env.DB.prepare(`UPDATE campaigns SET state = 'RUNNING' WHERE id = 'secret'`).run();
+    expect(await feed(await as("1003"))).toEqual(await feed());
+    expect((await feed()).campaigns.map((c) => c.slug)).toEqual(["hollowmere"]);
+  });
+});

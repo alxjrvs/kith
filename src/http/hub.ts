@@ -9,6 +9,7 @@ import { ANONYMOUS, type Viewer } from "../hub/visibility.ts";
 import { listingFor, openListings } from "../hub/listings.ts";
 import { catalog } from "../hub/catalog.ts";
 import { gamesFor, homeBase } from "../hub/home-base.ts";
+import { publicCampaigns } from "../hub/public-campaigns.ts";
 import { agendaFor } from "../hub/agenda.ts";
 import { isMemberOf } from "../hub/membership.ts";
 import { linksFor, pageFor, pagesFor } from "../hub/knowledge.ts";
@@ -120,6 +121,20 @@ export function hubRoutes() {
 
   /** The hub: one card per game the viewer may see. */
   hub.get("/homes", async (c) => c.json({ asOf: unixNow(), games: await gamesFor(c.env, c.get("viewer")) }));
+
+  /**
+   * The campaigns running or signing up, as a stranger sees them, for other
+   * sites to list (src/hub/public-campaigns.ts). The same for every caller,
+   * whatever cookie it sends, so it may be cached anywhere and read from any
+   * origin.
+   */
+  hub.get("/campaigns", async (c) => {
+    const campaigns = await publicCampaigns(c.env, new URL(c.req.url).origin);
+    return c.json({ asOf: unixNow(), campaigns }, 200, {
+      "Cache-Control": "public, max-age=300",
+      "Access-Control-Allow-Origin": "*",
+    });
+  });
 
   /** One game's home base: a campaign's roster and sessions, or a board game's days. */
   hub.get("/homes/:slug", async (c) => {
