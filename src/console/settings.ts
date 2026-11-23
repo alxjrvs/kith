@@ -127,7 +127,7 @@ const FIELDS: Omit<SettingField, "value" | "fallback">[] = [
     kind: "number",
     help: "The hour (1 to 23, guild time) a running campaign's reminder goes up in its channel on the day.",
     max: 23,
-    caveat: "Changing it does not move reminders already scheduled.",
+    caveat: "Reminders not yet sent move to the new hour within the hour.",
     writable: true,
   },
   {
