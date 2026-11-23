@@ -1,5 +1,6 @@
 import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { eq } from "drizzle-orm";
 import { db, schema } from "../src/db/index.ts";
 import { SETTING_KEYS, setSetting } from "../src/db/settings.ts";
 import { createApp } from "../src/http/app.ts";
@@ -472,6 +473,81 @@ describe("each game's home base", () => {
     roles["1003"] = [ORGANISER_ROLE];
     const boss = (await (await call("GET", "/api/hub/homes", await as("1003"))).json()) as { games: { slug: string }[] };
     expect(boss.games.map((g) => g.slug)).toEqual(["hollowmere", "secret", "arcs"]);
+  });
+});
+
+describe("naming past sessions", () => {
+  const earlier = Math.floor(Date.now() / 1000) - 14 * 86_400;
+
+  async function playedHollowmere() {
+    await env.DB.prepare(`UPDATE campaigns SET state = 'RUNNING' WHERE id = 'hollowmere'`).run();
+    await db(env).insert(schema.campaignMembers).values([
+      { campaignId: "hollowmere", userId: "1003", role: "gm" },
+      { campaignId: "hollowmere", userId: "1001", role: "player" },
+    ]);
+    await db(env).insert(schema.sessions).values([
+      { id: "old", kind: "campaign_session", campaignId: "hollowmere", startsAt: earlier - 14 * 86_400, endsAt: earlier - 14 * 86_400 + 3600, state: "PLAYED", title: "He Who Is Transplanted" },
+      { id: "last", kind: "campaign_session", campaignId: "hollowmere", startsAt: earlier, endsAt: earlier + 3600, state: "PLAYED" },
+      { id: "off", kind: "campaign_session", campaignId: "hollowmere", startsAt: earlier - 7 * 86_400, endsAt: earlier - 7 * 86_400 + 3600, state: "CANCELLED" },
+      { id: "vetoed", kind: "campaign_session", campaignId: "hollowmere", startsAt: earlier - 3 * 86_400, endsAt: earlier - 3 * 86_400 + 3600, state: "JEOPARDY" },
+      { id: "next", kind: "campaign_session", campaignId: "hollowmere", startsAt: later, endsAt: later + 3600 },
+    ]);
+  }
+
+  type Past = { home: { past: { sessionId: string; title: string | null }[]; canName: boolean } };
+
+  it("lists played sessions newest first with their names, and nothing signed out", async () => {
+    await playedHollowmere();
+    const member = (await (await call("GET", "/api/hub/homes/hollowmere", await as("1001"))).json()) as Past;
+    expect(member.home.past).toEqual([
+      expect.objectContaining({ sessionId: "last", title: null }),
+      expect.objectContaining({ sessionId: "old", title: "He Who Is Transplanted" }),
+    ]);
+    expect(member.home.canName).toBe(false);
+    const gm = (await (await call("GET", "/api/hub/homes/hollowmere", await as("1003"))).json()) as Past;
+    expect(gm.home.canName).toBe(true);
+    const outside = (await (await call("GET", "/api/hub/homes/hollowmere")).json()) as Past;
+    expect(outside.home.past).toEqual([]);
+  });
+
+  it("lets the GM name, rename and clear one, audited", async () => {
+    await playedHollowmere();
+    const gm = await as("1003");
+    expect((await call("PATCH", "/api/hub/sessions/last/title", gm, { title: "  Where There's   Smoke " })).status).toBe(200);
+    let row = await db(env).select().from(schema.sessions).where(eq(schema.sessions.id, "last")).get();
+    expect(row?.title).toBe("Where There's Smoke");
+    expect((await call("PATCH", "/api/hub/sessions/last/title", gm, { title: "" })).status).toBe(200);
+    row = await db(env).select().from(schema.sessions).where(eq(schema.sessions.id, "last")).get();
+    expect(row?.title).toBeNull();
+    const audit = await db(env).select().from(schema.auditLog).where(eq(schema.auditLog.action, "session.title")).all();
+    expect(audit.map((a) => a.detail)).toEqual([
+      { before: null, after: "Where There's Smoke" },
+      { before: "Where There's Smoke", after: null },
+    ]);
+  });
+
+  it("lets an organiser off the table name one, and nobody else", async () => {
+    await playedHollowmere();
+    expect((await call("PATCH", "/api/hub/sessions/last/title", await as("1001"), { title: "Mine now" })).status).toBe(403);
+    expect((await call("PATCH", "/api/hub/sessions/last/title", undefined, { title: "Anyone" })).status).toBe(401);
+    roles["1002"] = [ORGANISER_ROLE];
+    expect((await call("PATCH", "/api/hub/sessions/last/title", await as("1002"), { title: "Dust in the Wind" })).status).toBe(200);
+  });
+
+  it("refuses a session not yet played, a cancelled one, and a name too long", async () => {
+    await playedHollowmere();
+    const gm = await as("1003");
+    expect((await call("PATCH", "/api/hub/sessions/next/title", gm, { title: "Too soon" })).status).toBe(409);
+    expect((await call("PATCH", "/api/hub/sessions/off/title", gm, { title: "Never was" })).status).toBe(409);
+    expect((await call("PATCH", "/api/hub/sessions/vetoed/title", gm, { title: "Never moved" })).status).toBe(409);
+    expect((await call("PATCH", "/api/hub/sessions/last/title", gm, { title: "x".repeat(201) })).status).toBe(400);
+    expect((await call("PATCH", "/api/hub/sessions/last/title", gm, { title: 7 })).status).toBe(400);
+    expect((await call("PATCH", "/api/hub/sessions/nope/title", gm, { title: "Who" })).status).toBe(404);
+    // A body with no title is refused rather than read as "clear it".
+    await call("PATCH", "/api/hub/sessions/old/title", gm, { title: "Kept" });
+    expect((await call("PATCH", "/api/hub/sessions/old/title", gm, { name: "Oops" })).status).toBe(400);
+    const row = await db(env).select().from(schema.sessions).where(eq(schema.sessions.id, "old")).get();
+    expect(row?.title).toBe("Kept");
   });
 });
 

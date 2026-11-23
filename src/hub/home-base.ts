@@ -1,4 +1,4 @@
-import { and, asc, count, eq, gt, inArray, isNull, lte, ne, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, inArray, isNull, lte, ne, notInArray, or } from "drizzle-orm";
 import type { Env } from "../env.ts";
 import { db, schema } from "../db/index.ts";
 import { signupsForDay } from "../game-days/signups.ts";
@@ -10,6 +10,7 @@ import { isMemberOf } from "./membership.ts";
 import { personFrom, type Person } from "./people.ts";
 import type { Viewer } from "./visibility.ts";
 import { charactersFor, type CmsCharacter } from "../cms/content.ts";
+import { isGmOf } from "../sessions/title.ts";
 
 /**
  * Every game's home base, at `/games/<slug>`.
@@ -59,11 +60,32 @@ export interface CampaignHome {
   /** The roster once it runs; the signups while it forms. GMs first. */
   roster: Seat[];
   upcoming: HubAgendaRow[];
+  /**
+   * The sessions already played, newest first, each with its episode name if
+   * it has one. Empty signed out: the public page says nothing about when.
+   * Signed in, it goes wherever the upcoming sessions already go.
+   */
+  past: PastSession[];
+  /** The viewer may name past sessions: the table's GM, or an organiser. */
+  canName: boolean;
   /** The viewer's own subscribable feed of this game; null signed out, or when the feed would refuse them. */
   calendarUrl: string | null;
   links: TableLink[];
   pages: PageSummary[];
 }
+
+/** One evening already played, as the game page lists it. */
+export interface PastSession {
+  sessionId: string;
+  /** Session number within the campaign, when it has one. Display only. */
+  number: number | null;
+  startsAt: number;
+  /** The episode's name, given afterwards. */
+  title: string | null;
+}
+
+/** Enough for years of a fortnightly game, without letting one page grow forever. */
+const PAST_LIMIT = 200;
 
 export interface BoardDay {
   listing: Listing;
@@ -166,10 +188,39 @@ async function campaignHome(env: Env, listing: Listing, viewer: Viewer, origin: 
     canEdit: viewer.organiser,
     roster: await campaignRoster(env, listing, viewer.organiser || member, viewer.userId),
     upcoming: agenda.rows.filter((row) => row.campaignId === listing.id),
+    past: viewer.userId ? await pastSessions(env, listing.id, now) : [],
+    canName: viewer.organiser || (await isGmOf(env, listing.id, viewer.userId)),
     calendarUrl: await calendarUrlFor(env, viewer, origin, "campaign", listing.id),
     links: await linksFor(env, "campaign", listing.id, viewer, member),
     pages: await pagesFor(env, "campaign", listing.id, viewer, member),
   };
+}
+
+/**
+ * Every session of the campaign that has started and was not called off or
+ * left in JEOPARDY (`wasPlayed` in src/sessions/title.ts), newest first. A session the clock
+ * has not yet marked PLAYED still counts once it has begun: the evening happened, and its GM may want to name it that night.
+ */
+async function pastSessions(env: Env, campaignId: string, now: Date): Promise<PastSession[]> {
+  const nowUnix = Math.floor(now.getTime() / 1000);
+  return db(env)
+    .select({
+      sessionId: schema.sessions.id,
+      number: schema.sessions.number,
+      startsAt: schema.sessions.startsAt,
+      title: schema.sessions.title,
+    })
+    .from(schema.sessions)
+    .where(
+      and(
+        eq(schema.sessions.campaignId, campaignId),
+        notInArray(schema.sessions.state, ["CANCELLED", "JEOPARDY"]),
+        lte(schema.sessions.startsAt, nowUnix),
+      ),
+    )
+    .orderBy(desc(schema.sessions.startsAt))
+    .limit(PAST_LIMIT)
+    .all();
 }
 
 async function campaignRoster(

@@ -49,7 +49,9 @@ its game days (`src/hub/catalog.ts`); characters and sheet links on rosters
 (`src/hub/home-base.ts`); a campaign's pages and links (`src/hub/knowledge.ts`);
 uploaded files at `/media/<key>`. Where a game has no entry in EmDash yet, its
 words still come from D1, and a campaign's pages and links from D1 are listed
-after EmDash's, until they are moved over. A game day's own words stay in D1.
+after EmDash's, until they are moved over. A game day's own words stay in D1, and so does a session's episode name
+(`sessions.title`): it belongs to one session row and is named on the game page
+by the table's GM or an organiser after the evening is played.
 Published changes show within 30 seconds (`CMS_TTL_MS`).
 
 The content model is `cms/seed/seed.json`. The setup wizard applies it to a
