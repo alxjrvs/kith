@@ -45,7 +45,7 @@ function Top({ about }: { about: boolean }) {
   if (signedIn) return <Header over />;
   return (
     <header className="show-top">
-      <Link to="/" className="wordmark" style={{ fontSize: 26 }}>
+      <Link to="/" className="wordmark words-card" style={{ fontSize: 26 }}>
         <img src="/mark.svg" alt="" width="26" height="26" />
         Kith.town
       </Link>

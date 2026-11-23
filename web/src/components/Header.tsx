@@ -17,7 +17,7 @@ export function Header({ over = false }: { over?: boolean }) {
   const me = useMe().data;
   return (
     <header className={over ? "site-header over" : "site-header"}>
-      <Link to="/" className="wordmark">
+      <Link to="/" className={over ? "wordmark words-card" : "wordmark"}>
         <img src="/mark.svg" alt="" width="22" height="22" />
         Kith.town
       </Link>
