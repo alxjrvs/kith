@@ -54,12 +54,13 @@ export function GameHome() {
   return data.kind === "campaign" ? <CampaignBase home={data} /> : <BoardBase home={data} />;
 }
 
-/** What a slide says about nobody in particular: no lead, no seats, no dates. */
-const BLANK = { pitch: null, logoUrl: null, lead: null, players: 0, capacity: null, next: null, mine: false } as const;
+/** What a slide says about nobody but its organiser: no seats, no dates. */
+const BLANK = { pitch: null, logoUrl: null, players: 0, capacity: null, next: null, mine: false } as const;
 
 /**
  * Signed out, a home base is the game's slide from the front page, standing
- * still: what the game is and the way in, nothing about who plays or when.
+ * still: what the game is, who runs it, and the way in, nothing about who
+ * plays or when.
  * This is also what a game's join link shows: there is no separate splash. If
  * the game is taking signups, "I Want To Play" is on it; if not, nothing is.
  */
@@ -75,12 +76,13 @@ function PublicGame({ home }: { home: HomeBase }) {
     label: "Board game",
     tagline: home.game.summary,
     imageUrl: listing?.heroUrl ?? home.game.coverUrl,
+    lead: listing?.lead ?? null,
     open: listing?.open === true,
   };
   return <PublicSlide listing={listing} game={game} />;
 }
 
-/** A listing as a slide: what it is, with nothing about who plays or when. */
+/** A listing as a slide: what it is and who runs it, with nothing about who plays or when. */
 function listingSlide(listing: Listing): GameSummary {
   return {
     ...BLANK,
@@ -92,6 +94,7 @@ function listingSlide(listing: Listing): GameSummary {
     tagline: listing.tagline,
     pitch: listing.pitch,
     imageUrl: listing.heroUrl ?? listing.logoUrl,
+    lead: listing.lead,
     open: listing.open,
   };
 }
