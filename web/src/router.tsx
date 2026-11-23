@@ -86,7 +86,15 @@ const gamePage = createRoute({
   validateSearch: titleSearch,
 });
 const agenda = createRoute({ getParentRoute: () => shell, path: "/agenda", component: Agenda });
-const rules = createRoute({ getParentRoute: () => shell, path: "/rules", component: Rules });
+const coc = createRoute({ getParentRoute: () => shell, path: "/coc", component: Rules });
+/** The rules' first address, kept for links already shared. */
+const rules = createRoute({
+  getParentRoute: () => shell,
+  path: "/rules",
+  beforeLoad: () => {
+    throw redirect({ to: "/coc", replace: true });
+  },
+});
 const profile = createRoute({ getParentRoute: () => shell, path: "/profile", component: Profile });
 const table = createRoute({ getParentRoute: () => shell, path: "/table/$kind/$id", component: Table });
 const knowledge = createRoute({
@@ -99,7 +107,7 @@ const knowledge = createRoute({
 /** The splash is full screen and brings its own header. */
 const splash = createRoute({ getParentRoute: () => rootRoute, path: "/join/$kind/$id", component: Splash });
 
-const routeTree = rootRoute.addChildren([shell.addChildren([find, games, gamePage, agenda, rules, profile, table, knowledge]), home, gameHome, splash]);
+const routeTree = rootRoute.addChildren([shell.addChildren([find, games, gamePage, agenda, coc, rules, profile, table, knowledge]), home, gameHome, splash]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });
 
