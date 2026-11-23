@@ -16,7 +16,8 @@ import { ANONYMOUS } from "./visibility.ts";
  *   hiatus or over, never a game day or a board game;
  * - no people at all, not even the GM a listing names: a name on Kith is a
  *   Discord name, given to Kith, not to whatever site embeds this;
- * - no pitch: a listing elsewhere carries the tagline, and links here for more.
+ * - the pitch as plain text (`description`), with its Markdown taken out: a
+ *   listing elsewhere shows it as a few lines and links here for the rest.
  *
  * Visibility, staging and the next session are decided where they always
  * are (`listingFor`, `siteVisibility`, `agendaFor`); nothing here decides them
@@ -31,6 +32,8 @@ export interface PublicCampaign {
   /** "Daggerheart" */
   system: string | null;
   tagline: string | null;
+  /** The pitch, as plain text in one paragraph. */
+  description: string | null;
   /** The campaign's home base on Kith. */
   url: string;
   /** The hero art cut to 1200x630, or an outside URL as given. Absolute. */
@@ -56,6 +59,7 @@ export async function publicCampaigns(env: Env, origin: string, now = new Date()
       open: g.open,
       system: g.label,
       tagline: g.tagline,
+      description: plain(g.pitch),
       url: new URL(`/games/${encodeURIComponent(g.slug)}`, origin).href,
       imageUrl: absolute(g.imageUrl, origin, "/card"),
       logoUrl: absolute(g.logoUrl, origin, ""),
@@ -71,4 +75,18 @@ function absolute(url: string | null, origin: string, cut: string): string | nul
   if (/^https:\/\//.test(url)) return url;
   const key = url.match(/^\/media\/([^/]+)$/)?.[1];
   return key && MEDIA_KEY.test(key) ? new URL(`/media/${key}${cut}`, origin).href : null;
+}
+
+/** Markdown to one plain paragraph: links keep their words, marks and block markers go. */
+export function plain(markdown: string | null): string | null {
+  if (!markdown) return null;
+  const text = markdown
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/^\s{0,3}(#{1,6}\s+|>\s?|[-*+]\s+|\d+\.\s+)/gm, "")
+    // only marks in pairs around words: snake_case and 5 * 3 keep theirs
+    .replace(/(\*\*|__|~~|`|\*|(?<!\w)_)(\S(?:.*?\S)?)\1(?!\w)/g, "$2")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text || null;
 }
