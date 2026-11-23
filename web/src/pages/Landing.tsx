@@ -220,10 +220,7 @@ function Slide({
         <img className="show-mark" src="/mark.svg" alt="" aria-hidden="true" />
       )}
       <div className="show-slide-words">
-        <div className="game-tags">
-          {game.lead ? <span className="chip lead">{leadLine(game)}</span> : null}
-          <GameMarks system={game.label} soundUrl={soundUrl} />
-        </div>
+        <GameMarks system={game.label} soundUrl={soundUrl} />
         <h1>{still || game.state === "CONCLUDED" ? game.name : <GameLink game={game}>{game.name}</GameLink>}</h1>
         {game.tagline ? <p className="show-tagline">{game.tagline}</p> : null}
         {game.pitch ? (
@@ -231,6 +228,7 @@ function Slide({
             <Markdown source={game.pitch} />
           </div>
         ) : null}
+        {game.lead ? <span className="pill lead">{leadLine(game)}</span> : null}
         {still ? null : (
         <div className="row" style={{ gap: "8px 18px", fontSize: 14 }}>
           {game.next ? (

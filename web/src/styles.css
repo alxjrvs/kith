@@ -182,6 +182,8 @@ img { max-width: 100%; }
 .pill.maybe { --pill: var(--maybe); }
 .pill.out { --pill: var(--out); }
 .pill.accent { --pill: var(--accent); }
+/* Who runs a game: a small brass pill under its description. */
+.pill.lead { --pill: var(--lead); align-self: flex-start; border-color: var(--lead-edge); background: var(--lead-wash); color: var(--lead); }
 
 /* Seat and attendance squares */
 .squares { display: inline-flex; flex-wrap: wrap; gap: 3px; }
@@ -278,11 +280,6 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 
 /* The game system, first among the chips and lit like the table's top seat. */
 .chip.system { border-color: var(--accent); color: var(--link); }
-.chip.lead { border-color: var(--lead-edge); background: var(--lead-wash); color: var(--lead); }
-/* Who runs a game sits just above its system and sound, closer to them than to the name. */
-.game-tags { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
-.game-tags:empty { display: none; }
-.game-tags > .chip.lead { min-height: 36px; display: inline-flex; align-items: center; padding: 0 12px; }
 /* Above a game's name: its system and its sound, the same size side by side. */
 .game-marks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .game-marks .chip, .game-marks .btn.sound, .game-marks .btn.calendar { min-height: 36px; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: var(--radius-sm); font-size: 13px; }
