@@ -8,9 +8,9 @@ const MINE: Record<NonNullable<Listing["mine"]>, string> = {
 };
 
 /**
- * The one control for joining a table, used on cards and on the splash page.
+ * The one control for joining a table, used on cards and on a game's page.
  * Signed out, the same "I Want To Play" is the sign-in button, and sign-in
- * brings you back here.
+ * brings you back to the page you pressed it on.
  *
  * Every signup is In or Interested. To change one, you un-sign up and sign up
  * again. Somebody who isn't in the Kith server yet still signs up: their place
@@ -25,9 +25,8 @@ export function SignupButtons({ listing, big = false }: { listing: Listing; big?
   if (!listing.open) return <span className="pill">Not taking signups</span>;
 
   if (!me?.signedIn) {
-    const here = `/join/${listing.kind}/${listing.id}`;
     return (
-      <a className={`btn primary${size}`} href={signInHref(here)}>
+      <a className={`btn primary${size}`} href={signInHref()}>
         {full ? "I Want To Play (join the waitlist)" : "I Want To Play"}
       </a>
     );

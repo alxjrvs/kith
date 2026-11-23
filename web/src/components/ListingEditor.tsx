@@ -3,7 +3,7 @@ import { useListingEdit, type Listing, type Visibility } from "../api.ts";
 import { EditInCms } from "./EditInCms.tsx";
 
 /**
- * What organisers see under a splash page. A campaign's words are written in
+ * What organisers see at the foot of a game's page. A campaign's words are written in
  * kith-cms (docs/CMS.md), so for a campaign this sets only who may see it; a
  * game day's words are still edited here.
  */
