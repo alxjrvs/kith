@@ -110,7 +110,7 @@ describe("a game's manifest", () => {
     expect(res.headers.get("cache-control")).toContain("private");
     expect(await res.json()).toEqual({
       id: "/games/umbra",
-      name: "The Age of Umbra",
+      name: "Kith.town: The Age of Umbra",
       short_name: "The Age of Umbra",
       description: "Shadows fall.",
       start_url: "/games/umbra",
@@ -119,8 +119,8 @@ describe("a game's manifest", () => {
       background_color: "#211d1b",
       theme_color: "#211d1b",
       icons: [
-        { src: "/media/01AB.01CD.png/icon/192", sizes: "192x192", type: "image/png", purpose: "any" },
-        { src: "/media/01AB.01CD.png/icon/512", sizes: "512x512", type: "image/png", purpose: "any" },
+        { src: "/media/01AB.01CD.png/app-icon/192", sizes: "192x192", type: "image/png", purpose: "any" },
+        { src: "/media/01AB.01CD.png/app-icon/512", sizes: "512x512", type: "image/png", purpose: "any" },
       ],
     });
   });
@@ -128,7 +128,7 @@ describe("a game's manifest", () => {
   it("gives a board game one too, its icon cut from its hero, or Kith's icon with no hero", async () => {
     const arcs = (await (await get("/games/arcs/manifest.webmanifest")).json()) as { scope: string; icons: { src: string }[] };
     expect(arcs.scope).toBe("/games/arcs");
-    expect(arcs.icons.map((i) => i.src)).toEqual(["/media/01AB.ARCS.png/icon/192", "/media/01AB.ARCS.png/icon/512"]);
+    expect(arcs.icons.map((i) => i.src)).toEqual(["/media/01AB.ARCS.png/app-icon/192", "/media/01AB.ARCS.png/app-icon/512"]);
     const ti = (await (await get("/games/ti/manifest.webmanifest")).json()) as { icons: { src: string }[] };
     expect(ti.icons.map((i) => i.src)).toEqual(["/icon-192.png", "/icon-512.png"]);
   });
@@ -154,8 +154,8 @@ describe("a game's pages", () => {
       expect(res.status).toBe(200);
       const html = await res.text();
       expect(html).toContain('<link rel="manifest" href="/games/umbra/manifest.webmanifest" crossorigin="use-credentials" />');
-      expect(html).toContain('<meta name="apple-mobile-web-app-title" content="The Age of Umbra" />');
-      expect(html).toContain('<link rel="apple-touch-icon" href="/media/01AB.01CD.png/icon/180"');
+      expect(html).toContain('<meta name="apple-mobile-web-app-title" content="Kith.town: The Age of Umbra" />');
+      expect(html).toContain('<link rel="apple-touch-icon" href="/media/01AB.01CD.png/app-icon/180"');
       expect(html).toContain("<title>The Age of Umbra</title>");
     }
   });
@@ -169,28 +169,39 @@ describe("a game's pages", () => {
 });
 
 describe("a game's icon", () => {
-  it("is cut square from the art by Cloudflare Images", async () => {
+  it("is cut square from the art by Cloudflare Images, with the Kith table drawn over it", async () => {
     const asked: unknown[] = [];
     const IMAGES = {
       input: () => ({
         transform: (t: unknown) => {
           asked.push(t);
-          return { output: async () => ({ response: () => new Response("png") }) };
+          return {
+            draw: (_over: unknown, at: unknown) => {
+              asked.push(at);
+              return { output: async () => ({ response: () => new Response("png") }) };
+            },
+          };
         },
       }),
     };
-    const res = await get("/media/01AB.01CD.png/icon/512", undefined, { IMAGES });
+    const res = await get("/media/01AB.01CD.png/app-icon/512", undefined, { IMAGES });
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("image/png");
     expect(res.headers.get("cache-control")).toContain("immutable");
-    expect(asked).toEqual([{ width: 512, height: 512, fit: "cover", gravity: "auto" }]);
+    expect(asked).toEqual([
+      { width: 512, height: 512, fit: "cover", gravity: "auto" },
+      { width: 512, height: 512 },
+      { top: 0, left: 0 },
+    ]);
+    // Apps installed before the table was drawn on still find their icon.
+    expect((await get("/media/01AB.01CD.png/icon/512", undefined, { IMAGES })).status).toBe(200);
   });
 
   it("falls back to Kith's icon without Images, and refuses sizes it doesn't make", async () => {
-    const res = await get("/media/01AB.01CE.png/icon/192");
+    const res = await get("/media/01AB.01CE.png/app-icon/192");
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe("public, max-age=3600");
-    expect((await get("/media/01AB.01CD.png/icon/9999")).status).toBe(404);
+    expect((await get("/media/01AB.01CD.png/app-icon/9999")).status).toBe(404);
   });
 
   it("reads only Kith's own media keys", () => {

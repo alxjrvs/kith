@@ -14,7 +14,7 @@ export async function cutMedia(
   env: Env,
   request: Request,
   key: string,
-  cut: { cachePath: string; width: number; height: number; format: "image/png" | "image/jpeg"; fallback: string },
+  cut: { cachePath: string; width: number; height: number; format: "image/png" | "image/jpeg"; overlay?: string; fallback: string },
 ): Promise<Response> {
   const cache = typeof caches === "undefined" ? undefined : caches.default;
   const cacheKey = new Request(new URL(cut.cachePath, request.url));
@@ -26,9 +26,14 @@ export async function cutMedia(
 
   if (env.IMAGES) {
     try {
-      const out = await env.IMAGES.input(file.body)
-        .transform({ width: cut.width, height: cut.height, fit: "cover", gravity: "auto" })
-        .output({ format: cut.format, ...(cut.format === "image/jpeg" ? { quality: 85 } : {}) });
+      let image = env.IMAGES.input(file.body).transform({ width: cut.width, height: cut.height, fit: "cover", gravity: "auto" });
+      if (cut.overlay) {
+        // One of Kith's own images, drawn over the whole cut at its size.
+        const over = await env.ASSETS.fetch(new Request(new URL(cut.overlay, request.url)));
+        if (!over.ok || !over.body) throw new Error(`no overlay at ${cut.overlay}`);
+        image = image.draw(env.IMAGES.input(over.body).transform({ width: cut.width, height: cut.height }), { top: 0, left: 0 });
+      }
+      const out = await image.output({ format: cut.format, ...(cut.format === "image/jpeg" ? { quality: 85 } : {}) });
       const res = new Response(out.response().body, {
         headers: { "Content-Type": cut.format, "Cache-Control": "public, max-age=31536000, immutable" },
       });
