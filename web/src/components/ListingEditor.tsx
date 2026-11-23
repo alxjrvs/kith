@@ -23,7 +23,7 @@ function VisibilityEditor({ listing }: { listing: Listing }) {
       }}
     >
       <div className="panel-head label">
-        <span>Who can see it</span>
+        <span>For organisers</span>
         <span>{edit.isSuccess ? "Saved" : ""}</span>
       </div>
       <div className="panel-body">

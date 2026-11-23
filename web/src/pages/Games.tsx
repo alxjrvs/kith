@@ -84,7 +84,7 @@ function Catalog() {
   return (
     <section className="stack" style={{ gap: 16 }}>
       <h2 className="label">
-        Catalog, for organisers
+        Every game Kith knows
       </h2>
       <div className="panel">
         {games.map((game) => (

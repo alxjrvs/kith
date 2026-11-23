@@ -7,7 +7,7 @@ import { cadence } from "../format.ts";
 import { ToPage } from "../components/To.tsx";
 import { ListingEditor } from "../components/ListingEditor.tsx";
 
-export const VIS_LABEL: Record<Visibility, string> = { public: "Anyone", members: "Table", organisers: "Organisers" };
+export const VIS_LABEL: Record<Visibility, string> = { public: "Anyone", members: "The people on it", organisers: "Organisers only" };
 
 /**
  * A game day's own page: what it is, where its links go, and what it knows.
@@ -204,9 +204,9 @@ export function NewLink({ kind, id }: { kind: string; id: string }) {
         <div className="field">
           <label htmlFor="nl-vis">Who sees it</label>
           <select id="nl-vis" value={visibility} onChange={(e) => setVisibility(e.target.value as Visibility)}>
-            <option value="members">The table</option>
+            <option value="members">The people on it</option>
             <option value="public">Anyone</option>
-            <option value="organisers">Organisers</option>
+            <option value="organisers">Organisers only</option>
           </select>
         </div>
       </div>

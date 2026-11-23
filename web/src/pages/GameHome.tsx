@@ -534,8 +534,8 @@ function CancelSession({ row }: { row: Row }) {
           </span>
           <button
             type="button"
-            className="btn"
-            style={{ minHeight: 32, padding: "0 10px", borderColor: "var(--out)" }}
+            className="btn danger"
+            style={{ minHeight: 32, padding: "0 10px" }}
             disabled={cancel.isPending}
             onClick={() => cancel.mutate(row.sessionId, { onSuccess: () => setAsking(false) })}
           >

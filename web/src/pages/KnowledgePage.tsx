@@ -147,9 +147,9 @@ function PageEditor({
         <div className="field">
           <label htmlFor="pe-vis">Who can read it</label>
           <select id="pe-vis" value={visibility} onChange={(e) => setVisibility(e.target.value as Visibility)}>
-            <option value="members">The table</option>
+            <option value="members">The people on it</option>
             <option value="public">Anyone</option>
-            <option value="organisers">Organisers</option>
+            <option value="organisers">Organisers only</option>
           </select>
         </div>
       </div>
@@ -185,8 +185,8 @@ function PageEditor({
             </button>
             <button
               type="button"
-              className="btn"
-              style={{ marginLeft: "auto", borderColor: "var(--out)" }}
+              className="btn danger"
+              style={{ marginLeft: "auto" }}
               onClick={() =>
                 edits.removePage.mutate(slug, {
                   onSuccess: () =>
