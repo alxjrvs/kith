@@ -637,11 +637,20 @@ describe("the hub's loose ends", () => {
 });
 
 describe("each game's calendar", () => {
-  it("hands a signed-in viewer their own feed of the game, and nobody else one", async () => {
+  it("hands a player in one of the game's days their own feed of it, and nobody else one", async () => {
     await db(env).insert(schema.sessions).values({ id: "d1", kind: "one_off", gameDayId: "arcs-afternoon", startsAt: later, endsAt: later + 3600 });
+    await env.DB.prepare(`UPDATE game_days SET state = 'SEATING' WHERE id = 'arcs-afternoon'`).run();
+    await db(env).insert(schema.signups).values([
+      { targetType: "game_day", targetId: "arcs-afternoon", userId: "1001", state: "in", position: 1 },
+      { targetType: "game_day", targetId: "arcs-afternoon", userId: "1002", state: "interested", position: 2 },
+    ]);
+    const urlFor = async (who?: string) =>
+      ((await (await call("GET", "/api/hub/homes/arcs", who ? await as(who) : undefined)).json()) as { home: { calendarUrl: string | null } }).home.calendarUrl;
 
-    const signedOut = (await (await call("GET", "/api/hub/homes/arcs")).json()) as { home: { calendarUrl: string | null } };
-    expect(signedOut.home.calendarUrl).toBeNull();
+    // Signed out, only interested, or an organiser off the table: no calendar.
+    expect(await urlFor()).toBeNull();
+    expect(await urlFor("1002")).toBeNull();
+    expect(await urlFor("1003")).toBeNull();
 
     const { home } = (await (await call("GET", "/api/hub/homes/arcs", await as("1001"))).json()) as { home: { calendarUrl: string } };
     expect(home.calendarUrl).toBe("https://kith.test/ics/t-1001/game/arcs.ics");
@@ -659,5 +668,17 @@ describe("each game's calendar", () => {
     expect((await call("GET", "/ics/t-1002/campaign/secret.ics")).status).toBe(404);
     await db(env).insert(schema.campaignMembers).values({ campaignId: "secret", userId: "1002" });
     expect((await call("GET", "/ics/t-1002/campaign/secret.ics")).status).toBe(200);
+  });
+
+  it("offers a campaign's calendar to its roster only", async () => {
+    const urlFor = async (who?: string) =>
+      ((await (await call("GET", "/api/hub/homes/hollowmere", who ? await as(who) : undefined)).json()) as { home: { calendarUrl: string | null } }).home
+        .calendarUrl;
+    expect(await urlFor()).toBeNull();
+    expect(await urlFor("1002")).toBeNull();
+    await db(env).insert(schema.signups).values({ targetType: "campaign_forming", targetId: "hollowmere", userId: "1002", state: "interested", position: 1 });
+    expect(await urlFor("1002")).toBeNull();
+    await db(env).insert(schema.campaignMembers).values({ campaignId: "hollowmere", userId: "1002" });
+    expect(await urlFor("1002")).toBe("https://kith.test/ics/t-1002/campaign/hollowmere.ics");
   });
 });
