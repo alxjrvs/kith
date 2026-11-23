@@ -26,15 +26,17 @@ the email went.
 
 ### Setting up the email
 
-The email goes through Cloudflare Email (the `send_email` binding). Until it is
-set up, the Discord alert still goes and the console says the email didn't.
+The email goes through Cloudflare Email (the `send_email` binding). It is set up
+(2026-11-23): Email Routing is on for kith.town, the organiser's address is a
+verified destination and the `STOP_SIGN_EMAIL_TO` secret, and the binding is in
+`wrangler.jsonc`. To set it up again from nothing:
 
 1. In the Cloudflare dashboard, open the kith.town zone, then **Email > Email
    Routing**, and turn it on. It adds the DNS records it needs.
 2. Under **Destination addresses**, add the address the alerts should go to and
    click the link in the verification email.
 3. Set that address as a secret: `wrangler secret put STOP_SIGN_EMAIL_TO`.
-4. Add the binding to `wrangler.jsonc` and deploy:
+4. Keep the binding in `wrangler.jsonc` and deploy:
 
    ```jsonc
    "send_email": [{ "name": "EMAIL" }]
