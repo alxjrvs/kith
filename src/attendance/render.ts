@@ -74,7 +74,7 @@ export function renderAttendancePost(view: AttendanceView): MessagePayload {
  * campaigns stopped taking signups, and it keeps its five buttons. A game day's
  * session always has the signup post.
  */
-function dayOfWindow({ target, asOf }: AttendanceView): boolean {
+export function dayOfWindow({ target, asOf }: Pick<AttendanceView, "target" | "asOf">): boolean {
   return isDayOf(target) && unix(asOf) >= target.session.startsAt - DAY_OF_WINDOW;
 }
 

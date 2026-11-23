@@ -102,6 +102,25 @@ describe("clicking In / Out / Maybe", () => {
     expect(await db(env).select().from(schema.attendance).all()).toHaveLength(1);
   });
 
+  it("answers a repeat tap privately and leaves the post alone", async () => {
+    await click("in", { id: "1001", name: "Ada" });
+    const again = await click("in", { id: "1001", name: "Ada" });
+
+    expect(again.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+    expect(again.data.content).toContain("already in");
+    expect(again.data.content).toContain("I can't make it");
+
+    await click("out", { id: "1001", name: "Ada" });
+    const out = await click("out", { id: "1001", name: "Ada" });
+    expect(out.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+    expect(out.data.content).toContain("Hell yeah");
+
+    // And switching back un-cancels: the post is derived, not stored.
+    const back = await click("in", { id: "1001", name: "Ada" });
+    expect(back.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect(back.data.content).not.toContain("CANCELLED");
+  });
+
   it("serialises simultaneous clicks: no two of them read the same tally", async () => {
     const [first, second] = await Promise.all([
       click("in", { id: "1001", name: "Ada" }),
