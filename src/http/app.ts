@@ -26,6 +26,7 @@ import { feedsPanel, rotateFeedToken } from "../ics/feeds-panel.ts";
 import { NotConfigured, isOrganiser } from "../console/roles.ts";
 import { campaignSummaries, gameDaySummaries, gameSummaries } from "../console/api.ts";
 import { doorRows, letIn, turnAway } from "../hub/server-door.ts";
+import { markSuggestion, stopSignRows, suggestionRows } from "../hub/safety.ts";
 import { campaignPage } from "../console/campaign.ts";
 import { campaignHistory } from "../console/campaign-history.ts";
 import { campaignStats, gameDayStats } from "../console/stats.ts";
@@ -603,6 +604,22 @@ export function createApp() {
     if (decision.outcome === "already-joined") return c.json({ error: "They're already in the server." }, 400);
     return c.json({ decision });
   });
+
+  /**
+   * The suggestion box and the stop signs, every game's, newest first
+   * (src/hub/safety.ts). An anonymous suggestion comes back with no author
+   * because none was ever stored.
+   */
+  app.get("/api/suggestions", async (c) => c.json({ suggestions: await suggestionRows(c.env) }));
+
+  app.post("/api/suggestions/:id/:mark", async (c) => {
+    const mark = c.req.param("mark");
+    if (mark !== "read" && mark !== "unread") return c.json({ error: "Mark it read or unread." }, 404);
+    const found = await markSuggestion(c.env, c.req.param("id"), mark === "read", c.get("userId"));
+    return found ? c.json({ ok: true }) : c.json({ error: "No such suggestion." }, 404);
+  });
+
+  app.get("/api/stop-signs", async (c) => c.json({ stopSigns: await stopSignRows(c.env) }));
 
   app.get("/api/campaigns/:id/roster", async (c) =>
     c.json({ roster: await rosterRows(c.env, c.req.param("id")) }),

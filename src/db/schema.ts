@@ -961,3 +961,66 @@ export const pages = sqliteTable(
     check("pages_target_ck", sql`${t.targetType} IN ('campaign', 'game_day')`),
   ],
 );
+
+/**
+ * A game's home base, as the stop sign and the suggestion box name it: a
+ * campaign, slugged by its id, or a board game from the catalog, slugged by the
+ * game's id (`src/hub/home-base.ts`). Not a foreign key, for the same reason
+ * `pages` has none: one column points at two tables.
+ */
+export const GAME_KINDS = ["campaign", "board"] as const;
+
+/**
+ * Somebody pressed the stop sign on a game's home base.
+ *
+ * A safety tool, like the X-card: pressing it says "we need to stop and check
+ * in", and the person pressing never has to say why. Kith posts a short alert
+ * naming them in the game's own Discord channel and emails the organiser. The
+ * row is the record of the press, written before either goes out, and each
+ * delivery is recorded on it as it lands so a retry sends only what is missing.
+ */
+export const stopSigns = sqliteTable(
+  "stop_signs",
+  {
+    id: text("id").primaryKey(),
+    gameKind: text("game_kind", { enum: GAME_KINDS }).notNull(),
+    gameId: text("game_id").notNull(),
+    /** Who pressed it. A stop sign is never anonymous: the alert names them. */
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.discordId, { onDelete: "cascade" }),
+    /** Where the alert went. Recorded, then forgotten: messages are send-only. */
+    channelId: text("channel_id"),
+    discordMessageId: text("discord_message_id"),
+    emailedAt: integer("emailed_at"),
+    /** The last thing that went wrong delivering it, for the console. */
+    lastError: text("last_error"),
+    createdAt: integer("created_at").notNull().default(now),
+  },
+  (t) => [index("stop_signs_game_idx").on(t.gameKind, t.gameId, t.createdAt)],
+);
+
+/**
+ * The suggestion box: a note for the organiser about how a game could be
+ * better. Nothing about it goes to Discord.
+ *
+ * An anonymous suggestion has no author, and nothing else keeps one: no audit
+ * row, no log line, and its time is only the day it was left, so a small table
+ * can't tell who wrote it from when it arrived.
+ */
+export const suggestions = sqliteTable(
+  "suggestions",
+  {
+    id: text("id").primaryKey(),
+    gameKind: text("game_kind", { enum: GAME_KINDS }).notNull(),
+    gameId: text("game_id").notNull(),
+    /** Null when it was left anonymously. */
+    authorUserId: text("author_user_id").references(() => users.discordId, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    /** When an organiser marked it read. Null while it is new. */
+    readAt: integer("read_at"),
+    /** Unix seconds; midnight UTC of the day for an anonymous one. */
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("suggestions_game_idx").on(t.gameKind, t.gameId, t.createdAt)],
+);

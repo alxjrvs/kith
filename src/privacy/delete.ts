@@ -47,6 +47,18 @@ export async function deleteUserData(env: Env, discordId: string): Promise<Delet
     .where(eq(schema.sessionLogs.author, discordId))
     .returning({ id: schema.sessionLogs.id });
 
+  // Their stop sign presses, and the suggestions they put their name to. An
+  // anonymous suggestion was never theirs on record, so there is nothing of
+  // theirs in it to find, and it stays.
+  const stopSigns = await d
+    .delete(schema.stopSigns)
+    .where(eq(schema.stopSigns.userId, discordId))
+    .returning({ id: schema.stopSigns.id });
+  const suggestions = await d
+    .delete(schema.suggestions)
+    .where(eq(schema.suggestions.authorUserId, discordId))
+    .returning({ id: schema.suggestions.id });
+
   // The most sensitive thing Kith holds about anybody, and the one whose
   // deletion has an effect outside Kith: the pair stops working immediately and
   // the console stops recognising them.
@@ -71,6 +83,8 @@ export async function deleteUserData(env: Env, discordId: string): Promise<Delet
       campaign_members: campaignMembers.length,
       signups: signups.length,
       session_logs: logs.length,
+      stop_signs: stopSigns.length,
+      suggestions: suggestions.length,
       discord_tokens: tokens.length,
     },
     deletedAt: new Date().toISOString(),

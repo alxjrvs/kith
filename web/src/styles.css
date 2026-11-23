@@ -318,3 +318,38 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
   .show-slide-words h1 { font-size: clamp(32px, 7vh, 56px); }
   .show-pitch { display: none; }
   }
+
+/*
+ * The stop sign: always in the corner of a signed-in home base, the one red
+ * thing on the page, so it can be found mid-game without looking for it.
+ */
+.stop-sign {
+  position: fixed; z-index: 20; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom));
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: 48px; padding: 6px 16px 6px 6px;
+  border: 1px solid color-mix(in srgb, var(--out) 60%, var(--border)); border-radius: 999px;
+  background: var(--deep); color: var(--text); font-weight: 700; cursor: pointer;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.45);
+}
+.stop-sign:hover { border-color: var(--out); }
+.stop-sign:focus-visible { outline: 2px solid var(--out); outline-offset: 3px; }
+.stop-octagon {
+  display: grid; place-items: center; width: 36px; height: 36px;
+  clip-path: polygon(29.3% 0, 70.7% 0, 100% 29.3%, 100% 70.7%, 70.7% 100%, 29.3% 100%, 0 70.7%, 0 29.3%);
+  background: #c8322a; color: #fff; font-family: var(--font-small); font-size: 10px; letter-spacing: 0.04em;
+}
+.stop-dialog {
+  width: min(440px, calc(100vw - 32px)); padding: 22px;
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  background: var(--panel); color: var(--text);
+}
+.stop-dialog::backdrop { background: rgb(12 10 9 / 0.7); }
+.stop-dialog h2 { margin: 0; font-family: var(--font-head); }
+.stop-dialog p { margin: 0; line-height: 1.5; }
+.btn.stop-confirm { background: #c8322a; border-color: #c8322a; color: #fff; }
+.btn.stop-confirm:hover { filter: brightness(1.1); color: #fff; }
+@media (max-width: 640px) {
+  .stop-sign { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); }
+}
+/* Room under the last panel, so the stop sign never sits on top of it. */
+body:has(.stop-sign) main.page { padding-bottom: 96px; }

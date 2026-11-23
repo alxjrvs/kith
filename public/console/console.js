@@ -548,7 +548,7 @@ function action(label, confirmation, work) {
   button.type = "button";
   button.textContent = label;
   button.addEventListener("click", async () => {
-    if (!confirm(confirmation)) return;
+    if (confirmation && !confirm(confirmation)) return;
     button.disabled = true;
     await act(async () => {
       const started = work();
@@ -1894,6 +1894,95 @@ function doorSection(door) {
   return box;
 }
 
+/**
+ * The suggestion box, every game's, newest first. An anonymous one has no
+ * name and only a day, because that is all Kith ever kept.
+ */
+function suggestionsSection(suggestions) {
+  const box = document.createElement("section");
+  if (suggestions.length === 0) {
+    const p = document.createElement("p");
+    p.className = "note";
+    p.textContent = "Nothing in the suggestion box yet.";
+    box.append(p);
+    return box;
+  }
+  const table = document.createElement("table");
+  const head = document.createElement("tr");
+  for (const label of ["Game", "From", "Left", "Suggestion", ""]) {
+    const th = document.createElement("th");
+    th.textContent = label;
+    head.append(th);
+  }
+  table.append(head);
+  for (const row of suggestions) {
+    const tr = document.createElement("tr");
+    if (row.readAt) tr.className = "muted";
+    const game = document.createElement("td");
+    const link = document.createElement("a");
+    link.href = `/games/${encodeURIComponent(row.game.id)}`;
+    link.textContent = row.game.name;
+    game.append(link);
+    tr.append(game);
+    cell(tr, row.author ? row.author.name : "Anonymous");
+    cell(
+      tr,
+      row.dayOnly
+        ? new Date(row.createdAt * 1000).toLocaleDateString(undefined, { dateStyle: "medium", timeZone: "UTC" })
+        : when(row.createdAt),
+    );
+    const body = document.createElement("td");
+    body.style.whiteSpace = "pre-wrap";
+    body.textContent = row.body;
+    tr.append(body);
+    const actions = document.createElement("td");
+    const id = encodeURIComponent(row.id);
+    actions.append(
+      row.readAt
+        ? action("Mark new", null, () => api(`/api/suggestions/${id}/unread`, { method: "POST", body: "{}" }))
+        : action("Mark read", null, () => api(`/api/suggestions/${id}/read`, { method: "POST", body: "{}" })),
+    );
+    tr.append(actions);
+    table.append(tr);
+  }
+  box.append(table);
+  return box;
+}
+
+/** Every stop sign pressed, newest first, and whether the alert and the email went. */
+function stopSignsSection(signs) {
+  const box = document.createElement("section");
+  if (signs.length === 0) {
+    const p = document.createElement("p");
+    p.className = "note";
+    p.textContent = "Nobody has pressed a stop sign.";
+    box.append(p);
+    return box;
+  }
+  const table = document.createElement("table");
+  const head = document.createElement("tr");
+  for (const label of ["Game", "Who", "When", "Discord", "Email"]) {
+    const th = document.createElement("th");
+    th.textContent = label;
+    head.append(th);
+  }
+  table.append(head);
+  for (const row of signs) {
+    const tr = document.createElement("tr");
+    cell(tr, row.game.name);
+    cell(tr, row.person ? row.person.name : "Someone");
+    cell(tr, when(row.createdAt));
+    cell(tr, row.posted ? "Posted" : row.unconfirmed ? "Sent, not confirmed" : "Not yet");
+    const email = document.createElement("td");
+    email.textContent = row.emailed ? "Sent" : "Not yet";
+    if (row.lastError) email.title = row.lastError;
+    tr.append(email);
+    table.append(tr);
+  }
+  box.append(table);
+  return box;
+}
+
 function heading(label) {
   const h = document.createElement("h2");
   h.textContent = label;
@@ -1914,6 +2003,8 @@ async function load() {
       feeds,
       dayStats,
       door,
+      suggestions,
+      stopSigns,
     ] = await Promise.all([
       api("/api/me"),
       api("/api/agenda"),
@@ -1932,6 +2023,8 @@ async function load() {
       api("/console/me/feeds").catch(() => null),
       api("/api/game-days/stats").catch(() => null),
       api("/api/door").catch(() => null),
+      api("/api/suggestions").catch(() => null),
+      api("/api/stop-signs").catch(() => null),
     ]);
 
     // The rail is a second read rather than part of the agenda's: one session's
@@ -1966,6 +2059,8 @@ async function load() {
     split.append(agendaSection(agenda), detailRail(detail));
     main.replaceChildren(split);
     if (door) main.prepend(heading("Waiting to join the server"), doorSection(door));
+    if (stopSigns?.stopSigns.length) main.append(heading("Stop signs"), stopSignsSection(stopSigns.stopSigns));
+    if (suggestions) main.append(heading("Suggestion box"), suggestionsSection(suggestions.suggestions));
     main.append(heading("Campaigns"), campaignsTable(campaigns));
     if (plan) main.append(campaignPageSection(plan.campaign, history, polls, stats));
     main.append(heading("Game days"), gameDaysTable(gameDays));
