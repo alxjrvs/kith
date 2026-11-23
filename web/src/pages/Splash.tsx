@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from "react";
 import { ToTable } from "../components/To.tsx";
 import { Header } from "../components/Header.tsx";
 import { Link, useParams } from "@tanstack/react-router";
@@ -8,7 +7,7 @@ import { SignupButtons } from "../components/SignupButtons.tsx";
 import { ListingEditor } from "../components/ListingEditor.tsx";
 import { cadence } from "../format.ts";
 import { signInHref } from "../signin.ts";
-import { soundCloudPlayer, soundCloudTrack, type Player } from "../soundcloud.ts";
+import { GameMarks } from "../components/GameMarks.tsx";
 
 /**
  * A new game's front door: full screen, the hero image behind, the sound on a
@@ -85,70 +84,9 @@ export function Splash() {
   );
 }
 
-/** The splash's sound: off until pressed, looping once it plays. Shared with the home bases. */
-export function SoundButton({ url }: { url: string | null }) {
-  const player = useRef<Player | null>(null);
-  const [playing, setPlaying] = useState(false);
-
-  useEffect(() => {
-    if (!url) return;
-    const track = soundCloudTrack(url);
-    const made = track ? soundCloudPlayer(track, setPlaying) : audioPlayer(url, setPlaying);
-    player.current = made;
-    return () => {
-      made.destroy();
-      player.current = null;
-      setPlaying(false);
-    };
-  }, [url]);
-
-  const toggle = () => player.current?.toggle();
-
-  if (!url) return null;
-  return (
-    <button type="button" className="btn" aria-pressed={playing} onClick={toggle}>
-      {playing ? (
-        <>
-          <span aria-hidden="true" style={{ display: "inline-flex", gap: 3 }}>
-            <span style={{ width: 4, height: 12, background: "var(--in)" }} />
-            <span style={{ width: 4, height: 12, background: "var(--in)" }} />
-          </span>
-          Pause the sound
-        </>
-      ) : (
-        <>
-          <span
-            aria-hidden="true"
-            style={{ width: 0, height: 0, borderLeft: "10px solid var(--text)", borderTop: "6px solid transparent", borderBottom: "6px solid transparent" }}
-          />
-          Play the sound
-        </>
-      )}
-    </button>
-  );
-}
-
-/** An uploaded file (or any audio URL), looping. */
-function audioPlayer(url: string, onPlaying: (playing: boolean) => void): Player {
-  const element = new Audio(url);
-  element.loop = true;
-  element.preload = "none";
-  element.addEventListener("pause", () => onPlaying(false));
-  element.addEventListener("play", () => onPlaying(true));
-  return {
-    toggle() {
-      if (element.paused) void element.play().catch(() => onPlaying(false));
-      else element.pause();
-    },
-    destroy() {
-      element.pause();
-    },
-  };
-}
-
 function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean }) {
   const left = listing.capacity === null ? null : Math.max(listing.capacity - listing.taken, 0);
-  // The system is a chip of its own below the title, where people look for it.
+  // The system is a chip of its own above the title, where people look for it.
   const eyebrow = `${listing.kind === "campaign" ? "New campaign" : "Game day"}${
     listing.lead ? ` ${listing.kind === "campaign" ? "run" : "hosted"} by ${listing.lead.name}` : ""
   }`;
@@ -165,26 +103,22 @@ function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean
             <img src="/mark.svg" alt="" width="26" height="26" />
             Kith.town
           </Link>
-          <div className="row" style={{ gap: 10 }}>
-            <SoundButton url={listing.soundUrl} />
-            <a className="btn" href={signInHref()}>
-              Sign in
-            </a>
-          </div>
+          <a className="btn" href={signInHref()}>
+            Sign in
+          </a>
         </header>
       )}
       <main>
+        <GameMarks system={listing.system ?? listing.game?.name ?? null} soundUrl={listing.soundUrl} />
         <span className="label">{eyebrow}</span>
         <h1>{listing.name}</h1>
         {listing.tagline ? <p className="tagline">{listing.tagline}</p> : null}
         <div className="row" style={{ gap: 6 }}>
-          {listing.game ? <span className="chip system">{listing.game.name}</span> : null}
           {[...cadence(listing), listing.where === "voice" ? "Voice" : listing.where].filter(Boolean).map((chip) => (
             <span key={chip} className="chip">
               {chip}
             </span>
           ))}
-          {signedIn ? <SoundButton url={listing.soundUrl} /> : null}
         </div>
         <div className="row" style={{ gap: "16px 24px" }}>
           <SignupButtons listing={listing} big />

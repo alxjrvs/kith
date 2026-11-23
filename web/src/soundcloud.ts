@@ -66,7 +66,8 @@ function loadApi(): Promise<void> {
 
 /** What the sound button drives: an <audio> element or SoundCloud's player. */
 export interface Player {
-  toggle(): void;
+  play(): void;
+  pause(): void;
   destroy(): void;
 }
 
@@ -116,13 +117,13 @@ export function soundCloudPlayer(track: SoundCloudTrack, onPlaying: (playing: bo
     .catch(() => onPlaying(false));
 
   return {
-    toggle() {
-      if (!widget) {
-        wanted = !wanted;
-        return;
-      }
-      if (playing) widget.pause();
-      else widget.play();
+    play() {
+      wanted = true;
+      if (widget && !playing) widget.play();
+    },
+    pause() {
+      wanted = false;
+      if (widget && playing) widget.pause();
     },
     destroy() {
       widget?.pause();
