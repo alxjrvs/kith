@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useCopy, useGames, useHomes, useMe, type CatalogEntry, type GameSummary } from "../api.ts";
 import { Markdown } from "../markdown.tsx";
 import { CatalogEditor } from "../components/CatalogEditor.tsx";
-import { inDays, stamp } from "../format.ts";
+import { inDays, leadLine, stamp } from "../format.ts";
 import { signInHref } from "../signin.ts";
 import { SeatSquares } from "../components/Squares.tsx";
 
@@ -136,9 +136,9 @@ export function GameCard({ game }: { game: GameSummary }) {
       ) : null}
       <div className="panel-head label">
         <span>{STATE_LABEL[game.state] ?? game.state.toLowerCase()}</span>
-        <span>{game.label ?? ""}</span>
       </div>
       <div className="panel-body" style={{ flexGrow: 1 }}>
+        {game.label ? <span className="chip system" style={{ alignSelf: "flex-start" }}>{game.label}</span> : null}
         <h3 style={{ fontSize: 20, fontWeight: 600 }}>
           {game.kind === "day" ? (
             <Link to="/table/$kind/$id" params={{ kind: "game-day", id: game.slug }} style={{ color: "var(--text)" }}>
@@ -162,7 +162,7 @@ export function GameCard({ game }: { game: GameSummary }) {
         ) : null}
         {game.lead ? (
           <p className="muted" style={{ fontSize: 12 }}>
-            {game.kind === "campaign" ? "GM" : "Host"} {game.lead.name}
+            {leadLine(game)}
           </p>
         ) : null}
         <div className="row" style={{ marginTop: "auto", gap: 10 }}>

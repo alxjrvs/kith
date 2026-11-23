@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useHomes, useMe, type GameSummary } from "../api.ts";
-import { inDays, stamp } from "../format.ts";
+import { inDays, leadLine, stamp } from "../format.ts";
 import { Markdown } from "../markdown.tsx";
 import { signInHref } from "../signin.ts";
 import { Header } from "../components/Header.tsx";
@@ -221,6 +221,7 @@ function Slide({
       )}
       <div className="show-slide-words">
         <GameMarks system={game.label} soundUrl={soundUrl} />
+        {game.lead ? <span className="label">{leadLine(game)}</span> : null}
         <h1>{still || game.state === "CONCLUDED" ? game.name : <GameLink game={game}>{game.name}</GameLink>}</h1>
         {game.tagline ? <p className="show-tagline">{game.tagline}</p> : null}
         {game.pitch ? (
