@@ -28,19 +28,14 @@ export function Agenda() {
         </div>
         <div className="row">
           {signedIn ? (
-            <>
-              <div className="segmented" role="group" aria-label="Which games">
-                <button type="button" className="btn" aria-pressed={scope === "mine"} onClick={() => setScope("mine")}>
-                  Your games
-                </button>
-                <button type="button" className="btn" aria-pressed={scope === "public"} onClick={() => setScope("public")}>
-                  Everything you can see
-                </button>
-              </div>
-              <Link to="/profile" hash="feeds" className="btn">
-                Subscribe by calendar feed
-              </Link>
-            </>
+            <div className="segmented" role="group" aria-label="Which games">
+              <button type="button" className="btn" aria-pressed={scope === "mine"} onClick={() => setScope("mine")}>
+                Your games
+              </button>
+              <button type="button" className="btn" aria-pressed={scope === "public"} onClick={() => setScope("public")}>
+                Everything you can see
+              </button>
+            </div>
           ) : me ? (
             <a className="btn primary" href={signInHref()}>
               Sign in to see your games

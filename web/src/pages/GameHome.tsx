@@ -468,30 +468,27 @@ function RosterRows({ seats, empty, characters = true }: { seats: Seat[]; empty:
 }
 
 /**
- * Subscribe to this one game. `webcal:` hands the feed to the calendar app;
- * the copy is for Google, which wants the https URL pasted in.
+ * Subscribe to this one game, as one calendar icon. `webcal:` hands the feed to
+ * the calendar app; for Google, copy the link address and paste it in.
  */
 function CalendarLink({ url }: { url: string | null }) {
   const me = useMe().data;
-  const [copied, setCopied] = useState(false);
   if (!url) {
     return me && !me.signedIn ? <a href={signInHref()}>Sign in to subscribe in your calendar</a> : null;
   }
   return (
-    <span className="row" style={{ gap: 12 }}>
-      <a className="btn" href={url.replace(/^https?:/, "webcal:")}>
-        Subscribe in your calendar
-      </a>
-      <button
-        type="button"
-        className="btn"
-        onClick={() => {
-          void navigator.clipboard?.writeText(url).then(() => setCopied(true));
-        }}
-      >
-        {copied ? "Copied" : "Copy feed link"}
-      </button>
-    </span>
+    <a
+      className="btn"
+      href={url.replace(/^https?:/, "webcal:")}
+      title="Subscribe in your calendar"
+      aria-label="Subscribe in your calendar"
+      style={{ padding: 10, lineHeight: 0 }}
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5" />
+      </svg>
+    </a>
   );
 }
 

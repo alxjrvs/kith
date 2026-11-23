@@ -84,11 +84,6 @@ export interface AgendaRow {
   myIntent: Intent | null;
 }
 
-export interface FeedsPanel {
-  links: { label: string; url: string }[];
-  lag: string;
-}
-
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -150,9 +145,6 @@ export const useAgenda = (scope: "mine" | "public") =>
     queryKey: ["agenda", scope],
     queryFn: () => api<{ asOf: number; rows: AgendaRow[] }>(`/api/hub/agenda?scope=${scope}`),
   });
-
-export const useFeeds = (enabled: boolean) =>
-  useQuery({ queryKey: ["feeds"], queryFn: () => api<FeedsPanel>("/console/me/feeds"), enabled });
 
 /** Sign up In or Interested, or un-sign up. In on a full table is the waitlist. */
 export function useSignup(listing: Pick<Listing, "kind" | "id">) {
