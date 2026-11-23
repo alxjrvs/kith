@@ -4,7 +4,13 @@ import { db, schema } from "../db/index.ts";
 import { renderSignupPost } from "../game-days/render.ts";
 import { decodeCustomId, encodeCustomId } from "./custom-id.ts";
 import { deleteUserData, describeReceipt } from "../privacy/delete.ts";
-import { correctionPost, renderAttendancePost } from "../attendance/render.ts";
+import {
+  CANT_MAKE_IT,
+  HELL_YEAH,
+  correctionPost,
+  dayOfWindow,
+  renderAttendancePost,
+} from "../attendance/render.ts";
 import { registerRows } from "../attendance/assume.ts";
 import {
   hostCheck,
@@ -552,6 +558,15 @@ async function handleAttend(
     return ephemeral(intentClosed(target.session.state));
   }
 
+  // The morning reminder's buttons are one row shared by the whole channel, so
+  // the answer somebody already gave cannot vanish for them alone. Tapping it
+  // again is the next best thing: a private word that it's already counted and
+  // which button switches it, with the post left exactly as it was.
+  if ((arg === "in" || arg === "out") && dayOfWindow({ target, asOf: new Date() })) {
+    const mine = (await lock.readIntents(sessionId)).find((row) => row.userId === actor.id);
+    if (mine?.intent === arg) return ephemeral(alreadyAnswered(arg));
+  }
+
   let rows;
   switch (arg) {
     case "in":
@@ -676,6 +691,13 @@ function seatingClosed(state: string): string {
     default:
       return "This day has already been played.";
   }
+}
+
+/** A repeat tap on the morning reminder: what is counted, and how to change it. */
+function alreadyAnswered(intent: "in" | "out"): string {
+  return intent === "in"
+    ? `You're already in. Tap **${CANT_MAKE_IT}** if that changes.`
+    : `You're already down as out. Tap **${HELL_YEAH}** if you can make it after all.`;
 }
 
 /** Why the click did nothing, in the words that say what happened. */
