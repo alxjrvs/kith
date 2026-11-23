@@ -229,18 +229,19 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 /*
  * Over a picture the words sit on a frosted card: the art behind them blurs and
  * dims a little, and the rest of the picture shows at full strength. The card
- * has no edge: it reaches --bleed past the words and fades out over --feather
- * on every side, so it reads as a soft patch of shade rather than a box. Its
+ * has no edge you can find: it reaches --bleed past the words and fades out
+ * over a wide --feather on an eased curve, so it reads as shade that thins
+ * into the picture rather than a shape. --bleed plus the words' padding is at
+ * least --feather, so the words always sit on the card's full strength. Its
  * bottom spacing is a margin, so the card is only as tall as the words.
  */
-.words-card { --feather: 64px; --bleed: 24px; position: relative; isolation: isolate; text-shadow: 0 1px 2px #0008; }
+.words-card { --feather: 180px; --bleed: 140px; position: relative; isolation: isolate; text-shadow: 0 1px 2px #0008; }
 .words-card::before {
   content: ""; position: absolute; inset: calc(var(--bleed) * -1); z-index: -1; pointer-events: none;
-  border-radius: calc(var(--feather) * 1.5);
-  background: color-mix(in srgb, var(--deep) 50%, transparent);
+  background: color-mix(in srgb, var(--deep) var(--shade, 50%), transparent);
   -webkit-backdrop-filter: blur(16px) saturate(1.15); backdrop-filter: blur(16px) saturate(1.15);
-  --fade-x: linear-gradient(to right, transparent, #000 var(--feather), #000 calc(100% - var(--feather)), transparent);
-  --fade-y: linear-gradient(to bottom, transparent, #000 var(--feather), #000 calc(100% - var(--feather)), transparent);
+  --fade-x: linear-gradient(to right, transparent 0, rgb(0 0 0 / 0.03) calc(var(--feather) * 0.15), rgb(0 0 0 / 0.1) calc(var(--feather) * 0.3), rgb(0 0 0 / 0.25) calc(var(--feather) * 0.45), rgb(0 0 0 / 0.45) calc(var(--feather) * 0.6), rgb(0 0 0 / 0.7) calc(var(--feather) * 0.75), rgb(0 0 0 / 0.88) calc(var(--feather) * 0.88), #000 var(--feather), #000 calc(100% - var(--feather)), rgb(0 0 0 / 0.88) calc(100% - var(--feather) * 0.88), rgb(0 0 0 / 0.7) calc(100% - var(--feather) * 0.75), rgb(0 0 0 / 0.45) calc(100% - var(--feather) * 0.6), rgb(0 0 0 / 0.25) calc(100% - var(--feather) * 0.45), rgb(0 0 0 / 0.1) calc(100% - var(--feather) * 0.3), rgb(0 0 0 / 0.03) calc(100% - var(--feather) * 0.15), transparent 100%);
+  --fade-y: linear-gradient(to bottom, transparent 0, rgb(0 0 0 / 0.03) calc(var(--feather) * 0.15), rgb(0 0 0 / 0.1) calc(var(--feather) * 0.3), rgb(0 0 0 / 0.25) calc(var(--feather) * 0.45), rgb(0 0 0 / 0.45) calc(var(--feather) * 0.6), rgb(0 0 0 / 0.7) calc(var(--feather) * 0.75), rgb(0 0 0 / 0.88) calc(var(--feather) * 0.88), #000 var(--feather), #000 calc(100% - var(--feather)), rgb(0 0 0 / 0.88) calc(100% - var(--feather) * 0.88), rgb(0 0 0 / 0.7) calc(100% - var(--feather) * 0.75), rgb(0 0 0 / 0.45) calc(100% - var(--feather) * 0.6), rgb(0 0 0 / 0.25) calc(100% - var(--feather) * 0.45), rgb(0 0 0 / 0.1) calc(100% - var(--feather) * 0.3), rgb(0 0 0 / 0.03) calc(100% - var(--feather) * 0.15), transparent 100%);
   -webkit-mask-image: var(--fade-x), var(--fade-y); -webkit-mask-composite: source-in;
   mask-image: var(--fade-x), var(--fade-y); mask-composite: intersect;
 }
@@ -322,7 +323,7 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 .hero-words { display: flex; flex-direction: column; gap: 24px; }
 .splash.base main > .words-card { max-width: 792px; margin-left: -32px; padding: 40px 48px 40px 64px; }
 @media (max-width: 640px) {
-  .splash.base main > .words-card { --feather: 40px; --bleed: 12px; margin-left: -16px; margin-right: -16px; padding: 32px 28px 32px 32px; }
+  .splash.base main > .words-card { --feather: 96px; --bleed: 72px; margin-left: -16px; margin-right: -16px; padding: 32px 28px 32px 32px; }
 }
 .game-marks .btn.sound { white-space: nowrap; }
 @media (max-width: 640px) {
@@ -356,8 +357,10 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
 .show { position: relative; height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; background: var(--deep); }
 .show-top { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; }
 .show-about { margin: 0; font-size: 15px; color: color-mix(in srgb, var(--text) 85%, transparent); text-shadow: 0 1px 6px var(--deep); }
-/* Over bright art Kith's own line gets a small patch of the same frosted shade. */
-.show-about.words-card { --feather: 14px; --bleed: 10px; padding: 4px 10px; color: var(--text); }
+/* Over bright art Kith's own line gets a small patch of the same blur, barely darkened. */
+.show-about.words-card { --feather: 40px; --bleed: 40px; --shade: 15%; padding: 4px 10px; color: var(--text); text-shadow: 0 1px 3px #000c, 0 2px 12px #0008; }
+/* Kith's own mark over a picture: the same blur, barely darkened, and the words keep their own shadow. */
+.wordmark.words-card { --feather: 40px; --bleed: 40px; --shade: 15%; text-shadow: 0 1px 3px #000c, 0 2px 12px #0008; }
 .show-slides { position: absolute; inset: 0; }
 .show-slides { overflow: hidden; }
 .show-slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; visibility: hidden; overflow: hidden; }
@@ -451,10 +454,10 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
  */
 .show-slide .words-card { padding: 48px 48px 48px 64px; margin-bottom: 120px; }
 @media (max-width: 640px) {
-  .show-slide .words-card { --feather: 40px; --bleed: 12px; padding: 32px 28px 32px 32px; margin-bottom: 200px; }
+  .show-slide .words-card { --feather: 96px; --bleed: 72px; padding: 32px 28px 32px 32px; margin-bottom: 200px; }
 }
 @media (max-height: 520px) {
-  .show-slide .words-card { --feather: 24px; --bleed: 8px; padding: 20px 24px 20px 32px; margin-bottom: 64px; }
+  .show-slide .words-card { --feather: 64px; --bleed: 48px; padding: 20px 24px 20px 32px; margin-bottom: 64px; }
 }
 
 /*
