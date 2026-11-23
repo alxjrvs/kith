@@ -89,7 +89,7 @@ export const SETTING_KEYS = {
 export const SETTING_DEFAULTS = {
   [SETTING_KEYS.horizonSessions]: 4,
   [SETTING_KEYS.attendanceLeadDays]: 10,
-  [SETTING_KEYS.dayOfHour]: 9,
+  [SETTING_KEYS.dayOfHour]: 8,
   [SETTING_KEYS.jeopardyLeadHours]: 24,
   [SETTING_KEYS.reminderStepsHours]: [72, 24, 2],
   [SETTING_KEYS.pollWindowHours]: 72,

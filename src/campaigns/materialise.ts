@@ -204,7 +204,15 @@ async function healDayOf(env: Env, campaignId: string, now: Date): Promise<void>
   await db(env)
     .insert(schema.jobs)
     .values(jobs.map((job) => ({ ...job, idempotencyKey: job.id })))
-    .onConflictDoNothing();
+    // A reminder that has not gone out yet follows the hour it should go out
+    // at, so changing the reminder hour moves every pending one within the
+    // hour. One that has run, or is running, is left exactly as it is: moving
+    // it back to pending would post it twice.
+    .onConflictDoUpdate({
+      target: schema.jobs.id,
+      set: { runAt: sql`excluded.run_at` },
+      setWhere: sql`${schema.jobs.state} = 'pending' AND ${schema.jobs.runAt} <> excluded.run_at`,
+    });
 }
 
 function sessionCount(env: Env, campaignId: string): Promise<number> {

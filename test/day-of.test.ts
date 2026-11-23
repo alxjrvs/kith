@@ -162,6 +162,32 @@ describe("the clock", () => {
     expect(await job(`session.day-of:${SESSION_ID}`)).toMatchObject({ state: "pending" });
   });
 
+  it("moves a pending reminder to a new reminder hour, and leaves a sent one alone", async () => {
+    await setSetting(env, SETTING_KEYS.horizonSessions, 1);
+    const startsAt = Math.floor(Date.now() / 1000) + 3 * DAY;
+    await seed(startsAt);
+    await db(env)
+      .update(schema.campaigns)
+      .set({ state: "RUNNING", recurrenceAnchor: startsAt, intervalWeeks: 2 })
+      .where(eq(schema.campaigns.id, "age-of-umbra"));
+    const id = `session.day-of:${SESSION_ID}`;
+
+    await setSetting(env, SETTING_KEYS.dayOfHour, 9);
+    await materialiseHorizon(env, new Date());
+    const atNine = (await job(id))!.runAt;
+
+    await setSetting(env, SETTING_KEYS.dayOfHour, 8);
+    await materialiseHorizon(env, new Date());
+    const moved = (await job(id))!.runAt;
+    expect(atNine).toBe(dayOfInstant(startsAt, "America/New_York", 9));
+    expect(moved).toBe(dayOfInstant(startsAt, "America/New_York", 8));
+
+    await db(env).update(schema.jobs).set({ state: "done" }).where(eq(schema.jobs.id, id));
+    await setSetting(env, SETTING_KEYS.dayOfHour, 10);
+    await materialiseHorizon(env, new Date());
+    expect(await job(id)).toMatchObject({ state: "done", runAt: moved });
+  });
+
   it("holds an early signup post back and hands it to the morning of", async () => {
     const startsAt = Math.floor(Date.now() / 1000) + 3 * DAY;
     await seed(startsAt);

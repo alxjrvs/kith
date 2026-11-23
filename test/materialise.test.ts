@@ -175,9 +175,9 @@ describe("the jobs a new session arms", () => {
     expect(project).toMatchObject({ kind: "session.project", state: "pending" });
     // The post is a job, not a post made here: a post is the one thing that
     // cannot be taken back. A running campaign takes no signups, so it waits for
-    // 09:00 on the day, guild time — 19:00 London is 09:00 London ten hours
+    // 08:00 on the day, guild time — 19:00 London is 08:00 London eleven hours
     // earlier, whichever side of the clocks changing it falls.
-    expect(dayOf?.runAt).toBe(first!.startsAt - 10 * 3600);
+    expect(dayOf?.runAt).toBe(first!.startsAt - 11 * 3600);
   });
 
   it("arms no signup post and no reminder ladder for a running campaign", async () => {
