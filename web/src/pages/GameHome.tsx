@@ -191,12 +191,12 @@ function BaseHero({
           </div>
         ) : null}
         {children}
-        {/* The game's chips on the left, then the way in, in one row. */}
+        {/* The game's chips on the left, the way in on the right, in one row. */}
         <div className="row hero-actions">
           <GameMarks kind={kind} system={system} lead={lead} soundUrl={soundUrl}>
             {calendarUrl ? <CalendarLink url={calendarUrl} /> : null}
           </GameMarks>
-          {actions}
+          {actions ? <div className="row hero-way-in">{actions}</div> : null}
         </div>
       </main>
     </div>
@@ -239,7 +239,6 @@ function CampaignBase({ home }: { home: CampaignHome }) {
         actions={listing.open ? <SignupButtons listing={listing} big /> : null}
       >
         {upcoming[0] ? <NextUp row={upcoming[0]} /> : null}
-        {home.calendarUrl ? null : <CalendarLink url={null} />}
       </BaseHero>
     <main className="page">
 
@@ -381,7 +380,6 @@ function BoardBase({ home }: { home: BoardHome }) {
             ) : null}
           </div>
         ) : null}
-        {home.calendarUrl ? null : <CalendarLink url={null} />}
       </BaseHero>
     <main className="page" id="days">
       {editing ? <CatalogEditor game={game} done={() => setEditing(false)} /> : null}
@@ -603,11 +601,7 @@ function RosterRows({ seats, empty, characters = true }: { seats: Seat[]; empty:
  * Subscribe to this one game, as one calendar icon. `webcal:` hands the feed to
  * the calendar app; for Google, copy the link address and paste it in.
  */
-function CalendarLink({ url }: { url: string | null }) {
-  const me = useMe().data;
-  if (!url) {
-    return me && !me.signedIn ? <a href={signInHref()}>Sign in to subscribe in your calendar</a> : null;
-  }
+function CalendarLink({ url }: { url: string }) {
   return (
     <a
       className="btn calendar"

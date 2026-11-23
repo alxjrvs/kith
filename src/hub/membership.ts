@@ -54,3 +54,41 @@ export async function isMemberOf(
 export function targetType(kind: "campaign" | "game-day"): "campaign" | "game_day" {
   return kind === "campaign" ? "campaign" : "game_day";
 }
+
+/**
+ * Who a game's calendar is for: the players actually in it. A campaign's
+ * roster, or an In signup while it is still forming; a game day's In seats and
+ * its host. Interested and waitlisted are not in yet, so they get no feed link.
+ */
+export async function isPlayingIn(
+  env: Env,
+  kind: "campaign" | "game-day",
+  id: string,
+  userId: string | undefined,
+): Promise<boolean> {
+  if (!userId) return false;
+  const d = db(env);
+  const seat = await d
+    .select({ userId: schema.signups.userId })
+    .from(schema.signups)
+    .where(
+      and(
+        eq(schema.signups.targetType, kind === "campaign" ? "campaign_forming" : "game_day"),
+        eq(schema.signups.targetId, id),
+        eq(schema.signups.userId, userId),
+        eq(schema.signups.state, "in"),
+      ),
+    )
+    .get();
+  if (seat && !(await isProvisional(env, userId))) return true;
+  if (kind === "campaign") {
+    const member = await d
+      .select({ userId: schema.campaignMembers.userId })
+      .from(schema.campaignMembers)
+      .where(and(eq(schema.campaignMembers.campaignId, id), eq(schema.campaignMembers.userId, userId)))
+      .get();
+    return member !== undefined;
+  }
+  const day = await d.select({ host: schema.gameDays.hostUserId }).from(schema.gameDays).where(eq(schema.gameDays.id, id)).get();
+  return day?.host === userId;
+}

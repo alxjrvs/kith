@@ -6,7 +6,7 @@ import { agendaFor, type HubAgendaRow } from "./agenda.ts";
 import { catalog, type CatalogEntry } from "./catalog.ts";
 import { linksFor, pagesFor, type PageSummary, type TableLink } from "./knowledge.ts";
 import { listingFor, type Listing } from "./listings.ts";
-import { isMemberOf } from "./membership.ts";
+import { isMemberOf, isPlayingIn } from "./membership.ts";
 import { personFrom, type Person } from "./people.ts";
 import type { Viewer } from "./visibility.ts";
 import { charactersFor, type CmsCharacter } from "../cms/content.ts";
@@ -154,9 +154,10 @@ export async function homeBase(
 }
 
 /**
- * The viewer's own feed URL for one game, from their feed token. The feed reads
- * a token as a plain member, never an organiser, so an organiser looking at a
- * table they are not on gets no link rather than one that 404s.
+ * The viewer's own feed URL for one game, from their feed token, offered only
+ * to the players in it (`isPlayingIn`): a campaign's roster, or somebody In on
+ * one of a board game's coming days. Everyone else, organisers included, gets
+ * no link.
  */
 async function calendarUrlFor(
   env: Env,
@@ -164,12 +165,15 @@ async function calendarUrlFor(
   origin: string,
   path: "campaign" | "game",
   id: string,
+  dayIds: string[] = [],
 ): Promise<string | null> {
   if (!viewer.userId) return null;
-  if (path === "campaign") {
-    const asMember = await listingFor(env, "campaign", id, { userId: viewer.userId, organiser: false });
-    if (!asMember) return null;
-  }
+  const userId = viewer.userId;
+  const playing =
+    path === "campaign"
+      ? await isPlayingIn(env, "campaign", id, userId)
+      : (await Promise.all(dayIds.map((day) => isPlayingIn(env, "game-day", day, userId)))).some(Boolean);
+  if (!playing) return null;
   const holder = await db(env)
     .select({ feedToken: schema.users.feedToken })
     .from(schema.users)
@@ -351,7 +355,7 @@ async function boardHome(env: Env, game: CatalogEntry, viewer: Viewer, origin: s
     game,
     canEdit: viewer.organiser,
     upcoming,
-    calendarUrl: await calendarUrlFor(env, viewer, origin, "game", game.id),
+    calendarUrl: await calendarUrlFor(env, viewer, origin, "game", game.id, upcoming.map((day) => day.listing.id)),
     played: await playedCount(env, game.id, now),
   };
 }

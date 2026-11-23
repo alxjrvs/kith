@@ -294,12 +294,18 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 /* Who runs a game, in brass beside the ember of its system. */
 .chip.lead { border-color: var(--lead-edge); background: var(--lead-wash); color: var(--lead); }
 /* A home base's chips, then its way in, in one row on the left. */
-.hero-actions { gap: 16px 24px; align-items: center; width: max-content; max-width: calc(100vw - 64px); }
+/* A home base's chips on the left, the way in on the right. */
+.hero-actions { gap: 16px 24px; align-items: center; justify-content: space-between; width: 100%; }
+.hero-way-in { gap: 12px; margin-left: auto; }
+/* The words keep their measure; only the chip row runs the full width, so the way in reaches the right edge. */
+.splash.base main { max-width: none; }
+.splash.base main > :not(.hero-actions) { max-width: 728px; }
 .game-marks .btn.sound { white-space: nowrap; }
 @media (max-width: 640px) {
-  .hero-actions { max-width: 100%; }
   /* On a phone a game's chips sit above the way in and stretch to fill each row. */
-  .hero-actions { width: 100%; }
+  .hero-way-in { width: 100%; }
+  .hero-way-in > * { flex: 1 1 auto; }
+  .hero-way-in .btn { flex: 1 1 auto; justify-content: center; }
   .hero-actions > .game-marks, .show-way-in > .game-marks { width: 100%; }
   .game-marks > :is(.chip, .btn) { flex: 1 1 auto; justify-content: center; }
   /* Its chips and the way in take two or three rows down there: keep the words above them. */
@@ -363,11 +369,14 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
 .show-pitch p + p { margin-top: 0.6em; }
 .show-bottom { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 20px 32px 28px; }
 .show-dots { display: flex; flex-wrap: wrap; gap: 8px; }
-/* A game's chips sit just above the way in, on the slideshow and a game's own page alike. */
-.show-way-in { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
-.show-way-in > .game-marks { justify-content: flex-end; }
+/* A game's chips on the left and the way in on the right, along the bottom of the slideshow and a game's own page alike. */
+.show-bottom:has(.show-way-in > .game-marks) { flex-direction: column; align-items: stretch; }
+.show-way-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.show-way-in > .row { margin-left: auto; }
 @media (max-width: 640px) {
-  .show-way-in { align-items: stretch; }
+  .show-bottom:has(.show-way-in > .game-marks) { flex-direction: column-reverse; }
+  .show-way-in { flex-direction: column; align-items: stretch; }
+  .show-way-in > .row { margin-left: 0; }
 }
 .show-dots button { position: relative; width: 36px; height: 6px; padding: 0; border: 0; border-radius: 3px; background: color-mix(in srgb, var(--text) 28%, transparent); cursor: pointer; }
 /* A larger target than the bar itself, for fingers. (The bar must not clip it, or the extra target is dead.) */
