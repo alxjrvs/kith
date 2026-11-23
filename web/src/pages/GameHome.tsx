@@ -451,7 +451,7 @@ function RosterRows({ seats, empty, characters = true }: { seats: Seat[]; empty:
       <tbody>
         {seats.map((seat, i) => (
           <tr key={`${seat.role}-${seat.person?.id ?? i}`} className={seat.role === "gm" ? "gm" : undefined}>
-            <td style={{ width: 44 }}>
+            <td className="roster-face">
               <img
                 className="discord-avatar"
                 src={seat.person?.avatarUrl ?? ANONYMOUS_AVATAR}

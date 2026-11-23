@@ -246,7 +246,9 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 .roster tr.gm td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .roster-user { font-family: var(--font-small); }
 .roster-character { font-weight: 600; text-align: right; }
-.discord-avatar { display: block; width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: var(--raised); }
+/* The face column is exactly one face wide: as a percentage, the global img max-width let the table squeeze it to an oval. */
+.roster td.roster-face { width: 28px; }
+.discord-avatar { display: block; width: 28px; height: 28px; min-width: 28px; max-width: none; border-radius: 50%; object-fit: cover; background: var(--raised); }
 .chip { padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); font-family: var(--font-small); font-size: 13px; font-weight: 500; }
 
 /* Prose (knowledge pages) */
