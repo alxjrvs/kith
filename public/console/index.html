@@ -10,22 +10,14 @@
     <title>Kith console</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <!--
-      The design system lives in `design/` and is not shipped: `public/` is what
-      the ASSETS binding serves. These files are verbatim copies of
-      design/tokens/*.css — copied rather than imported, and never edited here.
-      There is no build step in this repo and this is not the phase to add one.
+      The console wears the site's Ember Table look: the same tokens as
+      web/src/styles.css, written out in console.css because the console has no
+      build step. The Discord-grey tokens in design/ are the old console's.
     -->
-    <link rel="stylesheet" href="/console/tokens/colors.css" />
-    <link rel="stylesheet" href="/console/tokens/fonts.css" />
-    <link rel="stylesheet" href="/console/tokens/typography.css" />
-    <link rel="stylesheet" href="/console/tokens/spacing.css" />
-    <link rel="stylesheet" href="/console/tokens/borders.css" />
-    <link rel="stylesheet" href="/console/tokens/motion.css" />
-    <link rel="stylesheet" href="/console/tokens/base.css" />
-    <link rel="stylesheet" href="/console/console.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600&family=Schibsted+Grotesk:wght@800&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=Hanken+Grotesk:wght@400;500;600;700&family=Schibsted+Grotesk:wght@700;800&family=Spline+Sans+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="/console/console.css" />
   </head>
   <body>
     <!--
@@ -44,8 +36,8 @@
       <a href="/profile" class="avatar" id="avatar" aria-label="Your profile"></a>
     </header>
 
-    <main id="main" aria-busy="true">
-      <p class="note" id="status">Loading…</p>
+    <main id="main" class="page" aria-busy="true">
+      <p class="muted" id="status">Loading…</p>
     </main>
 
     <script type="module" src="/console/console.js"></script>

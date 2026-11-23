@@ -1,4 +1,0 @@
-/* Kith uses two Google Fonts: IBM Plex Sans (UI) and IBM Plex Mono (data, labels, logs).
-   No licensed brand fonts were supplied — see readme.md "Type substitution".
-   Served from Google's CDN rather than self-hosted binaries. */
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap");

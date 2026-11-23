@@ -57,7 +57,7 @@ export function Profile() {
             </form>
             {confirming ? (
               <>
-                <button type="button" className="btn" style={{ borderColor: "var(--out)" }} disabled={remove.isPending} onClick={() => remove.mutate()}>
+                <button type="button" className="btn danger" disabled={remove.isPending} onClick={() => remove.mutate()}>
                   Yes, delete everything Kith holds about me
                 </button>
                 <button type="button" className="btn" onClick={() => setConfirming(false)}>

@@ -142,6 +142,9 @@ img { max-width: 100%; }
 .btn.primary:hover { filter: brightness(1.08); color: var(--on-accent); }
 .btn.big { min-height: 56px; padding: 0 28px; font-size: 16px; font-weight: 700; }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+/* Something that can't be taken back: an outline in red, never a red fill. */
+.btn.danger { border-color: color-mix(in srgb, var(--out) 70%, var(--border)); }
+.btn.danger:hover { border-color: var(--out); color: #fff; }
 .segmented { display: inline-flex; flex-wrap: wrap; }
 .segmented .btn { border-radius: 0; }
 .segmented .btn + .btn { border-left-width: 0; }
