@@ -260,7 +260,6 @@ img { max-width: 100%; }
 /* Above a game's name: its system and its sound, the same size side by side. */
 .game-marks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .game-marks .chip, .game-marks .btn.sound { min-height: 36px; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: var(--radius-sm); font-size: 13px; }
-.game-marks .chip { background: color-mix(in srgb, var(--deep) 70%, transparent); }
 
 /*
  * The landing, for someone not signed in: one screen tall and never scrolls.
