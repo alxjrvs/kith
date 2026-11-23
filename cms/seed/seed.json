@@ -89,7 +89,7 @@
         },
         {
           "slug": "sound_link",
-          "label": "Sound link, instead of a file (a SoundCloud track; end it with #t=0:09 to start 9 seconds in)",
+          "label": "Sound link, instead of a file (a SoundCloud track or a YouTube video; end it with #t=0:09 to start 9 seconds in)",
           "type": "url"
         },
         {

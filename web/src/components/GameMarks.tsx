@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { soundCloudPlayer, soundCloudTrack, type Player } from "../soundcloud.ts";
+import { youTubeVideo } from "../sound-link.ts";
+import { youTubePlayer } from "../youtube.ts";
 
 /**
  * What sits above a game's name everywhere the game is shown big: its system,
@@ -49,8 +51,7 @@ function SoundButton({ url }: { url: string | null }) {
 
   useEffect(() => {
     if (!url) return;
-    const track = soundCloudTrack(url);
-    const made = track ? soundCloudPlayer(track, setPlaying) : audioPlayer(url, setPlaying);
+    const made = linkedPlayer(url, setPlaying) ?? audioPlayer(url, setPlaying);
     player.current = made;
     if (!muted.current) made.play();
 
@@ -103,6 +104,15 @@ function SoundButton({ url }: { url: string | null }) {
       )}
     </button>
   );
+}
+
+/** A SoundCloud track or a YouTube video, played through its own hidden player. */
+function linkedPlayer(url: string, onPlaying: (playing: boolean) => void): Player | null {
+  const track = soundCloudTrack(url);
+  if (track) return soundCloudPlayer(track, onPlaying);
+  const video = youTubeVideo(url);
+  if (video) return youTubePlayer(video, onPlaying);
+  return null;
 }
 
 /** An uploaded file (or any audio URL), looping. */
