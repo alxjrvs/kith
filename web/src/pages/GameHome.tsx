@@ -149,7 +149,7 @@ function BaseHero({
   system = null,
   children,
 }: {
-  /** What the game is and who runs it, worn as its own chip above the system. */
+  /** What the game is and who runs it, as a small pill under the tagline. */
   eyebrow: string;
   title: string;
   tagline: string | null;
@@ -171,15 +171,13 @@ function BaseHero({
       <Header over={Boolean(heroUrl)} />
       <main>
         {logoUrl ? <img className="base-logo" src={logoUrl} alt="" /> : null}
-        {/* Who runs it, then the system and the sound, all above the name, where the eye starts. */}
-        <div className="game-tags">
-          <span className="chip lead">{eyebrow}</span>
-          <GameMarks system={system} soundUrl={soundUrl}>
-            {calendarUrl ? <CalendarLink url={calendarUrl} /> : null}
-          </GameMarks>
-        </div>
+        {/* The system and the sound sit above the name, where the eye starts. */}
+        <GameMarks system={system} soundUrl={soundUrl}>
+          {calendarUrl ? <CalendarLink url={calendarUrl} /> : null}
+        </GameMarks>
         <h1>{title}</h1>
         {tagline ? <p className="tagline">{tagline}</p> : null}
+        <span className="pill lead">{eyebrow}</span>
         {chips.length > 0 ? (
           <div className="row" style={{ gap: 6 }}>
             {chips.map((chip) => (
