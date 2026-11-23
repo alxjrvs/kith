@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { soundCloudPlayer, soundCloudTrack, type Player } from "../soundcloud.ts";
 import { youTubeVideo } from "../sound-link.ts";
 import { youTubePlayer } from "../youtube.ts";
@@ -7,68 +7,35 @@ import { youTubePlayer } from "../youtube.ts";
  * What sits above a game's name everywhere the game is shown big: its system,
  * as a chip, and its sound. The home base, the splash, a game's own page and
  * the slideshow all wear this, so a game looks like itself wherever it is.
- * The slideshow passes no sound: it never plays one.
+ * The slideshow passes no sound: it never plays one. A home base adds its
+ * calendar link to the end of the row.
  */
-export function GameMarks({ system, soundUrl = null }: { system: string | null; soundUrl?: string | null }) {
-  if (!system && !soundUrl) return null;
+export function GameMarks({ system, soundUrl = null, children }: { system: string | null; soundUrl?: string | null; children?: ReactNode }) {
+  if (!system && !soundUrl && !children) return null;
   return (
     <div className="game-marks">
       {system ? <span className="chip system">{system}</span> : null}
       <SoundButton url={soundUrl} />
+      {children}
     </div>
   );
 }
 
-/** A visitor who mutes the sound keeps it muted on every game page until they close the tab. */
-const MUTED_KEY = "kith-sound-muted";
-function readMuted(): boolean {
-  try {
-    return sessionStorage.getItem(MUTED_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-function writeMuted(muted: boolean) {
-  try {
-    if (muted) sessionStorage.setItem(MUTED_KEY, "1");
-    else sessionStorage.removeItem(MUTED_KEY);
-  } catch {
-    // No storage (a private window): the choice holds for this page only.
-  }
-}
-
 /**
- * A game's sound: it plays by itself and loops, and the button mutes it.
- * Browsers hold sound back until the visitor has touched the page, so when the
- * first try is refused the sound starts on their first click or key press
- * anywhere else. Shared by the splash and the home bases.
+ * A game's sound: it waits for the visitor to ask for it, then loops, and the
+ * same button stops it. Until it has been pressed it glows faintly, so the
+ * sound is easy to find without ever playing by itself.
  */
 function SoundButton({ url }: { url: string | null }) {
   const player = useRef<Player | null>(null);
-  const button = useRef<HTMLButtonElement>(null);
   const [playing, setPlaying] = useState(false);
-  const muted = useRef(readMuted());
+  const [pressed, setPressed] = useState(false);
 
   useEffect(() => {
     if (!url) return;
     const made = linkedPlayer(url, setPlaying) ?? audioPlayer(url, setPlaying);
     player.current = made;
-    if (!muted.current) made.play();
-
-    const events = ["click", "keydown"] as const;
-    const off = () => {
-      for (const type of events) document.removeEventListener(type, kick, true);
-    };
-    // A press of the button itself is the button's own business: it would start the sound and then mute it.
-    function kick(event: Event) {
-      if (event.target instanceof Node && button.current?.contains(event.target)) return;
-      off();
-      if (!muted.current) made.play();
-    }
-    for (const type of events) document.addEventListener(type, kick, true);
-
     return () => {
-      off();
       made.destroy();
       player.current = null;
       setPlaying(false);
@@ -76,15 +43,14 @@ function SoundButton({ url }: { url: string | null }) {
   }, [url]);
 
   const toggle = () => {
-    muted.current = playing;
-    writeMuted(muted.current);
+    setPressed(true);
     if (playing) player.current?.pause();
     else player.current?.play();
   };
 
   if (!url) return null;
   return (
-    <button ref={button} type="button" className="btn sound" aria-pressed={playing} onClick={toggle}>
+    <button type="button" className="btn sound" aria-pressed={playing} data-unheard={pressed ? undefined : ""} onClick={toggle}>
       {playing ? (
         <>
           <span aria-hidden="true" style={{ display: "inline-flex", gap: 3 }}>

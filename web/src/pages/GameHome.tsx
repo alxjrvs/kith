@@ -141,10 +141,12 @@ function BaseHero({
   heroUrl,
   logoUrl = null,
   soundUrl,
+  calendarUrl,
   chips,
   system = null,
   children,
 }: {
+  /** What the game is and who runs it, worn as its own chip above the system. */
   eyebrow: string;
   title: string;
   tagline: string | null;
@@ -152,6 +154,8 @@ function BaseHero({
   /** The game's logo, worn above its title. */
   logoUrl?: string | null;
   soundUrl: string | null;
+  /** The game's calendar feed, offered beside the system and the sound. */
+  calendarUrl: string | null;
   chips: string[];
   /** The game system, as its own chip: people look for it first. */
   system?: string | null;
@@ -164,9 +168,13 @@ function BaseHero({
       <Header over={Boolean(heroUrl)} />
       <main>
         {logoUrl ? <img className="base-logo" src={logoUrl} alt="" /> : null}
-        {/* The system and the sound sit above the name, where the eye starts. */}
-        <GameMarks system={system} soundUrl={soundUrl} />
-        <span className="label">{eyebrow}</span>
+        {/* Who runs it, then the system and the sound, all above the name, where the eye starts. */}
+        <div className="game-tags">
+          <span className="chip lead">{eyebrow}</span>
+          <GameMarks system={system} soundUrl={soundUrl}>
+            {calendarUrl ? <CalendarLink url={calendarUrl} /> : null}
+          </GameMarks>
+        </div>
         <h1>{title}</h1>
         {tagline ? <p className="tagline">{tagline}</p> : null}
         {chips.length > 0 ? (
@@ -213,14 +221,17 @@ function CampaignBase({ home }: { home: CampaignHome }) {
         heroUrl={listing.heroUrl}
         logoUrl={listing.logoUrl}
         soundUrl={listing.soundUrl}
+        calendarUrl={home.calendarUrl}
         system={listing.system ?? listing.game?.name ?? null}
         chips={[...cadence(listing), listing.where === "voice" ? "Voice" : listing.where].filter((c): c is string => Boolean(c))}
       >
         {upcoming[0] ? <NextUp row={upcoming[0]} /> : null}
-        <div className="row" style={{ gap: "16px 24px" }}>
-          {listing.open ? <SignupButtons listing={listing} big /> : null}
-          <CalendarLink url={home.calendarUrl} />
-        </div>
+        {listing.open || !home.calendarUrl ? (
+          <div className="row" style={{ gap: "16px 24px" }}>
+            {listing.open ? <SignupButtons listing={listing} big /> : null}
+            {home.calendarUrl ? null : <CalendarLink url={null} />}
+          </div>
+        ) : null}
       </BaseHero>
     <main className="page">
 
@@ -332,6 +343,7 @@ function BoardBase({ home }: { home: BoardHome }) {
         tagline={game.summary}
         heroUrl={next?.heroUrl ?? game.coverUrl}
         soundUrl={next?.soundUrl ?? null}
+        calendarUrl={home.calendarUrl}
         chips={[players, length, played > 0 ? `Played ${played}×` : null].filter((c): c is string => Boolean(c))}
       >
         {next ? (
@@ -350,7 +362,7 @@ function BoardBase({ home }: { home: BoardHome }) {
         ) : null}
         <div className="row" style={{ gap: "16px 24px" }}>
           {next?.open ? <SignupButtons listing={next} big /> : null}
-          <CalendarLink url={home.calendarUrl} />
+          {home.calendarUrl ? null : <CalendarLink url={null} />}
           {canEdit && !editing ? (
             <button type="button" className="btn" onClick={() => setEditing(true)}>
               Edit the game
@@ -486,11 +498,10 @@ function CalendarLink({ url }: { url: string | null }) {
   }
   return (
     <a
-      className="btn"
+      className="btn calendar"
       href={url.replace(/^https?:/, "webcal:")}
       title="Subscribe in your calendar"
       aria-label="Subscribe in your calendar"
-      style={{ padding: 10, lineHeight: 0 }}
     >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <rect x="3" y="5" width="18" height="16" rx="2" />
