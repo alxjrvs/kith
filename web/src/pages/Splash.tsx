@@ -8,6 +8,7 @@ import { SignupButtons } from "../components/SignupButtons.tsx";
 import { ListingEditor } from "../components/ListingEditor.tsx";
 import { cadence } from "../format.ts";
 import { signInHref } from "../signin.ts";
+import { soundCloudPlayer, soundCloudTrack, type Player } from "../soundcloud.ts";
 
 /**
  * A new game's front door: full screen, the hero image behind, the sound on a
@@ -86,29 +87,22 @@ export function Splash() {
 
 /** The splash's sound: off until pressed, looping once it plays. Shared with the home bases. */
 export function SoundButton({ url }: { url: string | null }) {
-  const audio = useRef<HTMLAudioElement | null>(null);
+  const player = useRef<Player | null>(null);
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
     if (!url) return;
-    const element = new Audio(url);
-    element.loop = true;
-    element.preload = "none";
-    element.addEventListener("pause", () => setPlaying(false));
-    element.addEventListener("play", () => setPlaying(true));
-    audio.current = element;
+    const track = soundCloudTrack(url);
+    const made = track ? soundCloudPlayer(track, setPlaying) : audioPlayer(url, setPlaying);
+    player.current = made;
     return () => {
-      element.pause();
-      audio.current = null;
+      made.destroy();
+      player.current = null;
+      setPlaying(false);
     };
   }, [url]);
 
-  const toggle = () => {
-    const element = audio.current;
-    if (!element) return;
-    if (element.paused) void element.play().catch(() => setPlaying(false));
-    else element.pause();
-  };
+  const toggle = () => player.current?.toggle();
 
   if (!url) return null;
   return (
@@ -132,6 +126,24 @@ export function SoundButton({ url }: { url: string | null }) {
       )}
     </button>
   );
+}
+
+/** An uploaded file (or any audio URL), looping. */
+function audioPlayer(url: string, onPlaying: (playing: boolean) => void): Player {
+  const element = new Audio(url);
+  element.loop = true;
+  element.preload = "none";
+  element.addEventListener("pause", () => onPlaying(false));
+  element.addEventListener("play", () => onPlaying(true));
+  return {
+    toggle() {
+      if (element.paused) void element.play().catch(() => onPlaying(false));
+      else element.pause();
+    },
+    destroy() {
+      element.pause();
+    },
+  };
 }
 
 function SplashHero({ listing, signedIn }: { listing: Listing; signedIn: boolean }) {
