@@ -98,7 +98,7 @@ function SoundButton({ url }: { url: string | null }) {
             aria-hidden="true"
             style={{ width: 0, height: 0, borderLeft: "10px solid var(--text)", borderTop: "6px solid transparent", borderBottom: "6px solid transparent" }}
           />
-          Play the sound
+          Hear the theme
         </>
       )}
     </button>
