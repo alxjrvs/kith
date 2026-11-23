@@ -314,6 +314,7 @@ export interface GameSummary {
   imageUrl: string | null;
   logoUrl: string | null;
   lead: Person | null;
+  soundUrl: string | null;
   players: number;
   capacity: number | null;
   next: number | null;

@@ -100,6 +100,8 @@ export interface GameSummary {
   /** A campaign's logo, worn on its card over the image. */
   logoUrl: string | null;
   lead: Person | null;
+  /** The game's theme: a link or uploaded file, played only when someone asks. */
+  soundUrl: string | null;
   /** How many players the roster or the next day holds. */
   players: number;
   capacity: number | null;
@@ -339,6 +341,7 @@ export async function gamesFor(env: Env, viewer: Viewer, now = new Date()): Prom
       imageUrl: listing.heroUrl ?? listing.logoUrl,
       logoUrl: listing.heroUrl ? listing.logoUrl : null,
       lead: listing.lead,
+      soundUrl: listing.soundUrl,
       players: listing.taken,
       capacity: listing.capacity,
       next: nextFor(id),
@@ -365,6 +368,7 @@ export async function gamesFor(env: Env, viewer: Viewer, now = new Date()): Prom
       imageUrl: game.coverUrl,
       logoUrl: null,
       lead: next?.lead ?? null,
+      soundUrl: next?.soundUrl ?? null,
       players: next?.taken ?? 0,
       capacity: next?.capacity ?? game.maxPlayers,
       next: next?.when.startsAt ?? null,
@@ -394,6 +398,7 @@ export async function gamesFor(env: Env, viewer: Viewer, now = new Date()): Prom
       imageUrl: day.heroUrl,
       logoUrl: null,
       lead: day.lead,
+      soundUrl: day.soundUrl,
       players: day.taken,
       capacity: day.capacity,
       next: day.when.startsAt,

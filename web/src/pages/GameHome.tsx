@@ -55,7 +55,7 @@ export function GameHome() {
 }
 
 /** What a slide says about nobody but its organiser: no seats, no dates. */
-const BLANK = { pitch: null, logoUrl: null, players: 0, capacity: null, next: null, mine: false } as const;
+const BLANK = { pitch: null, logoUrl: null, soundUrl: null, players: 0, capacity: null, next: null, mine: false } as const;
 
 /**
  * Signed out, a home base is the game's slide from the front page, standing
@@ -77,6 +77,7 @@ function PublicGame({ home }: { home: HomeBase }) {
     tagline: home.game.summary,
     imageUrl: listing?.heroUrl ?? home.game.coverUrl,
     lead: listing?.lead ?? null,
+    soundUrl: listing?.soundUrl ?? null,
     open: listing?.open === true,
   };
   return <PublicSlide listing={listing} game={game} />;
@@ -95,6 +96,7 @@ function listingSlide(listing: Listing): GameSummary {
     pitch: listing.pitch,
     imageUrl: listing.heroUrl ?? listing.logoUrl,
     lead: listing.lead,
+    soundUrl: listing.soundUrl,
     open: listing.open,
   };
 }
@@ -106,7 +108,6 @@ function PublicSlide({ listing, game = listing ? listingSlide(listing) : undefin
     <StillSlide
       game={game}
       action={listing?.open ? <SignupButtons listing={listing} /> : undefined}
-      soundUrl={listing?.soundUrl ?? null}
     />
   );
 }

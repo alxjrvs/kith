@@ -290,14 +290,12 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 .game-marks .btn.sound { white-space: nowrap; }
 @media (max-width: 640px) {
   .hero-actions { max-width: 100%; }
-  /* Signed out on a phone the way in stacks under the game's chips, not over them. */
-  .show-bottom > .game-marks { order: 1; }
   /* On a phone a game's chips sit above the way in and stretch to fill each row. */
   .hero-actions { width: 100%; }
-  .hero-actions > .game-marks, .show-bottom > .game-marks { width: 100%; }
+  .hero-actions > .game-marks, .show-way-in > .game-marks { width: 100%; }
   .game-marks > :is(.chip, .btn) { flex: 1 1 auto; justify-content: center; }
   /* Its chips and the way in take two or three rows down there: keep the words above them. */
-  .show-slide[data-still] .show-slide-words { padding-bottom: 208px; }
+  .show-slide .show-slide-words { padding-bottom: 232px; }
 }
 /* Above a game's name: its system and its sound, the same size side by side. */
 .game-marks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -347,7 +345,7 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
 .show-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, color-mix(in srgb, var(--deep) 80%, transparent), transparent 22%); }
 .show-mark { position: absolute; right: 8%; top: 50%; transform: translateY(-50%); width: min(40vw, 62vh, 560px); height: auto; opacity: 0.9; pointer-events: none; }
 /* A slide is set like a game's own page: the same sizes, the same spacing. */
-.show-slide-words { position: relative; display: flex; flex-direction: column; gap: 24px; max-width: 760px; padding: 0 32px 112px; }
+.show-slide-words { position: relative; display: flex; flex-direction: column; gap: 24px; max-width: 760px; padding: 0 32px 168px; }
 .show-slide-words h1 { font-size: clamp(48px, 10vw, 88px); line-height: 0.95; font-weight: 800; letter-spacing: -0.035em; }
 .show-slide-words h1 a { color: inherit; text-decoration: none; }
 .show-slide-words h1 a:hover { text-decoration: underline; text-decoration-thickness: 4px; text-underline-offset: 8px; text-decoration-color: var(--accent); }
@@ -357,6 +355,12 @@ html.no-scroll, html.no-scroll body { overflow: hidden; height: 100%; }
 .show-pitch p + p { margin-top: 0.6em; }
 .show-bottom { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 20px 32px 28px; }
 .show-dots { display: flex; flex-wrap: wrap; gap: 8px; }
+/* A game's chips sit just above the way in, on the slideshow and a game's own page alike. */
+.show-way-in { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+.show-way-in > .game-marks { justify-content: flex-end; }
+@media (max-width: 640px) {
+  .show-way-in { align-items: stretch; }
+}
 .show-dots button { position: relative; width: 36px; height: 6px; padding: 0; border: 0; border-radius: 3px; background: color-mix(in srgb, var(--text) 28%, transparent); cursor: pointer; }
 /* A larger target than the bar itself, for fingers. (The bar must not clip it, or the extra target is dead.) */
 .show-dots button::before { content: ""; position: absolute; inset: -19px -4px; }
