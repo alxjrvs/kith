@@ -1,3 +1,4 @@
+import type { GameSummary } from "./api.ts";
 /**
  * Times on the site are the reader's local clock, because the server's agenda
  * already groups by the guild's day; within a day, 19:30 is 19:30.
@@ -48,4 +49,10 @@ export function cadence(listing: { when: { startsAt: number | null; endsAt: numb
     if (endsAt) chips.push(`to ${time(endsAt)}`);
   }
   return chips;
+}
+
+/** Who runs it, worded as a game's own page words it. */
+export function leadLine(game: Pick<GameSummary, "kind" | "lead">): string {
+  if (!game.lead) return "";
+  return game.kind === "campaign" ? `Campaign run by ${game.lead.name}` : `${game.kind === "board" ? "Board game" : "Game day"} hosted by ${game.lead.name}`;
 }
