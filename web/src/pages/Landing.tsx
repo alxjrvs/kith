@@ -145,7 +145,7 @@ function Slides({ slides }: { slides: GameSummary[] }) {
           />
         ))}
       </section>
-      <Footer>
+      <Footer marks={slides[index] ? <GameChips key={`${slides[index].kind}:${slides[index].slug}`} game={slides[index]} /> : null}>
         {count > 1 ? (
           <div className="show-dots" role="group" aria-label="Choose a game">
             {slides.map((game, i) => (
@@ -171,7 +171,7 @@ function Slides({ slides }: { slides: GameSummary[] }) {
  * standing still. No details beyond what the game is, and the way in at the
  * bottom (taking a seat, when it is signing up).
  */
-export function StillSlide({ game, action, soundUrl = null }: { game: GameSummary; action?: ReactNode; soundUrl?: string | null }) {
+export function StillSlide({ game, action }: { game: GameSummary; action?: ReactNode }) {
   useNoScroll();
   return (
     <div className="show">
@@ -179,10 +179,7 @@ export function StillSlide({ game, action, soundUrl = null }: { game: GameSummar
       <section className="show-slides">
         <Slide game={game} current still position="" />
       </section>
-      {/* Its chips sit on the left of the way in, the same row a home base gives them. */}
-      <Footer action={action} hint={false}>
-        <GameMarks kind={kindWord(game.kind)} system={game.label} lead={leadChip(game)} soundUrl={soundUrl} />
-      </Footer>
+      <Footer action={action} hint={false} marks={<GameChips game={game} />} />
     </div>
   );
 }
@@ -220,7 +217,6 @@ function Slide({
         <img className="show-mark" src="/mark.svg" alt="" aria-hidden="true" />
       )}
       <div className="show-slide-words">
-        {still ? null : <GameMarks kind={kindWord(game.kind)} system={game.label} lead={leadChip(game)} />}
         <h1>{still || game.state === "CONCLUDED" ? game.name : <GameLink game={game}>{game.name}</GameLink>}</h1>
         {game.tagline ? <p className="show-tagline">{game.tagline}</p> : null}
         {game.pitch ? (
@@ -256,7 +252,16 @@ function GameLink({ game, children }: { game: GameSummary; children: ReactNode }
   );
 }
 
-function Footer({ children, action, hint = true }: { children?: ReactNode; action?: ReactNode; hint?: boolean }) {
+/**
+ * A game's chips, the same on its slide and on its own page signed out: what
+ * kind of game, its system, who runs it, and its theme (played only on a press).
+ */
+function GameChips({ game }: { game: GameSummary }) {
+  return <GameMarks kind={kindWord(game.kind)} system={game.label} lead={leadChip(game)} soundUrl={game.soundUrl} />;
+}
+
+/** The bottom of the slideshow and of a game's own page: the dots on the left, the game's chips just above the way in. */
+function Footer({ children, action, hint = true, marks }: { children?: ReactNode; action?: ReactNode; hint?: boolean; marks?: ReactNode }) {
   // Signed in, the slideshow is at /slideshow, and the way out is back to Kith.
   const signedIn = useMe().data?.signedIn === true;
   if (signedIn && !action) {
@@ -270,13 +275,16 @@ function Footer({ children, action, hint = true }: { children?: ReactNode; actio
   return (
     <footer className="show-bottom">
       {children ?? <span />}
-      <div className="row" style={{ gap: 12 }}>
-        {hint ? <span className="muted show-hint">Playing in one of these?</span> : null}
-        {action ?? (
-          <a className="btn primary" href={signInHref()}>
-            Sign in with Discord
-          </a>
-        )}
+      <div className="show-way-in">
+        {marks}
+        <div className="row" style={{ gap: 12 }}>
+          {hint ? <span className="muted show-hint">Playing in one of these?</span> : null}
+          {action ?? (
+            <a className="btn primary" href={signInHref()}>
+              Sign in with Discord
+            </a>
+          )}
+        </div>
       </div>
     </footer>
   );
