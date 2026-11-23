@@ -34,6 +34,7 @@ import {
 import { postDayNoticeOnce, promotedNotice } from "../game-days/notice.ts";
 import { loadProjectionTarget } from "../projection/target.ts";
 import { ASK_JOB, CHECK_JOB, atTheDoor, postAsk } from "../hub/server-door.ts";
+import { STOP_SIGN_JOB, retryStopSign } from "../hub/safety.ts";
 
 const CLAIM_SECONDS = 60;
 const BATCH = 25;
@@ -506,6 +507,14 @@ async function runJob(job: typeof schema.jobs.$inferSelect, env: Env): Promise<v
       const { userId } = job.payload as { userId?: string };
       if (!userId) throw new Error(`${ASK_JOB} job ${job.id} has no userId`);
       await postAsk(env, userId);
+      return;
+    }
+
+    /** A stop sign whose alert or email didn't go when it was pressed. */
+    case STOP_SIGN_JOB: {
+      const { stopSignId } = job.payload as { stopSignId?: string };
+      if (!stopSignId) throw new Error(`${STOP_SIGN_JOB} job ${job.id} has no stopSignId`);
+      await retryStopSign(env, stopSignId);
       return;
     }
 

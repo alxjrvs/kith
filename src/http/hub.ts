@@ -18,6 +18,7 @@ import { takesIntent } from "../sessions/lifecycle.ts";
 import type { InteractionUser } from "../discord/types.ts";
 import { cmsSections, toMarkdown } from "../cms/content.ts";
 import { atTheDoor, checkLater, serverStatusFor } from "../hub/server-door.ts";
+import { SUGGESTION_MAX, gameFor, leaveSuggestion, pressStopSign } from "../hub/safety.ts";
 
 /**
  * `/api/hub/*`: the site's API, for everybody.
@@ -201,6 +202,33 @@ export function hubRoutes() {
     const lock = c.env.SESSION_LOCK.get(c.env.SESSION_LOCK.idFromName(sessionId));
     await lock.setIntent({ sessionId, actor, intent });
     return c.json({ ok: true, intent });
+  });
+
+  /**
+   * The stop sign: a safety tool, like the X-card. The site asks "are you
+   * sure" before it sends; this posts the alert naming them in the game's
+   * Discord channel and emails the organiser.
+   */
+  hub.post("/homes/:slug/stop", async (c) => {
+    const actor = await signedInActor(c);
+    if (actor instanceof Response) return actor;
+    const game = await gameFor(c.env, c.req.param("slug"), c.get("viewer"));
+    if (!game) return c.json({ error: "Kith has no game here, or it is not yours to see." }, 404);
+    return c.json(await pressStopSign(c.env, game, actor.id));
+  });
+
+  /** The suggestion box: words for the organiser, with a name or without one. Nothing goes to Discord. */
+  hub.post("/homes/:slug/suggestions", async (c) => {
+    const actor = await signedInActor(c);
+    if (actor instanceof Response) return actor;
+    const game = await gameFor(c.env, c.req.param("slug"), c.get("viewer"));
+    if (!game) return c.json({ error: "Kith has no game here, or it is not yours to see." }, 404);
+    const input = await body(c);
+    const text = typeof input.body === "string" ? input.body.trim() : "";
+    if (!text) return c.json({ error: "Write something first." }, 400);
+    if (text.length > SUGGESTION_MAX) return c.json({ error: `Keep it under ${SUGGESTION_MAX} characters.` }, 400);
+    await leaveSuggestion(c.env, game, actor.id, text, input.anonymous === true);
+    return c.json({ ok: true });
   });
 
   return hub;

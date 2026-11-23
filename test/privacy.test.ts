@@ -197,6 +197,14 @@ describe("delete-my-data", () => {
       "INSERT INTO session_logs (session_id, author, body) VALUES ('age-of-umbra-s12', '1001', 'a recap')",
     ).run();
 
+    // A stop sign they pressed, a suggestion they signed, and one left anonymously, which stays.
+    await env.DB.prepare(
+      "INSERT INTO stop_signs (id, game_kind, game_id, user_id) VALUES ('s1', 'campaign', 'age-of-umbra', '1001')",
+    ).run();
+    await env.DB.prepare(
+      "INSERT INTO suggestions (id, game_kind, game_id, author_user_id, body, created_at) VALUES ('g1', 'campaign', 'age-of-umbra', '1001', 'more snacks', 1), ('g2', 'campaign', 'age-of-umbra', NULL, 'fewer puns', 1)",
+    ).run();
+
     const receipt = await deleteUserData(env, "1001");
     expect(Object.keys(receipt.removed).sort()).toEqual([
       "attendance",
@@ -204,6 +212,8 @@ describe("delete-my-data", () => {
       "discord_tokens",
       "session_logs",
       "signups",
+      "stop_signs",
+      "suggestions",
       "users",
     ]);
     expect(receipt.removed).toEqual({
@@ -213,7 +223,11 @@ describe("delete-my-data", () => {
       signups: 1,
       discord_tokens: 1,
       session_logs: 1,
+      stop_signs: 1,
+      suggestions: 1,
     });
+    const anonymous = await env.DB.prepare("SELECT COUNT(*) AS n FROM suggestions").first<{ n: number }>();
+    expect(anonymous?.n).toBe(1);
 
     for (const table of [
       "attendance",
@@ -221,6 +235,7 @@ describe("delete-my-data", () => {
       "signups",
       "discord_tokens",
       "session_logs",
+      "stop_signs",
     ]) {
       const left = await env.DB.prepare(
         `SELECT COUNT(*) AS n FROM ${table}`,
@@ -333,6 +348,8 @@ describe("delete my data, from the console", () => {
       "discord_tokens",
       "session_logs",
       "signups",
+      "stop_signs",
+      "suggestions",
       "users",
     ]);
     expect(body.said).toContain("users (1)");

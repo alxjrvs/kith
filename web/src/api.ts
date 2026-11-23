@@ -379,3 +379,22 @@ export function useCancelSession() {
     },
   });
 }
+
+/** The stop sign: an alert naming you in the game's Discord, and an email to the organiser. */
+export function useStopSign(slug: string) {
+  return useMutation({
+    mutationFn: () =>
+      api<{ id: string; posted: boolean; unconfirmed: boolean; emailed: boolean }>(
+        `/api/hub/homes/${encodeURIComponent(slug)}/stop`,
+        { method: "POST", body: {} },
+      ),
+  });
+}
+
+/** The suggestion box. Anonymous keeps no name at all. */
+export function useSuggestion(slug: string) {
+  return useMutation({
+    mutationFn: (input: { body: string; anonymous: boolean }) =>
+      api<{ ok: true }>(`/api/hub/homes/${encodeURIComponent(slug)}/suggestions`, { method: "POST", body: input }),
+  });
+}

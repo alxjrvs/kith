@@ -15,6 +15,7 @@ import { StillSlide } from "./Landing.tsx";
 import { Header } from "../components/Header.tsx";
 import { signInHref } from "../signin.ts";
 import { useGameApp } from "../pwa.ts";
+import { StopSign, SuggestionBox } from "../components/Safety.tsx";
 
 const STATE_EYEBROW: Record<string, string> = {
   FORMING: "New campaign",
@@ -293,9 +294,11 @@ function CampaignBase({ home }: { home: CampaignHome }) {
             ))}
             {canEdit ? <EditInCms collection="links">Add or edit links in the CMS</EditInCms> : null}
           </section>
+          <SuggestionBox slug={home.slug} />
         </aside>
       </div>
     </main>
+    <StopSign slug={home.slug} game={listing.name} />
     </>
   );
 }
@@ -387,8 +390,12 @@ function BoardBase({ home }: { home: BoardHome }) {
             </section>
           ))}
         </div>
+        <aside>
+          <SuggestionBox slug={home.slug} />
+        </aside>
       </div>
     </main>
+    <StopSign slug={home.slug} game={game.name} />
     </>
   );
 }

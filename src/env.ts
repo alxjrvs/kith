@@ -20,6 +20,12 @@ export interface Env {
    * (src/http/game-apps.ts). Optional: without it a game's app wears Kith's icon.
    */
   IMAGES?: ImagesBinding;
+  /**
+   * Cloudflare Email, for the stop sign's email to the organiser
+   * (src/hub/safety.ts). Optional: without it, or without STOP_SIGN_EMAIL_TO,
+   * the Discord alert still goes and the console says the email didn't.
+   */
+  EMAIL?: SendEmail;
 
   // Vars
   ENVIRONMENT: "development" | "production";
@@ -31,6 +37,8 @@ export interface Env {
    * hostname is configuration rather than something derived at the callsite.
    */
   PUBLIC_ORIGIN: string;
+  /** Who the stop sign's email comes from. Defaults to kith@kith.town. */
+  EMAIL_FROM?: string;
 
   // Secrets
   DISCORD_APPLICATION_ID: string;
@@ -44,6 +52,8 @@ export interface Env {
   CONSOLE_SESSION_SECRET: string;
   /** An EmDash API token with only `content:read`, for reading kith-cms. */
   CMS_TOKEN?: string;
+  /** Where the stop sign's email goes: the organiser's own address. A secret, so it isn't in the repo. */
+  STOP_SIGN_EMAIL_TO?: string;
 }
 
 /**
