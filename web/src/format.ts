@@ -13,6 +13,13 @@ export function stamp(unix: number): string {
   return `${weekday.format(d)} ${dayMonth.format(d)} at ${clock.format(d)}`;
 }
 
+const dayMonthYear = new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+
+/** A day in history, with its year: "Mon, 5 Oct 2026". */
+export function onDay(unix: number): string {
+  return dayMonthYear.format(new Date(unix * 1000));
+}
+
 export function time(unix: number): string {
   return clock.format(new Date(unix * 1000));
 }

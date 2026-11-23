@@ -262,6 +262,14 @@ export const sessions = sqliteTable(
     /** Free text for an EXTERNAL event; ignored for a VOICE one. */
     location: text("location"),
     /**
+     * The episode's name, given after it is played by the table's GM or an
+     * organiser ("The One Where the Mech Fell Over"). Optional, and words a
+     * person reads rather than state a rule reads; it lives here rather than in
+     * kith-cms because it belongs to one session row, the way a game day's own
+     * words do (docs/CMS.md). Nothing projects it: Discord and Google never see it.
+     */
+    title: text("title"),
+    /**
      * `LOCKED` joins the five in phase 6, and it costs **no migration**: this
      * column carries no CHECK — `sessions_parent_ck` is about `kind` and
      * `campaign_id` — so the set of words it holds is a TypeScript fact, the

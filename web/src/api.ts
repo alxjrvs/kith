@@ -334,9 +334,20 @@ export interface CampaignHome {
   canEdit: boolean;
   roster: Seat[];
   upcoming: AgendaRow[];
+  /** Sessions already played, newest first. */
+  past: PastSession[];
+  /** The viewer may name past sessions: the GM or an organiser. */
+  canName: boolean;
   calendarUrl: string | null;
   links: TableLink[];
   pages: PageSummary[];
+}
+
+export interface PastSession {
+  sessionId: string;
+  number: number | null;
+  startsAt: number;
+  title: string | null;
 }
 
 export interface BoardHome {
@@ -373,6 +384,18 @@ export function useCancelSession() {
       void client.invalidateQueries({ queryKey: ["home"] });
       void client.invalidateQueries({ queryKey: ["homes"] });
       void client.invalidateQueries({ queryKey: ["agenda"] });
+    },
+  });
+}
+
+/** Name an episode after it was played, or clear its name with an empty one. */
+export function useNameSession() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sessionId, title }: { sessionId: string; title: string }) =>
+      api(`/api/hub/sessions/${encodeURIComponent(sessionId)}/title`, { method: "PATCH", body: { title } }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ["home"] });
     },
   });
 }

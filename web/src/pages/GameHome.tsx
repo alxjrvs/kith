@@ -18,6 +18,7 @@ import { Header } from "../components/Header.tsx";
 import { signInHref } from "../signin.ts";
 import { useGameApp } from "../pwa.ts";
 import { StopSign, SuggestionBox } from "../components/Safety.tsx";
+import { PastSessions } from "../components/PastSessions.tsx";
 
 const STATE_EYEBROW: Record<string, string> = {
   FORMING: "New campaign",
@@ -272,6 +273,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
             )}
           </section>
 
+          <PastSessions past={home.past ?? []} canName={home.canName} />
 
           {listing.pitch ? (
             <section className="stack">

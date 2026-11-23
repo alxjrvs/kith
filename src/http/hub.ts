@@ -19,6 +19,7 @@ import type { InteractionUser } from "../discord/types.ts";
 import { cmsSections, toMarkdown } from "../cms/content.ts";
 import { atTheDoor, checkLater, serverStatusFor } from "../hub/server-door.ts";
 import { SUGGESTION_MAX, gameFor, leaveSuggestion, pressStopSign } from "../hub/safety.ts";
+import { SESSION_TITLE_MAX, nameSession } from "../sessions/title.ts";
 import { InvalidCharacter, characterFrom, putOwnCharacter } from "../hub/characters.ts";
 
 /**
@@ -203,6 +204,33 @@ export function hubRoutes() {
     const lock = c.env.SESSION_LOCK.get(c.env.SESSION_LOCK.idFromName(sessionId));
     await lock.setIntent({ sessionId, actor, intent });
     return c.json({ ok: true, intent });
+  });
+
+  /**
+   * Name an episode after it was played. The table's GM or an organiser; the
+   * organiser check is fresh, not the site's cached flag.
+   */
+  hub.patch("/sessions/:id/title", async (c) => {
+    const actor = await signedInActor(c);
+    if (actor instanceof Response) return actor;
+    const input = await body(c);
+    // Only an explicit null or "" clears a name; a body without one is a mistake, not a delete.
+    if (!("title" in input)) return c.json({ error: "Send a title, or null to clear it." }, 400);
+    const outcome = await nameSession(c.env, c.req.param("id"), input.title, actor.id);
+    switch (outcome) {
+      case "named":
+        return c.json({ ok: true });
+      case "not-found":
+        return c.json({ error: "Kith does not know that session." }, 404);
+      case "not-yours":
+        return c.json({ error: "Naming a session is for its GM or an organiser." }, 403);
+      case "not-yet":
+        return c.json({ error: "A session takes a name once it has been played." }, 409);
+      case "not-text":
+        return c.json({ error: "title is text, or null to clear it." }, 400);
+      case "too-long":
+        return c.json({ error: `Keep the name under ${SESSION_TITLE_MAX} characters.` }, 400);
+    }
   });
 
   /**
