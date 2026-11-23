@@ -359,7 +359,15 @@ describe("each game's home base", () => {
 
   type Home = {
     kind: string;
-    roster?: { person: { name: string } | null; character: string | null; sheetUrl?: string | null; role: string; state: string }[];
+    roster?: {
+      person: { name: string } | null;
+      character: string | null;
+      sheetUrl?: string | null;
+      description?: string | null;
+      mine?: boolean;
+      role: string;
+      state: string;
+    }[];
     listing?: { tagline: string | null; pitch: string | null };
     links?: { label: string }[];
     pages?: { slug: string }[];
@@ -373,8 +381,8 @@ describe("each game's home base", () => {
     const { home } = (await res.json()) as { home: Home };
     expect(home.kind).toBe("campaign");
     expect(home.roster).toEqual([
-      { person: expect.objectContaining({ name: "Rowan" }), character: null, sheetUrl: null, role: "gm", state: "in" },
-      { person: expect.objectContaining({ name: "Ada" }), character: "Wren Ashdown", sheetUrl: null, role: "player", state: "in" },
+      { person: expect.objectContaining({ name: "Rowan" }), character: null, sheetUrl: null, description: null, mine: false, role: "gm", state: "in" },
+      { person: expect.objectContaining({ name: "Ada" }), character: "Wren Ashdown", sheetUrl: null, description: null, mine: true, role: "player", state: "in" },
     ]);
     expect(home.upcoming.map((r) => r.sessionId)).toEqual(["s1"]);
   });
@@ -464,6 +472,75 @@ describe("each game's home base", () => {
     roles["1003"] = [ORGANISER_ROLE];
     const boss = (await (await call("GET", "/api/hub/homes", await as("1003"))).json()) as { games: { slug: string }[] };
     expect(boss.games.map((g) => g.slug)).toEqual(["hollowmere", "secret", "arcs"]);
+  });
+});
+
+describe("a player writing their own character", () => {
+  async function runHollowmere() {
+    await env.DB.prepare(`UPDATE campaigns SET state = 'RUNNING' WHERE id = 'hollowmere'`).run();
+    await db(env).insert(schema.campaignMembers).values([
+      { campaignId: "hollowmere", userId: "1003", role: "gm" },
+      { campaignId: "hollowmere", userId: "1001", role: "player", characterName: "Wren Ashdown" },
+    ]);
+  }
+  type Seat = { person: { name: string } | null; character: string | null; sheetUrl: string | null; description: string | null; mine: boolean };
+  const roster = async (cookie?: string) =>
+    ((await (await call("GET", "/api/hub/homes/hollowmere", cookie)).json()) as { home: { roster: Seat[] } }).home.roster;
+  const put = (cookie: string | undefined, body: unknown) => call("PUT", "/api/hub/homes/hollowmere/character", cookie, body);
+
+  it("saves a name, a sheet and a few words, shown to everyone who sees the roster", async () => {
+    await runHollowmere();
+    const ada = await as("1001");
+    const res = await put(ada, { name: "  Vess Moorlight ", sheetUrl: "https://sheets.example/vess", description: "A lamplighter." });
+    expect(res.status).toBe(200);
+    expect((await roster(ada))[1]).toMatchObject({
+      character: "Vess Moorlight",
+      sheetUrl: "https://sheets.example/vess",
+      description: "A lamplighter.",
+      mine: true,
+    });
+    // Off the table: the character, not the person, and not theirs to edit.
+    expect((await roster())[1]).toMatchObject({ person: null, character: "Vess Moorlight", description: "A lamplighter.", mine: false });
+
+    const audit = await db(env).select().from(schema.auditLog).all();
+    expect(audit.find((a) => a.action === "member.character")).toMatchObject({ actorUserId: "1001", targetId: "hollowmere" });
+  });
+
+  it("wins over a character written in kith-cms once the player has written theirs", async () => {
+    await runHollowmere();
+    cmsEntries = { characters: [{ slug: "c", data: { name: "From the CMS", game: "hollowmere", player: "ada", sheet: "https://cms.example/sheet" } }] };
+    resetCmsCache();
+    try {
+      const ada = await as("1001");
+      expect((await roster(ada))[1]).toMatchObject({ character: "From the CMS", sheetUrl: "https://cms.example/sheet" });
+      // The sheet is optional, and an empty one clears the CMS's link too.
+      expect((await put(ada, { name: "Vess", sheetUrl: "", description: "" })).status).toBe(200);
+      expect((await roster(ada))[1]).toMatchObject({ character: "Vess", sheetUrl: null, description: null });
+    } finally {
+      cmsEntries = null;
+      resetCmsCache();
+    }
+  });
+
+  it("needs a name and a real link", async () => {
+    await runHollowmere();
+    const ada = await as("1001");
+    expect((await put(ada, { name: "  " })).status).toBe(400);
+    const bad = await put(ada, { name: "Vess", sheetUrl: "javascript:alert(1)" });
+    expect(bad.status).toBe(400);
+    expect(((await bad.json()) as { error: string }).error).toMatch(/https/);
+    expect((await put(ada, { name: "x".repeat(81) })).status).toBe(400);
+    expect((await roster(ada))[1]?.character).toBe("Wren Ashdown");
+  });
+
+  it("is only for players on the roster, signed in", async () => {
+    await runHollowmere();
+    expect((await put(undefined, { name: "Vess" })).status).toBe(401);
+    // The GM runs the table; somebody off it has no seat to describe.
+    expect((await put(await as("1003"), { name: "Vess" })).status).toBe(403);
+    expect((await put(await as("1002"), { name: "Vess" })).status).toBe(403);
+    expect((await call("PUT", "/api/hub/homes/nope/character", await as("1001"), { name: "Vess" })).status).toBe(404);
+    expect((await roster(await as("1003"))).some((s) => s.mine)).toBe(false);
   });
 });
 

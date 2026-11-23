@@ -15,7 +15,9 @@ rules that are easy to violate by accident.
   characters, knowledge pages, links, the site's own copy) is written in kith-cms
   (`cms/`, admin at admin.kith.town) and read over the `CMS` service binding.
   Anything a rule reads (rosters, attendance, schedules, signups, visibility of a
-  table) stays in D1. A game is born in EmDash; its D1 row follows it. `docs/CMS.md`.
+  table) stays in D1. A game is born in EmDash; its D1 row follows it. The one
+  exception is a player's own character, written by them on the site and kept on
+  their roster row, because players can't reach the CMS. `docs/CMS.md`.
 - **Discord is the only identity system.** `identify` scope only; roles come from the bot
   token; never request `guilds`.
 - **The command surface is four commands.** Administration belongs in the console. If a new

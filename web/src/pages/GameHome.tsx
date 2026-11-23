@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "@tanstack/react-router";
-import { useCancelSession, useHome, useListing, useMe, type BoardHome, type CampaignHome, type GameSummary, type HomeBase, type Listing, type AgendaRow as Row, type Seat } from "../api.ts";
+import { useCancelSession, useCharacter, useHome, useListing, useMe, type BoardHome, type CampaignHome, type GameSummary, type HomeBase, type Listing, type AgendaRow as Row, type Seat } from "../api.ts";
 import { AgendaRow } from "../components/AgendaRow.tsx";
 import { CatalogEditor } from "../components/CatalogEditor.tsx";
 import { SeatSquares, seatLine } from "../components/Squares.tsx";
@@ -302,6 +302,7 @@ function CampaignBase({ home }: { home: CampaignHome }) {
 
         <aside>
           <Roster
+            slug={home.slug}
             seats={roster}
             title={listing.state === "FORMING" ? "Signed up so far" : "Roster"}
             empty={listing.state === "FORMING" ? "Nobody has signed up yet." : "No roster yet."}
@@ -423,14 +424,108 @@ function BoardBase({ home }: { home: BoardHome }) {
 }
 
 /** The roster as a table in the sidebar: Discord faces, characters, the GM lit. */
-function Roster({ seats, title, empty }: { seats: Seat[]; title: string; empty: string }) {
+function Roster({ slug, seats, title, empty }: { slug: string; seats: Seat[]; title: string; empty: string }) {
+  const mine = seats.find((seat) => seat.mine);
   return (
     <section className="panel" id="roster">
       <h2 className="panel-head label">
         {title}
       </h2>
       <RosterRows seats={seats} empty={empty} />
+      {mine ? <YourCharacter slug={slug} seat={mine} /> : null}
     </section>
+  );
+}
+
+/**
+ * A player's own character: a name, a link to their sheet, a few words. Shut
+ * until they open it, so the roster stays a roster.
+ */
+function YourCharacter({ slug, seat }: { slug: string; seat: Seat }) {
+  const save = useCharacter(slug);
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(seat.character ?? "");
+  const [sheetUrl, setSheetUrl] = useState(seat.sheetUrl ?? "");
+  const [description, setDescription] = useState(seat.description ?? "");
+  const [saved, setSaved] = useState(false);
+
+  if (!open) {
+    return (
+      <div className="panel-body character-ask">
+        {saved ? <p className="notice">Saved. Your character is on the roster.</p> : null}
+        <div className="row">
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              setName(seat.character ?? "");
+              setSheetUrl(seat.sheetUrl ?? "");
+              setDescription(seat.description ?? "");
+              setSaved(false);
+              setOpen(true);
+            }}
+          >
+            {seat.character ? "Edit your character" : "Add your character"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      className="panel-body character-form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!name.trim()) return;
+        save.mutate(
+          { name: name.trim(), sheetUrl: sheetUrl.trim(), description: description.trim() },
+          {
+            onSuccess: () => {
+              setOpen(false);
+              setSaved(true);
+            },
+          },
+        );
+      }}
+    >
+      <h3 className="label">Your character</h3>
+      <div className="field">
+        <label htmlFor="character-name">Name</label>
+        <input id="character-name" value={name} maxLength={80} required autoComplete="off" onChange={(e) => setName(e.target.value)} />
+      </div>
+      <div className="field">
+        <label htmlFor="character-sheet">Link to your character sheet (optional)</label>
+        <input
+          id="character-sheet"
+          type="url"
+          inputMode="url"
+          placeholder="https://"
+          value={sheetUrl}
+          maxLength={500}
+          autoComplete="off"
+          onChange={(e) => setSheetUrl(e.target.value)}
+        />
+      </div>
+      <div className="field">
+        <label htmlFor="character-description">A few words about them (optional)</label>
+        <textarea
+          id="character-description"
+          value={description}
+          maxLength={500}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </div>
+      {save.error ? <p className="notice error">{save.error.message}</p> : null}
+      <div className="row">
+        <button type="submit" className="btn primary" disabled={save.isPending || !name.trim()}>
+          {save.isPending ? "Saving…" : "Save character"}
+        </button>
+        <button type="button" className="btn" onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -472,12 +567,17 @@ function RosterRows({ seats, empty, characters = true }: { seats: Seat[]; empty:
               <td className="roster-character">
                 {seat.role === "gm" ? (
                   <span className="muted">GM</span>
-                ) : seat.character && seat.sheetUrl ? (
-                  <a href={seat.sheetUrl} target="_blank" rel="noopener noreferrer">
-                    {seat.character}
-                  </a>
                 ) : (
-                  (seat.character ?? <span className="muted">—</span>)
+                  <>
+                    {seat.character && seat.sheetUrl ? (
+                      <a href={seat.sheetUrl} target="_blank" rel="noopener noreferrer">
+                        {seat.character}
+                      </a>
+                    ) : (
+                      (seat.character ?? <span className="muted">—</span>)
+                    )}
+                    {seat.description ? <span className="character-description">{seat.description}</span> : null}
+                  </>
                 )}
               </td>
             ) : null}

@@ -19,6 +19,7 @@ import type { InteractionUser } from "../discord/types.ts";
 import { cmsSections, toMarkdown } from "../cms/content.ts";
 import { atTheDoor, checkLater, serverStatusFor } from "../hub/server-door.ts";
 import { SUGGESTION_MAX, gameFor, leaveSuggestion, pressStopSign } from "../hub/safety.ts";
+import { InvalidCharacter, characterFrom, putOwnCharacter } from "../hub/characters.ts";
 
 /**
  * `/api/hub/*`: the site's API, for everybody.
@@ -228,6 +229,29 @@ export function hubRoutes() {
     if (!text) return c.json({ error: "Write something first." }, 400);
     if (text.length > SUGGESTION_MAX) return c.json({ error: `Keep it under ${SUGGESTION_MAX} characters.` }, 400);
     await leaveSuggestion(c.env, game, actor.id, text, input.anonymous === true);
+    return c.json({ ok: true });
+  });
+
+  /**
+   * A player's own character on a campaign: a name, and optionally a link to
+   * their sheet and a few words. Only for somebody on its roster as a player,
+   * and only ever their own row.
+   */
+  hub.put("/homes/:slug/character", async (c) => {
+    const actor = await signedInActor(c);
+    if (actor instanceof Response) return actor;
+    const slug = c.req.param("slug");
+    const listing = await listingFor(c.env, "campaign", slug, c.get("viewer"));
+    if (!listing) return c.json({ error: "Kith has no game here, or it is not yours to see." }, 404);
+    let input;
+    try {
+      input = characterFrom(await body(c));
+    } catch (error) {
+      if (error instanceof InvalidCharacter) return c.json({ error: error.message }, 400);
+      throw error;
+    }
+    const outcome = await putOwnCharacter(c.env, listing.id, actor.id, input);
+    if (outcome === "not-a-player") return c.json({ error: "Only players on this game's roster can add a character." }, 403);
     return c.json({ ok: true });
   });
 

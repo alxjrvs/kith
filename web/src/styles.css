@@ -246,6 +246,14 @@ label.row:has(> input[type="checkbox"]) { min-height: 44px; cursor: pointer; }
 .roster tr.gm td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 .roster-user { font-family: var(--font-small); }
 .roster-character { font-weight: 600; text-align: right; }
+.roster-character .character-description {
+  display: block; margin-top: 2px; font-size: 12px; font-weight: 400; color: var(--muted);
+  overflow-wrap: anywhere;
+}
+/* A player's own character, under the roster it sits on. */
+.panel > .character-ask { border-top: 1px solid var(--rule); padding-top: 14px; }
+.panel > .character-form { border-top: 1px solid var(--rule); }
+.character-form .field textarea { min-height: 88px; }
 .discord-avatar { display: block; width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: var(--raised); }
 .chip { padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--panel); font-family: var(--font-small); font-size: 13px; font-weight: 500; }
 

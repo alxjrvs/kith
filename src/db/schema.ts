@@ -512,6 +512,19 @@ export const campaignMembers = sqliteTable(
       .notNull()
       .default("player"),
     characterName: text("character_name"),
+    /**
+     * The rest of the character, as the player writes it on the site: a link
+     * to their sheet and a few words about who they are. Players can't reach
+     * the CMS admin, so what they write about their own character is kept
+     * here, beside the roster row it describes (docs/CMS.md).
+     */
+    characterSheetUrl: text("character_sheet_url"),
+    characterDescription: text("character_description"),
+    /**
+     * When the player last saved their character on the site. Set, their
+     * words win over a character written in kith-cms; null, the CMS's do.
+     */
+    characterSetAt: integer("character_set_at"),
     joinedAt: integer("joined_at").notNull().default(now),
   },
   (t) => [primaryKey({ columns: [t.campaignId, t.userId] })],

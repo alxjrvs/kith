@@ -39,8 +39,12 @@ export interface Seat {
    */
   person: Person | null;
   character: string | null;
-  /** The character's sheet, from kith-cms. */
+  /** The character's sheet: the player's own link, or kith-cms's. */
   sheetUrl: string | null;
+  /** A few words about the character, as the player wrote them. */
+  description: string | null;
+  /** This seat is the viewer's own, and its character theirs to write. */
+  mine: boolean;
   role: "gm" | "player";
   /** `in` is on the table; `waitlisted` is queued behind capacity. */
   state: "in" | "waitlisted";
@@ -160,7 +164,7 @@ async function campaignHome(env: Env, listing: Listing, viewer: Viewer, origin: 
     listing,
     member,
     canEdit: viewer.organiser,
-    roster: await campaignRoster(env, listing, viewer.organiser || member),
+    roster: await campaignRoster(env, listing, viewer.organiser || member, viewer.userId),
     upcoming: agenda.rows.filter((row) => row.campaignId === listing.id),
     calendarUrl: await calendarUrlFor(env, viewer, origin, "campaign", listing.id),
     links: await linksFor(env, "campaign", listing.id, viewer, member),
@@ -168,7 +172,12 @@ async function campaignHome(env: Env, listing: Listing, viewer: Viewer, origin: 
   };
 }
 
-async function campaignRoster(env: Env, listing: Listing, showPeople: boolean): Promise<Seat[]> {
+async function campaignRoster(
+  env: Env,
+  listing: Listing,
+  showPeople: boolean,
+  viewerId: string | undefined,
+): Promise<Seat[]> {
   const d = db(env);
   const members = await d
     .select({ member: schema.campaignMembers, user: schema.users })
@@ -177,17 +186,25 @@ async function campaignRoster(env: Env, listing: Listing, showPeople: boolean): 
     .where(eq(schema.campaignMembers.campaignId, listing.id))
     .orderBy(asc(schema.campaignMembers.joinedAt))
     .all();
-  // Characters are written in kith-cms, per game and player (docs/CMS.md);
-  // one written there wins over the name given at signup.
+  // A character is written in kith-cms, per game and player (docs/CMS.md),
+  // or by the player themselves on this page. Theirs wins once they've
+  // written it; until then the CMS's wins over the name given at signup.
   const characters = await charactersFor(env, listing.id);
   const characterOf = (user: { discordId: string; username: string | null }, fallback: string | null) => {
     const c: CmsCharacter | undefined =
       characters.get(user.discordId) ?? (user.username ? characters.get(user.username.toLowerCase()) : undefined);
-    return { character: c?.name ?? fallback, sheetUrl: c?.sheetUrl ?? null };
+    return { character: c?.name ?? fallback, sheetUrl: c?.sheetUrl ?? null, description: null };
   };
   const seats: Seat[] = members.map(({ member, user }) => ({
     person: showPeople || member.role === "gm" ? personFrom(user) : null,
-    ...characterOf(user, member.characterName),
+    ...(member.characterSetAt !== null
+      ? {
+          character: member.characterName,
+          sheetUrl: member.characterSheetUrl,
+          description: member.characterDescription,
+        }
+      : characterOf(user, member.characterName)),
+    mine: viewerId !== undefined && member.userId === viewerId && member.role === "player",
     role: member.role,
     state: "in",
   }));
@@ -213,6 +230,7 @@ async function campaignRoster(env: Env, listing: Listing, showPeople: boolean): 
       seats.push({
         person: showPeople ? personFrom(user) : null,
         ...characterOf(user, signup.characterName),
+        mine: false,
         role: "player",
         state: signup.state as Seat["state"],
       });
@@ -301,6 +319,8 @@ async function daySeats(env: Env, listing: Listing, viewer: Viewer): Promise<Sea
       person: user ? personFrom(user) : null,
       character: s.characterName ?? null,
       sheetUrl: null,
+      description: null,
+      mine: false,
       role: "player" as const,
       state: s.state as Seat["state"],
     };
