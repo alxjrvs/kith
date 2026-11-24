@@ -26,8 +26,9 @@ rules that are easy to violate by accident.
 - **Signups attach to campaigns at formation and to game days — never to an individual
   session.** Enforced by a CHECK constraint.
 - **Once a campaign has a roster, attendance is unanimous.** Silence is in, and one
-  `out` from a roster member means the evening moves — to a date poll, never to a
-  cancellation. A quorum is what a table still being *found* is measured by: a
+  `out` from a roster member puts the evening on hold. Kith then DMs the GM, and
+  nothing reaches the table until the GM picks: call it off, or find another date
+  (a date poll). Kith never cancels on its own. `src/sessions/gm-call.ts`. A quorum is what a table still being *found* is measured by: a
   forming campaign, a game day. `campaigns.quorum` is the opt-out and the only one,
   and which rule applies is derived in `src/attendance/quorum.ts` rather than stored.
   Nothing else may decide it a second way.

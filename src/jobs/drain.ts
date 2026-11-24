@@ -15,6 +15,8 @@ import { gmOf } from "../campaigns/roster.ts";
 import { attendanceRows } from "../attendance/rows.ts";
 import { quorumOf } from "../attendance/quorum.ts";
 import { RESCHEDULE_JOB, openRescheduleFor } from "../polls/reschedule.ts";
+import { GM_ASK_JOB, askTheGm, gmAskJob, gmAsked } from "../sessions/gm-call.ts";
+import { CANCELLED_NOTICE_JOB, postCancelledNotice } from "../sessions/lifecycle.ts";
 import { rearm } from "./arm.ts";
 import { confirmedNotice, correctionPost, jeopardyNotice } from "../attendance/render.ts";
 import { isMultiDaySession } from "../attendance/tables.ts";
@@ -230,6 +232,19 @@ async function runJob(job: typeof schema.jobs.$inferSelect, env: Env): Promise<v
        */
       if (quorum.rule === "unanimous" && quorum.vetoes.length === 0) return;
 
+      /**
+       * Under the veto rule nothing goes to the table until the GM has decided:
+       * the GM is asked (call it off, or find another date) and the notice
+       * follows their answer. The clock has to be able to start this and not
+       * only a click, because an `out` reaches D1 from the console too.
+       */
+      if (quorum.rule === "unanimous") {
+        if (!(await gmAsked(env, sessionId, target.session.startsAt))) {
+          await rearm(db(env), [gmAskJob(sessionId, quorum.vetoes[0] as string)]);
+        }
+        return;
+      }
+
       await postNoticeOnce(
         env,
         target,
@@ -246,36 +261,29 @@ async function runJob(job: typeof schema.jobs.$inferSelect, env: Env): Promise<v
         }),
       );
 
-      /**
-       * Under the veto rule the notice says a date poll is the next step, so the
-       * next step is armed here rather than waited for.
-       *
-       * The clock has to be able to start this and not only a click, because an
-       * `out` reaches D1 from the console too, and somebody can be added to a
-       * roster after the post went up. Neither is a click on a post.
-       *
-       * Under a quorum nothing is armed: being short is a question asked of the
-       * table, and people turning up is the answer it is waiting for. Opening a
-       * poll on their behalf would answer it for them.
-       *
-       * There is a veto here by construction — the guard above returned if there
-       * was not — so `vetoes[0]` is somebody rather than `undefined`.
-       */
-      if (quorum.rule === "unanimous") {
-        await rearm(db(env), [
-          {
-            id: `${RESCHEDULE_JOB}:${sessionId}`,
-            kind: RESCHEDULE_JOB,
-            payload: { sessionId, by: quorum.vetoes[0] },
-            runAt: Math.floor(Date.now() / 1000),
-          },
-        ]);
-      }
+      return;
+    }
+
+    /** A roster member can't make it: ask the GM what happens next. */
+    case GM_ASK_JOB: {
+      const { sessionId, by } = job.payload as { sessionId?: string; by?: string };
+      if (!sessionId) throw new Error(`${GM_ASK_JOB} job ${job.id} has no sessionId`);
+      const outcome = await askTheGm(env, sessionId, by);
+      if (outcome !== "asked-by-dm") console.log(GM_ASK_JOB, sessionId, outcome);
+      return;
+    }
+
+    /** The GM called it off from their DM: tell the table. */
+    case CANCELLED_NOTICE_JOB: {
+      const { sessionId } = job.payload as { sessionId?: string };
+      if (!sessionId) throw new Error(`${CANCELLED_NOTICE_JOB} job ${job.id} has no sessionId`);
+      await postCancelledNotice(env, sessionId);
       return;
     }
 
     /**
-     * A roster member cannot make it, so the table is asked when instead.
+     * The GM chose another date (or there was nobody to ask), so the table is
+     * asked when instead.
      *
      * The poll before the notice, on purpose: the notice says a date poll is the
      * next step, and a notice that says so with no poll behind it is worse than

@@ -1,5 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import type { Env } from "../env.ts";
 import { db, schema } from "../db/index.ts";
 import { SESSION_CONFIRMED, SESSION_VETOED } from "../db/audit.ts";
@@ -17,6 +17,7 @@ import {
 import { promoteFromWaitlist } from "../game-days/promote.ts";
 import { moveSession } from "../polls/move.ts";
 import { RESCHEDULE_JOB } from "../polls/reschedule.ts";
+import { GM_ASK_JOB, gmAskJob, gmAsked, withdrawGmAsk } from "../sessions/gm-call.ts";
 import { rearmStatement } from "../jobs/arm.ts";
 import type { AttendanceRow } from "../attendance/render.ts";
 import type { InteractionUser } from "../discord/types.ts";
@@ -255,7 +256,7 @@ export class SessionLock extends DurableObject<Env> {
      * has to spend them rewriting its own message; a poll is a D1 batch plus a
      * Discord post, which is exactly what this repo puts on the next drain.
      */
-    if (vetoed(quorum, target) && !(await this.rescheduleInFlight(sessionId))) {
+    if (vetoed(quorum, target) && !(await this.rescheduleInFlight(sessionId, target.session.startsAt))) {
       const d = db(this.env);
       // The first of them, when several have said out. `openedBy` is one column,
       // the poll is one question, and all of them are asking it.
@@ -279,14 +280,9 @@ export class SessionLock extends DurableObject<Env> {
         // Re-armed rather than added, which is what makes a veto of an
         // already-moved date work: the job row from the last cycle is `done`, and
         // this moves it rather than failing on its id.
-        rearmStatement(d, [
-          {
-            id: `${RESCHEDULE_JOB}:${sessionId}`,
-            kind: RESCHEDULE_JOB,
-            payload: { sessionId, by },
-            runAt: Math.floor(Date.now() / 1000),
-          },
-        ]),
+        // The GM is asked, and nothing else happens until they answer: call it
+        // off, or find another date (src/sessions/gm-call.ts).
+        rearmStatement(d, [gmAskJob(sessionId, by)]),
 
         // Whose decision it was. The one state change here that a count did not
         // make, so unlike `SESSION_CONFIRMED` this row names somebody — and it
@@ -349,6 +345,9 @@ export class SessionLock extends DurableObject<Env> {
             ),
           ),
       ]);
+      // And the GM's question with it: still waiting to go, it is called off;
+      // already sent, it is forgotten so that a fresh `out` asks again.
+      await withdrawGmAsk(this.env, sessionId, target.session.startsAt);
 
       return rows;
     }
@@ -441,16 +440,21 @@ export class SessionLock extends DurableObject<Env> {
     return open !== undefined;
   }
 
-  private async rescheduleInFlight(sessionId: string): Promise<boolean> {
+  private async rescheduleInFlight(sessionId: string, startsAt: number): Promise<boolean> {
     if (await this.pollIsOpen(sessionId)) return true;
+    // The GM has the question for this date already. Asking again on every
+    // Refresh would be a DM per click.
+    if (await gmAsked(this.env, sessionId, startsAt)) return true;
 
-    const job = await db(this.env)
+    const jobs = await db(this.env)
       .select({ state: schema.jobs.state })
       .from(schema.jobs)
-      .where(eq(schema.jobs.id, `${RESCHEDULE_JOB}:${sessionId}`))
-      .get();
+      .where(
+        inArray(schema.jobs.id, [`${RESCHEDULE_JOB}:${sessionId}`, `${GM_ASK_JOB}:${sessionId}`]),
+      )
+      .all();
 
-    return job?.state === "pending" || job?.state === "claimed";
+    return jobs.some((job) => job.state === "pending" || job.state === "claimed");
   }
 
   /**

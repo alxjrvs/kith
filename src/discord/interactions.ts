@@ -53,8 +53,9 @@ import {
   type Interaction,
 } from "./types.ts";
 import { isStaging, schedulingChannel } from "../projection/staging.ts";
-import { askPayload, letIn, turnAway } from "../hub/server-door.ts";
+import { askPayload, decidersFor, letIn, requestOf, turnAway } from "../hub/server-door.ts";
 import { rememberUser } from "../db/users.ts";
+import { decide, decisionPayload, decisionWords, parseGmArg } from "../sessions/gm-call.ts";
 
 type Json = Record<string, unknown>;
 
@@ -487,11 +488,39 @@ async function handleComponent(
       return handleTablesWho(interaction, env, id.target);
     case "suggest":
       return handleSuggest(interaction, env, id.target);
+    case "gm":
+      return handleGmCall(interaction, env, id.arg, id.target);
     case "door":
       return handleDoor(interaction, env, id.arg, id.target);
     default:
       return retiredPost();
   }
+}
+
+/**
+ * Call it off / Find another date, on the DM the GM gets when somebody on the
+ * roster can't make it (src/sessions/gm-call.ts). The GM alone answers it. The
+ * click rewrites the DM into what was decided, and the buttons go with it.
+ */
+async function handleGmCall(
+  interaction: Interaction,
+  env: Env,
+  arg: string | undefined,
+  sessionId: string | undefined,
+): Promise<Json> {
+  const parsed = parseGmArg(arg);
+  if (!sessionId || !parsed) return retiredPost();
+  const actor = actorOf(interaction);
+  if (!actor) return ephemeral("Kith could not tell who clicked that.");
+
+  // The cancel's audit row names them, and `audit_log` references `users`.
+  await rememberUser(env, actor);
+  const result = await decide(env, { sessionId, ...parsed, actorId: actor.id });
+  // Somebody else tapping a GM's buttons (the channel fallback) leaves them be.
+  if (result.outcome === "not-gm") return ephemeral(decisionWords(undefined, result));
+  const target = await loadProjectionTarget(env, sessionId);
+  const payload = decisionPayload(target, result);
+  return rewrite(payload.content, payload.components);
 }
 
 /**
@@ -509,7 +538,19 @@ async function handleDoor(
   if (!userId || (arg !== "in" && arg !== "no")) return retiredPost();
   const actor = actorOf(interaction);
   if (!actor) return ephemeral("Kith could not tell who clicked that.");
-  if (!(await hasOrganiserRole(env, interaction))) return ephemeral("Only an organiser can answer this.");
+  // An organiser in the server, or (in a DM, where Discord sends no roles) the
+  // GM or host the ask was sent to.
+  const allowed =
+    (await hasOrganiserRole(env, interaction)) || (await decidersFor(env, userId)).includes(actor.id);
+  if (!allowed) return ephemeral("Only an organiser or the game's GM can answer this.");
+
+  // Answered already, maybe by another GM whose DM had the same buttons. The
+  // click shows what was decided rather than deciding again.
+  const standing = await requestOf(env, userId);
+  if (standing && standing.state !== "pending") {
+    const current = await askPayload(env, userId);
+    if (current) return rewrite(current.content, current.components);
+  }
 
   // Letting in makes one Discord call (the invite) inside the 3 seconds. If it
   // runs long and Discord says the interaction failed, a second click is safe:

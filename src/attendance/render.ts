@@ -123,7 +123,11 @@ function compose(
   const off = detail.dayOf ? calledOff(verdict) : null;
   const lines = detail.dayOf
     ? [
-        off ? `**CANCELLED** ${heading(target)}` : `${heading(target)} starts <t:${session.startsAt}:R>!`,
+        off === "cancelled"
+          ? `**CANCELLED** ${heading(target)}`
+          : off === "veto"
+            ? `**ON HOLD** ${heading(target)}`
+            : `${heading(target)} starts <t:${session.startsAt}:R>!`,
         `<t:${session.startsAt}:t> → <t:${session.endsAt}:t>`,
       ]
     : [heading(target), when(session.startsAt, session.endsAt)];
@@ -180,11 +184,13 @@ function compose(
   //
   // Except on the day, under the veto rule. A running table is on unless it is
   // not, so the reminder says nothing about it until it is not — and then the
-  // heading itself says CANCELLED. A line saying "on" was the post saying the
+  // heading says ON HOLD (somebody is out, and the GM is deciding) or CANCELLED. A line saying "on" was the post saying the
   // thing everybody already assumed. A campaign that opted into a quorum still
   // gets its tally, because there "on" is not the default.
   if (detail.dayOf && verdict.rule === "unanimous") {
-    if (off === "veto") lines.push("", "-# Somebody can't make it, so we'll find another date in the thread.");
+    if (off === "veto") {
+      lines.push("", "-# Somebody can't make it, so it's on hold while the GM decides: call it off, or find a new date.");
+    }
   } else {
     const quorum = quorumLine(verdict, detail.dayOf ? CANT_MAKE_IT : "Out");
     if (quorum) lines.push("", quorum);

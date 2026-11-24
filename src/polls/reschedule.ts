@@ -13,12 +13,13 @@ import type { ParsedDate } from "./parse-dates.ts";
 /**
  * What happens when somebody on the roster cannot make it.
  *
- * Not a cancellation. #1 is explicit that when the answer is no the response is a
- * date poll, and the veto rule does not change that — it changes *what counts as
- * no*. One `out` is the answer; this is the question that follows it.
+ * The GM's "Find another date". One `out` puts the evening on hold and the GM
+ * is asked by DM (src/sessions/gm-call.ts); this is what follows when they
+ * choose a new date rather than calling it off. A campaign with no GM comes
+ * straight here, as every veto did before there was a GM to ask.
  *
- * Run from the drain, off the `session.reschedule` job, rather than from the click
- * that vetoed. Three seconds is what an interaction has, and a poll is a D1 batch
+ * Run from the drain, off the `session.reschedule` job, rather than from the
+ * click. Three seconds is what an interaction has, and a poll is a D1 batch
  * plus a Discord post: the click rewrites its own message and arms this, which is
  * the same division every other posted consequence in this repo is built on.
  */
