@@ -127,9 +127,9 @@ describe("the post", () => {
 
     const buttons = (post.body.components as { components: { custom_id: string }[] }[])
       .flatMap((row) => row.components);
-    // A toggle each, and the Recap button underneath them.
-    expect(buttons).toHaveLength(4);
-    const toggles = buttons.filter((b) => decodeCustomId(b.custom_id)?.action !== "recap");
+    // A toggle each, and Recap and Game was cancelled underneath them.
+    expect(buttons).toHaveLength(5);
+    const toggles = buttons.filter((b) => decodeCustomId(b.custom_id)?.action === "attended");
     expect(toggles.map((b) => decodeCustomId(b.custom_id)?.arg).sort()).toEqual([
       GM,
       "p-1",
@@ -392,5 +392,44 @@ describe("a post Discord refused", () => {
     await drainJobs(env);
 
     expect(await register("p-1")).toMatchObject({ attended: 0, attendedSource: "gm" });
+  });
+});
+
+describe("Game was cancelled", () => {
+  async function played() {
+    await member(GM, "gm", "in");
+    await member("p-1", "player", "in");
+    await armAssume(env, SESSION_ID, Math.floor(Date.now() / 1000) - 60);
+    await drainJobs(env);
+    posts = [];
+  }
+  const state = () =>
+    db(env)
+      .select({ state: schema.sessions.state })
+      .from(schema.sessions)
+      .where(eq(schema.sessions.id, SESSION_ID))
+      .get()
+      .then((r) => r?.state);
+
+  it("turns a played evening into a cancelled one, with nobody down as having come, and posts nothing", async () => {
+    await played();
+    expect(await state()).toBe("PLAYED");
+
+    const reply = await click(encodeCustomId({ action: "nogame", target: SESSION_ID }), GM);
+
+    expect(reply.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect(String(reply.data.content)).toContain("marked as cancelled");
+    expect(reply.data.components).toEqual([]);
+    expect(await state()).toBe("CANCELLED");
+    const rows = await db(env).select().from(schema.attendance).where(eq(schema.attendance.sessionId, SESSION_ID)).all();
+    expect(rows.every((r) => r.attended === null)).toBe(true);
+    expect(posts.filter((p) => p.path.endsWith("/messages"))).toEqual([]);
+  });
+
+  it("is the GM's alone", async () => {
+    await played();
+    const reply = await click(encodeCustomId({ action: "nogame", target: SESSION_ID }), "p-1");
+    expect(reply.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+    expect(await state()).toBe("PLAYED");
   });
 });

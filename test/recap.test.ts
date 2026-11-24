@@ -129,7 +129,7 @@ describe("the button and the modal", () => {
 
     const rows = post.components as { components: { custom_id: string }[] }[];
     const last = rows.at(-1)!.components;
-    expect(decodeCustomId(last.at(-1)!.custom_id)?.action).toBe("recap");
+    expect(last.map((b) => decodeCustomId(b.custom_id)?.action)).toEqual(["recap", "nogame"]);
   });
 
   it("opens a modal that is not prefilled", async () => {

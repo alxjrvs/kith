@@ -559,10 +559,23 @@ function recapForm(detail) {
  */
 function railActions(detail) {
   const box = el("div", "buttons");
-  // Nothing left to do to a session that is over or already off.
-  if (detail.state === "PLAYED" || detail.state === "CANCELLED") return box;
-
   const id = encodeURIComponent(detail.sessionId);
+
+  // A played session can still turn out never to have happened.
+  if (detail.state === "PLAYED") {
+    box.append(
+      action(
+        "Game was cancelled",
+        `Mark ${detail.title} as cancelled? Nobody will be down as having come, and nothing is posted.`,
+        () => api(`/api/sessions/${id}/cancel`, { method: "POST", body: JSON.stringify({ played: true }) }),
+        "danger",
+      ),
+    );
+    return box;
+  }
+  // Nothing left to do to a session that is already off.
+  if (detail.state === "CANCELLED") return box;
+
 
   if (detail.state !== "LOCKED") {
     box.append(
