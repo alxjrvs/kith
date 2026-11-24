@@ -383,3 +383,104 @@ describe("the approvals post's buttons", () => {
     expect(json.data.content).toMatch(/retired/);
   });
 });
+
+describe("asking the GM by DM", () => {
+  let closed = false;
+  beforeEach(async () => {
+    closed = false;
+    const inner = globalThis.fetch;
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (url.endsWith("/users/@me/channels")) {
+        const { recipient_id } = JSON.parse(String(init?.body)) as { recipient_id: string };
+        return Response.json({ id: `dm-${recipient_id}` });
+      }
+      if (closed && /\/channels\/dm-[^/]+\/messages$/.test(url)) {
+        return Response.json({ code: 50007, message: "Cannot send messages to this user" }, { status: 403 });
+      }
+      return inner(input, init);
+    }) as typeof fetch;
+    // Rowan runs Colossus.
+    await db(env)
+      .insert(schema.campaignMembers)
+      .values({ campaignId: "colossus", userId: "1003", role: "gm", joinedAt: 1 });
+  });
+
+  it("DMs the game's GM instead of posting in a channel, once", async () => {
+    await call("POST", "/api/hub/campaigns/colossus/signup", await as("2001"), { action: "in" });
+    await postAsk(env, "2001");
+    await postAsk(env, "2001");
+
+    expect(posted.map((p) => p.channel)).toEqual(["dm-1003"]);
+    expect(JSON.stringify(posted[0]!.body.components)).toContain("o1:door:in:2001");
+  });
+
+  it("DMs a game day's host", async () => {
+    await db(env).update(schema.gameDays).set({ hostUserId: "1001" }).where(eq(schema.gameDays.id, "arcs-afternoon"));
+    await call("POST", "/api/hub/game-days/arcs-afternoon/seat", await as("2001"), { action: "interested" });
+    await postAsk(env, "2001");
+
+    expect(posted.map((p) => p.channel)).toEqual(["dm-1001"]);
+  });
+
+  it("falls back to the approvals channel when the GM's DMs are closed", async () => {
+    closed = true;
+    await call("POST", "/api/hub/campaigns/colossus/signup", await as("2001"), { action: "in" });
+    await postAsk(env, "2001");
+
+    expect(posted.map((p) => p.channel)).toEqual(["staging-1"]);
+  });
+
+  it("takes the GM's answer from the DM, where Discord sends no roles", async () => {
+    await call("POST", "/api/hub/campaigns/colossus/signup", await as("2001"), { action: "in" });
+    const res = await app.fetch(
+      await discord.request({
+        type: InteractionType.MESSAGE_COMPONENT,
+        data: { custom_id: "o1:door:in:2001", component_type: 2 },
+        user: { id: "1003", username: "rowan", global_name: "Rowan" },
+        message: { id: "msg-1", channel_id: "dm-1003" },
+      }),
+      testEnv(),
+    );
+    const json = (await res.json()) as { type: number; data: { content: string } };
+    expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+    expect((await requestOf("2001"))?.decidedBy).toBe("1003");
+  });
+
+  it("refuses somebody who is neither the GM nor an organiser, in a DM", async () => {
+    await call("POST", "/api/hub/campaigns/colossus/signup", await as("2001"), { action: "in" });
+    const res = await app.fetch(
+      await discord.request({
+        type: InteractionType.MESSAGE_COMPONENT,
+        data: { custom_id: "o1:door:in:2001", component_type: 2 },
+        user: { id: "1001", username: "ada", global_name: "Ada" },
+        message: { id: "msg-1", channel_id: "dm-1001" },
+      }),
+      testEnv(),
+    );
+    const json = (await res.json()) as { data: { flags: number } };
+    expect(json.data.flags & MessageFlags.EPHEMERAL).toBeTruthy();
+    expect((await requestOf("2001"))?.state).toBe("pending");
+  });
+});
+
+it("shows a second decider what was already decided, rather than deciding again", async () => {
+  await call("POST", "/api/hub/campaigns/colossus/signup", await as("2001"), { action: "in" });
+  const tap = (arg: string, roles: string[]) =>
+    discord
+      .request({
+        type: InteractionType.MESSAGE_COMPONENT,
+        data: { custom_id: `o1:door:${arg}:2001`, component_type: 2 },
+        member: { user: { id: "1003", username: "rowan", global_name: "Rowan" }, roles },
+        guild_id: "g1",
+        message: { id: "msg-1", channel_id: "staging-1" },
+      })
+      .then((req) => app.fetch(req, testEnv()));
+  await tap("no", [ORGANISER_ROLE]);
+  const res = await tap("in", [ORGANISER_ROLE]);
+  const json = (await res.json()) as { type: number; data: { content: string } };
+
+  expect(json.type).toBe(InteractionResponseType.UPDATE_MESSAGE);
+  expect(json.data.content).toContain("Not this time");
+  expect((await requestOf("2001"))?.state).toBe("declined");
+});

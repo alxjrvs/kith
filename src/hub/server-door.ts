@@ -11,9 +11,12 @@ import {
   createInvite,
   getGuildMember,
   isMissingPermission,
+  isClosedDm,
   isUnknownMember,
+  openDm,
   postMessage,
 } from "../discord/rest.ts";
+import { gmOf } from "../campaigns/roster.ts";
 import { claim, record, recordFailure, release } from "../projection/publications.ts";
 import { leaveForming } from "../campaigns/forming-signup.ts";
 import { schedulingChannel } from "../projection/staging.ts";
@@ -451,22 +454,98 @@ export async function askPayload(env: Env, userId: string): Promise<MessagePaylo
 }
 
 /**
+ * Who answers for this person: the GM of each campaign they signed up for, and
+ * the host of each game day. Jrvs, 2026-11-24: admin asks such as letting
+ * somebody into the server go to the GM by DM, and the bot DMs nobody else.
+ */
+export async function decidersFor(env: Env, userId: string): Promise<string[]> {
+  const signups = await signupsOf(env, userId);
+  const ids = new Set<string>();
+  for (const signup of signups) {
+    if (signup.kind === "campaign") {
+      const gm = await gmOf(env, signup.id);
+      if (gm) ids.add(gm);
+    } else {
+      const day = await db(env)
+        .select({ host: schema.gameDays.hostUserId })
+        .from(schema.gameDays)
+        .where(eq(schema.gameDays.id, signup.id))
+        .get();
+      if (day?.host) ids.add(day.host);
+    }
+  }
+  ids.delete(userId);
+  return [...ids];
+}
+
+/**
+ * DM the ask to each decider, once each. Returns the first message id that
+ * went out, or undefined when nobody could be reached by DM (no GM, or their
+ * DMs are closed to the bot), in which case the approvals channel is asked.
+ */
+async function askByDm(
+  env: Env,
+  guildId: string,
+  userId: string,
+  payload: MessagePayload,
+): Promise<string | undefined> {
+  let first: string | undefined;
+  for (const decider of await decidersFor(env, userId)) {
+    const ref = {
+      surface: "discord",
+      kind: "message",
+      targetId: `server-request:${userId}`,
+      label: `ask:dm:${decider}`,
+    } as const;
+    const { mine, publication } = await claim(env, ref);
+    if (!mine) {
+      first ??= publication.remoteId ?? undefined;
+      continue;
+    }
+    try {
+      const id = await throughGovernor(env, guildId, async () => {
+        const dm = await openDm(env, decider);
+        return (await postMessage(env, dm.id, payload)).id;
+      });
+      await record(env, ref, id);
+      first ??= id;
+    } catch (error) {
+      // Closed DMs are an answer, not a blip: forget this one and let the
+      // channel ask stand in. Anything else lets go so the retry can try again.
+      await release(env, ref);
+      if (!isClosedDm(error)) throw error;
+    }
+  }
+  return first;
+}
+
+/**
  * The job: post the ask once. Somebody let in or turned away from the console
  * before it ran needs no post.
  */
 export async function postAsk(env: Env, userId: string): Promise<void> {
   const request = await requestOf(env, userId);
   if (!request || request.state !== "pending") return;
-  const channelId =
-    (await getSetting<string>(env, SETTING_KEYS.approvalsChannelId)) ??
-    (await getSetting<string>(env, SETTING_KEYS.stagingChannelId));
-  if (!channelId) throw new Error("no approvals channel or Staging channel is set");
   // A signup that didn't land (the table closed mid-click) leaves nothing to ask about.
   if ((await signupsOf(env, userId)).length === 0) return;
   const payload = await askPayload(env, userId);
   if (!payload) return;
   const guildId = await requireGuildId(env);
 
+  // The GM, by DM, first. The approvals channel only when no GM can be reached.
+  const dmId = await askByDm(env, guildId, userId, payload);
+  if (dmId) {
+    await db(env)
+      .update(schema.serverRequests)
+      .set({ discordMessageId: dmId, updatedAt: sql`(unixepoch())` })
+      .where(eq(schema.serverRequests.userId, userId));
+    return;
+  }
+
+  const channelId =
+    (await getSetting<string>(env, SETTING_KEYS.approvalsChannelId)) ??
+    (await getSetting<string>(env, SETTING_KEYS.stagingChannelId));
+  if (!channelId) throw new Error("no approvals channel or Staging channel is set");
   const ref = { surface: "discord", kind: "message", targetId: `server-request:${userId}`, label: "ask" } as const;
   const { mine } = await claim(env, ref, channelId);
   if (!mine) return;
