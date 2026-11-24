@@ -47,7 +47,7 @@ import { sessionDetail } from "../console/session-detail.ts";
 import { writeRecap } from "../logs/recap.ts";
 import { storedWatch } from "../google/watch.ts";
 import { armSync } from "../google/sync.ts";
-import { cancelSession, lockSession } from "../sessions/lifecycle.ts";
+import { cancelPlayed, cancelSession, lockSession } from "../sessions/lifecycle.ts";
 import { SETTING_DEFAULTS, SETTING_KEYS, settingOr } from "../db/settings.ts";
 import { openPollFromConsole } from "../console/polls.ts";
 import { InvalidCampaign, createCampaign, updateCampaign } from "../campaigns/write.ts";
@@ -486,6 +486,17 @@ export function createApp() {
 
   app.post("/api/sessions/:id/cancel", async (c) =>
     refusable(c, async () => {
+      // `{ played: true }` is "it never happened": a session already marked
+      // played that was in fact called off. No notice; the register is wiped.
+      const body = (await c.req.json().catch(() => ({}))) as { played?: boolean };
+      if (body.played === true) {
+        const after = await cancelPlayed(c.env, c.req.param("id"), c.get("userId"));
+        return after === "no-session"
+          ? c.json({ error: "Kith does not know that session." }, 404)
+          : after === "not-played"
+            ? c.json({ error: "That session hasn't been played." }, 400)
+            : c.json({ outcome: after });
+      }
       const outcome = await cancelSession(c.env, c.req.param("id"), c.get("userId"));
       return outcome === "no-session"
         ? c.json({ error: "Kith does not know that session." }, 404)

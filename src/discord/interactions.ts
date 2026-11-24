@@ -19,7 +19,8 @@ import {
   tablesPlayedFor,
 } from "../attendance/tables.ts";
 import { isGm } from "../campaigns/roster.ts";
-import { takesIntent } from "../sessions/lifecycle.ts";
+import { cancelPlayed, takesIntent } from "../sessions/lifecycle.ts";
+import { adminUser, runnerOf } from "./admin-dm.ts";
 import { loadProjectionTarget, sessionTitle } from "../projection/target.ts";
 import { loginLink } from "../console/link.ts";
 import { mayRecap, writeRecap } from "../logs/recap.ts";
@@ -490,9 +491,41 @@ async function handleComponent(
       return handleSuggest(interaction, env, id.target);
     case "gm":
       return handleGmCall(interaction, env, id.arg, id.target);
+    case "nogame":
+      return handleNoGame(interaction, env, id.target);
     case "door":
       return handleDoor(interaction, env, id.arg, id.target);
     default:
+      return retiredPost();
+  }
+}
+
+/**
+ * Game was cancelled, on the "Who came?" DM: the evening Kith marked played
+ * never ran. Whoever ran it (or Kith's admin) only. The DM is rewritten into
+ * what was done, and its buttons go with it.
+ */
+async function handleNoGame(interaction: Interaction, env: Env, sessionId: string | undefined): Promise<Json> {
+  if (!sessionId) return retiredPost();
+  const actor = actorOf(interaction);
+  if (!actor) return ephemeral("Kith could not tell who clicked that.");
+  const target = await loadProjectionTarget(env, sessionId);
+  if (!target) return retiredPost();
+
+  const runner = await runnerOf(env, { campaignId: target.session.campaignId, gameDayId: target.session.gameDayId });
+  const allowed = actor.id === runner || actor.id === (await adminUser(env));
+  if (!allowed) return ephemeral("Only whoever ran the session can say it didn't happen.");
+
+  await rememberUser(env, actor);
+  const title = `**${sessionTitle(target)}**`;
+  switch (await cancelPlayed(env, sessionId, actor.id)) {
+    case "cancelled":
+      return rewrite(`${title} is marked as cancelled. Nobody is down as having come, and its calendar entries are coming down.`);
+    case "already":
+      return rewrite(`${title} is already marked as cancelled.`);
+    case "not-played":
+      return ephemeral("That session hasn't been marked as played, so there's nothing to undo. Call it off from the console.");
+    case "no-session":
       return retiredPost();
   }
 }

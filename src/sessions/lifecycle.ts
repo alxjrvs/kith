@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { Env } from "../env.ts";
 import { db, schema } from "../db/index.ts";
 import { enqueueUnprojection } from "../projection/outbox.ts";
@@ -136,6 +136,43 @@ export async function postCancelledNotice(env: Env, sessionId: string): Promise<
   await postNoticeOnce(env, off, "cancelled", cancelledSessionNotice(off), {
     inChannel: off.campaign !== null && off.gameDay === null,
   });
+}
+
+/**
+ * It never happened, said after the fact: a session Kith marked PLAYED from
+ * what people said, which in fact was called off. The register Kith assumed
+ * is wiped (nobody attended an evening that didn't run), the calendar entries
+ * come down, and nothing is posted: the table already knows, and an "It's
+ * off" for last night would only confuse them.
+ */
+export async function cancelPlayed(
+  env: Env,
+  sessionId: string,
+  actor: string | null = null,
+): Promise<"cancelled" | "already" | "not-played" | "no-session"> {
+  const d = db(env);
+  const session = await d
+    .select({ state: schema.sessions.state })
+    .from(schema.sessions)
+    .where(eq(schema.sessions.id, sessionId))
+    .get();
+  if (!session) return "no-session";
+  if (session.state === "CANCELLED") return "already";
+  if (session.state !== "PLAYED") return "not-played";
+
+  await d.batch([
+    d
+      .update(schema.sessions)
+      .set({ state: "CANCELLED", updatedAt: sql`(unixepoch())` })
+      .where(and(eq(schema.sessions.id, sessionId), eq(schema.sessions.state, "PLAYED"))),
+    d
+      .update(schema.attendance)
+      .set({ attended: null, attendedSource: null })
+      .where(eq(schema.attendance.sessionId, sessionId)),
+    audit(d, actor, "session.cancel-after", sessionId, { before: "PLAYED", after: "CANCELLED" }),
+  ]);
+  await enqueueUnprojection(env, sessionId);
+  return "cancelled";
 }
 
 /** Whether a click may still change what somebody said. */

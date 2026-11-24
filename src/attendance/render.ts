@@ -709,9 +709,23 @@ export function afterRow(sessionId: string, tables: boolean): Record<string, unk
         label: "Recap",
         custom_id: encodeCustomId({ action: "recap", target: sessionId }),
       },
+      // The GM's own post (it goes to them by DM), so the GM's own answer: it
+      // never happened. A multi day's post is everybody's, and stays without it.
+      ...(tables
+        ? []
+        : [
+            {
+              type: ComponentType.BUTTON,
+              style: ButtonStyle.DANGER,
+              label: GAME_WAS_CANCELLED,
+              custom_id: encodeCustomId({ action: "nogame", target: sessionId }),
+            },
+          ]),
     ],
   };
 }
+
+export const GAME_WAS_CANCELLED = "Game was cancelled";
 
 /**
  * One button, and a chain that is ephemeral from there on.
