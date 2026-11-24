@@ -423,6 +423,15 @@ describe("asking the GM by DM", () => {
     expect(posted.map((p) => p.channel)).toEqual(["dm-1001"]);
   });
 
+  it("DMs Kith's admin when nobody runs what they signed up for", async () => {
+    await env.DB.prepare("DELETE FROM campaign_members").run();
+    await setSetting(env, SETTING_KEYS.adminUserId, "1001");
+    await call("POST", "/api/hub/campaigns/colossus/signup", await as("2001"), { action: "in" });
+    await postAsk(env, "2001");
+
+    expect(posted.map((p) => p.channel)).toEqual(["dm-1001"]);
+  });
+
   it("falls back to the approvals channel when the GM's DMs are closed", async () => {
     closed = true;
     await call("POST", "/api/hub/campaigns/colossus/signup", await as("2001"), { action: "in" });

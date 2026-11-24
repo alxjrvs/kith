@@ -7,6 +7,7 @@ import { createApp } from "../src/http/app.ts";
 import { SESSION_COOKIE, issueSession } from "../src/console/cookies.ts";
 import { forgetOrganisers } from "../src/http/hub.ts";
 import { STOP_SIGN_JOB, retryStopSign } from "../src/hub/safety.ts";
+import { drainJobs } from "../src/jobs/drain.ts";
 import { fakeDiscord } from "./discord.ts";
 
 /**
@@ -290,5 +291,60 @@ describe("the suggestion box", () => {
     const res = await call("GET", "/api/stop-signs", await as("1003"));
     const { stopSigns } = (await res.json()) as { stopSigns: Array<{ person: { name: string }; posted: boolean; emailed: boolean }> };
     expect(stopSigns).toEqual([expect.objectContaining({ person: expect.objectContaining({ name: "Ada" }), posted: true, emailed: true })]);
+  });
+});
+
+describe("the GM hears it by DM", () => {
+  let dms: string[] = [];
+  beforeEach(async () => {
+    dms = [];
+    await env.DB.prepare("DELETE FROM publications").run();
+    await env.DB.prepare("DELETE FROM campaign_members").run();
+    await db(env).insert(schema.campaignMembers).values({ campaignId: "umbra", userId: "1003", role: "gm", joinedAt: 1 });
+    const inner = globalThis.fetch;
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (url.endsWith("/users/@me/channels")) {
+        const { recipient_id } = JSON.parse(String(init?.body)) as { recipient_id: string };
+        dms.push(recipient_id);
+        return Response.json({ id: `dm-${recipient_id}` });
+      }
+      return inner(input, init);
+    }) as typeof fetch;
+  });
+
+  it("gets the stop sign in a DM as well as the channel's alert, once", async () => {
+    await call("POST", "/api/hub/homes/umbra/stop", await as("1001"), {});
+    await call("POST", "/api/hub/homes/umbra/stop", await as("1001"), {});
+
+    expect(dms).toEqual(["1003"]);
+    const dm = posted.filter((p) => p.channel === "dm-1003");
+    expect(dm).toHaveLength(1);
+    expect(dm[0]!.body.content).toContain("Stop sign, The Age of Umbra");
+    // The table's alert is where it always was.
+    expect(posted.some((p) => p.channel === "umbra-chan")).toBe(true);
+  });
+
+  it("gets a suggestion by DM on the next drain, keeping an anonymous one anonymous", async () => {
+    await call("POST", "/api/hub/homes/umbra/suggestions", await as("1001"), {
+      body: "More downtime scenes",
+      anonymous: true,
+    });
+    await drainJobs(testEnv());
+
+    const dm = posted.filter((p) => p.channel === "dm-1003");
+    expect(dm).toHaveLength(1);
+    expect(dm[0]!.body.content).toContain("More downtime scenes");
+    expect(dm[0]!.body.content).toContain("anonymously");
+    expect(dm[0]!.body.content).not.toContain("Ada");
+  });
+
+  it("sends a board game's suggestion to Kith's admin", async () => {
+    await setSetting(env, SETTING_KEYS.adminUserId, "1003");
+    await call("POST", "/api/hub/homes/arcs/suggestions", await as("1001"), { body: "Try the campaign mode", anonymous: false });
+    await drainJobs(testEnv());
+
+    expect(dms).toEqual(["1003"]);
+    expect(posted.find((p) => p.channel === "dm-1003")?.body.content).toContain("Ada left this");
   });
 });

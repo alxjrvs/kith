@@ -12,6 +12,7 @@ import { loadProjectionTarget, sessionTitle, type ProjectionTarget } from "../pr
 import { attendanceRows } from "../attendance/rows.ts";
 import { quorumOf } from "../attendance/quorum.ts";
 import { gmOf } from "../campaigns/roster.ts";
+import { adminUser } from "../discord/admin-dm.ts";
 import { rearm } from "../jobs/arm.ts";
 import { RESCHEDULE_JOB, proposalsFor } from "../polls/reschedule.ts";
 import { cancelSession } from "./lifecycle.ts";
@@ -115,7 +116,8 @@ export async function askTheGm(env: Env, sessionId: string, by?: string): Promis
   const { mine } = await claim(env, ref);
   if (!mine) return "already-asked";
 
-  const gm = await gmOf(env, target.campaign.id);
+  // The GM, or Kith's admin for a campaign with no GM on its roster.
+  const gm = (await gmOf(env, target.campaign.id)) ?? (await adminUser(env));
   if (!gm) return pollWithoutAsking(env, ref, sessionId, by ?? verdict.vetoes[0], "no-gm");
 
   const out = new Set(verdict.vetoes);
@@ -275,7 +277,8 @@ export async function decide(
 ): Promise<DecisionResult> {
   const target = await loadProjectionTarget(env, sessionId);
   if (!target?.campaign) return { outcome: "gone" };
-  if ((await gmOf(env, target.campaign.id)) !== actorId) return { outcome: "not-gm" };
+  const answers = [await gmOf(env, target.campaign.id), await adminUser(env)];
+  if (!answers.includes(actorId)) return { outcome: "not-gm" };
 
   const { session } = target;
   if (session.state === "CANCELLED") return { outcome: "already-off" };

@@ -7,6 +7,7 @@ import { asDiscordFailure, postMessage } from "../discord/rest.ts";
 import { escapeMarkdown } from "../discord/markdown.ts";
 import { schedulingChannel } from "../projection/staging.ts";
 import { rearmStatement } from "../jobs/arm.ts";
+import { adminUser, dmOnce, runnerOf } from "../discord/admin-dm.ts";
 import { catalog } from "./catalog.ts";
 import { listingFor } from "./listings.ts";
 import { personFrom, type Person } from "./people.ts";
@@ -228,6 +229,36 @@ export async function deliverStopSign(env: Env, id: string): Promise<StopSignOut
     }
   }
 
+  // And the GM hears it by DM, straight away. Best effort and once: it is a
+  // copy of what the channel and the email already say, so a failure here is
+  // noted on the row but never holds the press up.
+  if (age <= EMAIL_WITHIN_SECONDS) {
+    try {
+      const to =
+        (row.gameKind === "campaign" ? await runnerOf(env, { campaignId: row.gameId }) : undefined) ??
+        (await adminUser(env));
+      if (to && to !== row.userId) {
+        await dmOnce(env, {
+          to,
+          targetId: `stop-sign:${id}`,
+          label: "dm",
+          payload: {
+            content: [
+              `🛑 **Stop sign, ${escapeMarkdown(game.name)}.** ${escapeMarkdown(who)}${escapeMarkdown(handle)} pressed it.`,
+              posted || unconfirmed ? "The alert is up in the game's channel." : "Kith is still trying to post the alert in the game's channel.",
+              "",
+              `-# ${SITE}/games/${encodeURIComponent(row.gameId)}`,
+            ].join("\n"),
+            components: [],
+            allowed_mentions: { parse: [], roles: [] },
+          },
+        });
+      }
+    } catch (error) {
+      errors.push(`DM: ${String(error)}`);
+    }
+  }
+
   await d
     .update(schema.stopSigns)
     .set({ lastError: errors.length ? errors.join("\n") : null })
@@ -300,17 +331,56 @@ export async function leaveSuggestion(
 ): Promise<{ id: string }> {
   const now = Math.floor(Date.now() / 1000);
   const id = crypto.randomUUID();
-  await db(env)
-    .insert(schema.suggestions)
-    .values({
+  const d = db(env);
+  await d.batch([
+    d.insert(schema.suggestions).values({
       id,
       gameKind: game.kind,
       gameId: game.id,
       authorUserId: anonymous ? null : userId,
       body,
       createdAt: anonymous ? now - (now % 86_400) : now,
-    });
+    }),
+    // The GM hears about it by DM, on the next drain.
+    rearmStatement(d, [{ id: `${SUGGESTION_JOB}:${id}`, kind: SUGGESTION_JOB, payload: { suggestionId: id }, runAt: now }]),
+  ]);
   return { id };
+}
+
+export const SUGGESTION_JOB = "suggestion.notify";
+
+/**
+ * Tell whoever runs the game about a new suggestion, by DM: the campaign's GM,
+ * or Kith's admin for a board game. Anonymous stays anonymous. Nobody to tell,
+ * or DMs closed, leaves it in the console's suggestion box, where it always is.
+ */
+export async function notifySuggestion(env: Env, id: string): Promise<void> {
+  const row = await db(env).select().from(schema.suggestions).where(eq(schema.suggestions.id, id)).get();
+  if (!row) return;
+  const to =
+    (row.gameKind === "campaign" ? await runnerOf(env, { campaignId: row.gameId }) : undefined) ?? (await adminUser(env));
+  if (!to) return;
+  const { name } = await gameNamed(env, row.gameKind, row.gameId);
+  const author = row.authorUserId
+    ? await db(env).select().from(schema.users).where(eq(schema.users.discordId, row.authorUserId)).get()
+    : undefined;
+  const from = author ? escapeMarkdown(author.globalName ?? author.username ?? "Somebody") : "Somebody, anonymously,";
+  const quoted = row.body
+    .split("\n")
+    .map((line) => `> ${escapeMarkdown(line)}`)
+    .join("\n");
+  await dmOnce(env, {
+    to,
+    targetId: `suggestion:${id}`,
+    label: "dm",
+    payload: {
+      content: [`**Suggestion box, ${escapeMarkdown(name)}.** ${from} left this:`, quoted, "", `-# All of them: ${SITE}/console`]
+        .join("\n")
+        .slice(0, 2000),
+      components: [],
+      allowed_mentions: { parse: [], roles: [] },
+    },
+  });
 }
 
 // ---------------------------------------------------------------------------

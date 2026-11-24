@@ -115,8 +115,10 @@ describe("the post", () => {
 
     await drainJobs(env);
 
+    // The register is the GM's alone, so it goes to them by DM.
+    expect(posts[0]).toMatchObject({ path: "/users/@me/channels", body: { recipient_id: GM } });
     const post = posts.at(-1)!;
-    expect(post.path).toBe("/channels/thread-1/messages");
+    expect(post.path).toBe("/channels/msg-1/messages");
     expect(post.body.content).toContain("Who came?");
     // Three of three: the campaign has a roster and no quorum, so the evening ran
     // under the veto rule, and `p-2` saying nothing was the rule's own yes rather
@@ -152,7 +154,26 @@ describe("the post", () => {
     await armAssume(env, SESSION_ID, Math.floor(Date.now() / 1000) - 60);
     await drainJobs(env);
 
-    expect(posts).toHaveLength(1);
+    // Opening the DM, and the one message in it.
+    expect(posts.map((p) => p.path)).toEqual(["/users/@me/channels", "/channels/msg-1/messages"]);
+  });
+
+  it("goes in the thread instead when the GM's DMs are closed", async () => {
+    await member(GM, "gm", "in");
+    const healthy = globalThis.fetch;
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
+      if (url.pathname.endsWith("/channels/msg-1/messages")) {
+        posts.push({ path: "refused", body: {} });
+        return Response.json({ code: 50007, message: "Cannot send messages to this user" }, { status: 403 });
+      }
+      return healthy(input, init);
+    }) as typeof fetch;
+    await armAssume(env, SESSION_ID, Math.floor(Date.now() / 1000) - 60);
+    await drainJobs(env);
+
+    expect(posts.at(-1)?.path).toBe("/channels/thread-1/messages");
+    expect(String(posts.at(-1)?.body.content)).toContain("Who came?");
   });
 });
 
@@ -317,7 +338,7 @@ describe("a post Discord refused", () => {
       const url = new URL(
         typeof input === "string" ? input : input instanceof URL ? input.href : input.url,
       );
-      if (url.pathname.endsWith("/channels/thread-1/messages")) {
+      if (/\/channels\/(thread-1|msg-\d+)\/messages$/.test(url.pathname)) {
         return Response.json({ code: 50001, message: "Missing Access" }, { status: 403 });
       }
       return healthy(input, init);
@@ -343,7 +364,7 @@ describe("a post Discord refused", () => {
     // could never correct — assumed for everybody, with no post to flip anyone
     // on. The claim in postNoticeOnce is what makes the post once.
     const post = posts.at(-1);
-    expect(post?.path).toBe("/channels/thread-1/messages");
+    expect(post?.path).toMatch(/^\/channels\/msg-\d+\/messages$/);
     expect(String(post?.body.content)).toContain("Who came?");
   });
 

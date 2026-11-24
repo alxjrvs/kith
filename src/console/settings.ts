@@ -83,6 +83,14 @@ const FIELDS: Omit<SettingField, "value" | "fallback">[] = [
     writable: true,
   },
   {
+    key: SETTING_KEYS.adminUserId,
+    label: "Admin (Discord user id)",
+    kind: "text",
+    help: "Who Kith DMs about admin that has no GM or host to go to, such as a board game's suggestions. Everything else goes to the game's GM by DM.",
+    caveat: "Blank uses the approvals channel for those instead.",
+    writable: true,
+  },
+  {
     key: SETTING_KEYS.inviteChannelId,
     label: "Invite channel",
     kind: "text",
