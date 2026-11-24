@@ -123,7 +123,7 @@ describe("the reminder once people answer", () => {
       (row as { components: { label: string }[] }).components.map((b) => b.label),
     );
 
-  it("reads CANCELLED once somebody on the roster can't make it", async () => {
+  it("reads ON HOLD once somebody on the roster can't make it, until the GM decides", async () => {
     await seed(Date.parse("2026-11-23T01:30:00Z") / 1000);
     const target = (await loadProjectionTarget(env, SESSION_ID))!;
     const rows: AttendanceRow[] = [
@@ -132,9 +132,9 @@ describe("the reminder once people answer", () => {
     ];
     const payload = renderAttendancePost({ target, rows, asOf });
 
-    expect(payload.content.split("\n")[0]).toBe("**CANCELLED** <@&umbra-role> **Age of Umbra — Session 12**");
+    expect(payload.content.split("\n")[0]).toBe("**ON HOLD** <@&umbra-role> **Age of Umbra — Session 12**");
     expect(payload.content).toContain("**Can't make it (1)** — Bob");
-    expect(payload.content).toContain("another date");
+    expect(payload.content).toContain("on hold while the GM decides");
     // Bob can still take it back.
     expect(labels(payload)).toEqual(["Hell yeah", "I can't make it"]);
   });

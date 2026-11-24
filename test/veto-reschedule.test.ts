@@ -14,6 +14,7 @@ import {
   openRescheduleFor,
   proposalsFor,
 } from "../src/polls/reschedule.ts";
+import { GM_ASK_JOB, decide as gmDecides } from "../src/sessions/gm-call.ts";
 
 /**
  * What happens when one person cannot make it (#173).
@@ -96,6 +97,22 @@ async function roster(gm: string, players: string[]) {
 }
 
 const actor = (id: string) => ({ id, username: `u${id}`, global_name: null });
+
+function gmAskJob() {
+  return db(env)
+    .select()
+    .from(schema.jobs)
+    .where(eq(schema.jobs.id, `${GM_ASK_JOB}:${SESSION_ID}`))
+    .get();
+}
+
+/** The GM, asked by DM, taps Find another date; the drain then opens the poll. */
+async function gmMoves() {
+  expect(
+    await gmDecides(env, { sessionId: SESSION_ID, choice: "move", startsAt: STARTS_AT, actorId: "gm-1" }),
+  ).toEqual({ outcome: "moving" });
+  await drainJobs(env);
+}
 
 beforeEach(async () => {
   posted = [];
@@ -197,15 +214,17 @@ describe("the click that vetoes", () => {
     await roster("gm-1", ["p-1", "p-2"]);
   });
 
-  it("marks the session and arms the reschedule in one go", async () => {
+  it("marks the session and arms the GM's question in one go, and nothing else", async () => {
     await lock().setIntent({ sessionId: SESSION_ID, actor: actor("p-1"), intent: "out" });
 
     expect(await stateOf()).toBe("JEOPARDY");
-    expect(await rescheduleJob()).toMatchObject({
-      kind: RESCHEDULE_JOB,
+    expect(await gmAskJob()).toMatchObject({
+      kind: GM_ASK_JOB,
       state: "pending",
       payload: { sessionId: SESSION_ID, by: "p-1" },
     });
+    // The poll waits for the GM.
+    expect(await rescheduleJob()).toBeUndefined();
   });
 
   it("writes down whose decision it was", async () => {
@@ -263,7 +282,7 @@ describe("the click that vetoes", () => {
     // `moveSession` changes the date and not the state, so a session that has been
     // rescheduled once is still JEOPARDY. Refusing here would give a campaign
     // exactly one reschedule, ever.
-    expect(await rescheduleJob()).toBeDefined();
+    expect(await gmAskJob()).toBeDefined();
   });
 });
 
@@ -275,6 +294,7 @@ describe("the poll it opens", () => {
   async function veto(by = "p-1") {
     await lock().setIntent({ sessionId: SESSION_ID, actor: actor(by), intent: "out" });
     await drainJobs(env);
+    await gmMoves();
   }
 
   it("asks the session's own table, on the days around the one that fell through", async () => {
@@ -435,6 +455,7 @@ describe("the second look, and the ones after it", () => {
   it("opens one poll however many clicks land on a vetoed session", async () => {
     await lock().setIntent({ sessionId: SESSION_ID, actor: actor("p-1"), intent: "out" });
     await drainJobs(env);
+    await gmMoves();
     await lock().readIntents(SESSION_ID);
     await lock().setIntent({ sessionId: SESSION_ID, actor: actor("p-2"), intent: "out" });
     await drainJobs(env);
@@ -468,6 +489,7 @@ describe("the second look, and the ones after it", () => {
   it("leaves it marked once the question is out in the channel", async () => {
     await lock().setIntent({ sessionId: SESSION_ID, actor: actor("p-1"), intent: "out" });
     await drainJobs(env);
+    await gmMoves();
 
     await lock().setIntent({ sessionId: SESSION_ID, actor: actor("p-1"), intent: "in" });
 
@@ -506,6 +528,7 @@ describe("the second look, and the ones after it", () => {
   it("still posts the notice on a retry once the poll is open", async () => {
     await lock().setIntent({ sessionId: SESSION_ID, actor: actor("p-1"), intent: "out" });
     await drainJobs(env);
+    await gmMoves();
 
     // Discord refused the notice with a 4xx, so `postNoticeOnce` released its
     // claim precisely so a retry could make it. The retry used to return on

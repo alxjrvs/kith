@@ -5,6 +5,8 @@ import type { ProjectionTarget } from "../projection/target.ts";
 import type { MessagePayload } from "./render.ts";
 import { destinationFor, postToSession } from "./thread.ts";
 import { requireGuildId } from "../db/settings.ts";
+import { throughGovernor } from "../discord/governor.ts";
+import { postMessage } from "../discord/rest.ts";
 
 /**
  * A notice: a new message in the session's thread, sent once and never touched.
@@ -24,6 +26,13 @@ export async function postNoticeOnce(
   target: ProjectionTarget,
   label: string,
   payload: MessagePayload,
+  /**
+   * In the campaign's own channel rather than the session's thread: for news
+   * the whole table needs to see, such as an evening being called off. Never
+   * the server-wide scheduling channel; a campaign with no channel of its own
+   * gets the thread, as before.
+   */
+  { inChannel = false }: { inChannel?: boolean } = {},
 ): Promise<string | undefined> {
   const ref = {
     surface: "discord",
@@ -39,11 +48,12 @@ export async function postNoticeOnce(
    * this notice for good, with no Discord call ever made and nothing to show for
    * it. `recordFailure` keeps the claim on exactly that kind of throw.
    */
-  const destination = await destinationFor(env, target);
+  const ownChannel = inChannel ? (target.campaign?.discordChannelId ?? undefined) : undefined;
+  const destination = ownChannel ?? (await destinationFor(env, target));
   // No destination at all: nothing can be posted, and taking a claim to say so
   // would block the attempt that comes after somebody makes the thread.
   if (!destination) return undefined;
-  await requireGuildId(env);
+  const guildId = await requireGuildId(env);
 
   const { mine, publication } = await claim(env, ref);
   // Somebody already posted it, or tried to. Either way this is not the caller
@@ -53,7 +63,9 @@ export async function postNoticeOnce(
 
   let messageId: string | undefined;
   try {
-    messageId = await postToSession(env, target, payload);
+    messageId = ownChannel
+      ? (await throughGovernor(env, guildId, () => postMessage(env, ownChannel, payload))).id
+      : await postToSession(env, target, payload);
   } catch (error) {
     // A 4xx is Discord refusing, so nothing went up and the claim is in the way
     // of a retry that should be allowed. Anything else — a 5xx, a network error

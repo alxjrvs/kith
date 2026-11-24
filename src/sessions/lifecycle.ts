@@ -62,7 +62,7 @@ export async function lockSession(
  *
  * Three things, and the order is the usual one: D1 first because it is the
  * source of truth; then the deletes, which are queue messages rather than calls;
- * then the notice, as a **new message in the thread**.
+ * then the notice, as a **new message** (`postCancelledNotice` says where).
  *
  * The deletes are not gated on the session still being projectable. `project`'s
  * retract branch is deliberately ungated for exactly this, and gating them would
@@ -74,10 +74,14 @@ export async function lockSession(
  * the bump for free the moment both roots are in `main`. A handler that
  * incremented a sequence itself would be the second place that does.
  */
+export const CANCELLED_NOTICE_JOB = "session.cancelled-notice";
+
 export async function cancelSession(
   env: Env,
   sessionId: string,
   actor: string | null = null,
+  /** Post the notice from the next drain, for a caller inside a click's three seconds. */
+  { noticeLater = false }: { noticeLater?: boolean } = {},
 ): Promise<SessionAction> {
   const target = await loadProjectionTarget(env, sessionId);
   if (!target) return "no-session";
@@ -97,15 +101,41 @@ export async function cancelSession(
 
   await enqueueUnprojection(env, sessionId);
 
+  if (noticeLater) {
+    await d
+      .insert(schema.jobs)
+      .values({
+        id: `${CANCELLED_NOTICE_JOB}:${sessionId}`,
+        kind: CANCELLED_NOTICE_JOB,
+        payload: { sessionId },
+        idempotencyKey: `${CANCELLED_NOTICE_JOB}:${sessionId}`,
+        runAt: sql`(unixepoch())`,
+      })
+      .onConflictDoNothing();
+    return "cancelled";
+  }
+
+  await postCancelledNotice(env, sessionId);
+  return "cancelled";
+}
+
+/**
+ * The "It's off" note. A running campaign's evening is news for the whole
+ * table, so it goes in the campaign's own scheduling channel rather than down
+ * in the thread (never the server-wide one). A game day's lives in the day's
+ * thread, where its signups are.
+ */
+export async function postCancelledNotice(env: Env, sessionId: string): Promise<void> {
   // Re-read: the notice says the session is off, and it should be rendering the
   // row that says so rather than the one from before the write.
-  const off = (await loadProjectionTarget(env, sessionId)) ?? target;
+  const off = await loadProjectionTarget(env, sessionId);
+  if (!off || off.session.state !== "CANCELLED") return;
   // A new message, claimed under its own label so a second cancel posts nothing.
   // Nothing in this path edits the attendance post — it renders from D1, so the
   // next click on it shows the new state on its own.
-  await postNoticeOnce(env, off, "cancelled", cancelledSessionNotice(off));
-
-  return "cancelled";
+  await postNoticeOnce(env, off, "cancelled", cancelledSessionNotice(off), {
+    inChannel: off.campaign !== null && off.gameDay === null,
+  });
 }
 
 /** Whether a click may still change what somebody said. */

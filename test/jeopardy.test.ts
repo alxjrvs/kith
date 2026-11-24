@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { db, schema } from "../src/db/index.ts";
 import { SETTING_KEYS, setSetting } from "../src/db/settings.ts";
 import { seedStatements } from "../src/db/seed-sql.ts";
+import { decide as gmDecides } from "../src/sessions/gm-call.ts";
 import { drainJobs } from "../src/jobs/drain.ts";
 import { loadProjectionTarget } from "../src/projection/target.ts";
 import { armJeopardyCheck, checkJeopardy } from "../src/attendance/jeopardy.ts";
@@ -246,6 +247,8 @@ describe("what the check writes", () => {
 
     await armJeopardyCheck(env, SESSION_ID, Math.floor(Date.now() / 1000) + 3600);
     await drainJobs(env);
+    // The check asks the GM, and the next drain sends the DM.
+    await drainJobs(env);
     const first = posted.length;
 
     // The evening moves, and the new date does not work either. A session-scoped
@@ -257,6 +260,7 @@ describe("what the check writes", () => {
       .set({ startsAt: moved, endsAt: moved + 4 * 3600, state: "SCHEDULED" })
       .where(eq(schema.sessions.id, SESSION_ID));
     await armJeopardyCheck(env, SESSION_ID, Math.floor(Date.now() / 1000) + 3600);
+    await drainJobs(env);
     await drainJobs(env);
 
     expect(first).toBeGreaterThan(0);
@@ -512,12 +516,31 @@ describe("the notice, once there is a roster", () => {
   });
 
   async function noticeAfterVeto(by = "p-1") {
+    // Ahead of the real clock, so the date poll the GM chooses has days to offer.
+    const startsAt = Math.floor(Date.now() / 1000) + 10 * 86_400;
+    await db(env)
+      .update(schema.sessions)
+      .set({ startsAt, endsAt: startsAt + 4 * 3600 })
+      .where(eq(schema.sessions.id, SESSION_ID));
     await db(env)
       .insert(schema.attendance)
       .values({ sessionId: SESSION_ID, userId: by, intent: "out" });
     await armJeopardyCheck(env, SESSION_ID, Math.floor(Date.now() / 1000) + 3600);
     await drainJobs(env);
-    return posted.at(-1)!;
+    await drainJobs(env);
+    // Nothing reaches the table until the GM, asked by DM, chooses another date.
+    await gmDecides(env, {
+      sessionId: SESSION_ID,
+      choice: "move",
+      startsAt,
+      actorId: "gm-1",
+    });
+    await drainJobs(env);
+    await drainJobs(env);
+    return (
+      posted.find((call) => String((call.body as { content?: string }).content ?? "").includes("has to move")) ??
+      posted.at(-1)!
+    );
   }
 
   it("says the evening has to move, and names who cannot make it", async () => {
@@ -556,10 +579,17 @@ describe("the notice, once there is a roster", () => {
     expect(rows[0]?.components?.[0]?.custom_id).toContain("suggest");
   });
 
-  it("goes out for a session the clock finds vetoed, not only a clicked one", async () => {
+  it("asks the GM about a session the clock finds vetoed, and tells the table nothing yet", async () => {
     // The whole reason the check still runs the veto rule: an `out` can reach D1
     // from the console, and somebody can be added to a roster after the post went
     // up. Neither of those is a click on the post.
-    expect((await noticeAfterVeto()).path).toContain("/messages");
+    await db(env)
+      .insert(schema.attendance)
+      .values({ sessionId: SESSION_ID, userId: "p-1", intent: "out" });
+    await armJeopardyCheck(env, SESSION_ID, Math.floor(Date.now() / 1000) + 3600);
+    await drainJobs(env);
+    await drainJobs(env);
+
+    expect(posted.map((call) => call.path)).toEqual(["/users/@me/channels", "/channels/msg-1/messages"]);
   });
 });
