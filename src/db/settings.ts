@@ -25,6 +25,12 @@ export const SETTING_KEYS = {
    */
   approvalsChannelId: "discord.approvals_channel_id",
   /**
+   * The Discord user id of whoever runs Kith. Admin asks go to a game's GM (or
+   * a day's host) by DM; this person gets the ones that have nobody else, such
+   * as a board game's suggestion box. Unset falls back to the approvals channel.
+   */
+  adminUserId: "discord.admin_user_id",
+  /**
    * The channel an invite opens on. Unset uses the scheduling channel. The bot
    * needs Create Invite there.
    */

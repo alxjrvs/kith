@@ -35,8 +35,9 @@ import {
 } from "../game-days/lifecycle.ts";
 import { postDayNoticeOnce, promotedNotice } from "../game-days/notice.ts";
 import { loadProjectionTarget } from "../projection/target.ts";
+import { dmOnce, runnerOf } from "../discord/admin-dm.ts";
 import { ASK_JOB, CHECK_JOB, atTheDoor, postAsk } from "../hub/server-door.ts";
-import { STOP_SIGN_JOB, retryStopSign } from "../hub/safety.ts";
+import { STOP_SIGN_JOB, SUGGESTION_JOB, notifySuggestion, retryStopSign } from "../hub/safety.ts";
 
 const CLAIM_SECONDS = 60;
 const BATCH = 25;
@@ -360,17 +361,33 @@ async function runJob(job: typeof schema.jobs.$inferSelect, env: Env): Promise<v
 
       // Re-read rather than rendering `assumed`: an organiser who corrected a
       // row before this ran keeps their answer, and the post has to show it.
-      await postNoticeOnce(
-        env,
-        target,
-        "correction",
-        correctionPost(target, await registerRows(env, sessionId), new Date(), {
-          // The button is a multi day's alone. A campaign session and a single
-          // day both play one thing, and asking what somebody played would be a
-          // question with one answer.
-          multiDay: await isMultiDaySession(env, sessionId),
-        }),
-      );
+      // The button is a multi day's alone. A campaign session and a single
+      // day both play one thing, and asking what somebody played would be a
+      // question with one answer.
+      const multiDay = await isMultiDaySession(env, sessionId);
+      const correction = correctionPost(target, await registerRows(env, sessionId), new Date(), { multiDay });
+
+      // The register and the recap are the GM's (or host's) alone, so they go
+      // to them by DM. A multi day keeps the post in its thread, because its
+      // Tables played button is for everybody who sat down. A runner whose DMs
+      // are closed, or no runner at all, gets the thread as before.
+      if (!multiDay) {
+        const runner = await runnerOf(env, {
+          campaignId: target.session.campaignId,
+          gameDayId: target.session.gameDayId,
+        });
+        if (runner) {
+          const sent = await dmOnce(env, {
+            to: runner,
+            targetId: sessionId,
+            label: "correction:dm",
+            payload: correction,
+          });
+          if (sent.outcome !== "closed") return;
+        }
+      }
+
+      await postNoticeOnce(env, target, "correction", correction);
       return;
     }
 
@@ -519,6 +536,13 @@ async function runJob(job: typeof schema.jobs.$inferSelect, env: Env): Promise<v
     }
 
     /** A stop sign whose alert or email didn't go when it was pressed. */
+    case SUGGESTION_JOB: {
+      const { suggestionId } = job.payload as { suggestionId?: string };
+      if (!suggestionId) throw new Error(`${SUGGESTION_JOB} job ${job.id} has no suggestionId`);
+      await notifySuggestion(env, suggestionId);
+      return;
+    }
+
     case STOP_SIGN_JOB: {
       const { stopSignId } = job.payload as { stopSignId?: string };
       if (!stopSignId) throw new Error(`${STOP_SIGN_JOB} job ${job.id} has no stopSignId`);

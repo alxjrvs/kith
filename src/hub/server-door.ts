@@ -17,6 +17,7 @@ import {
   postMessage,
 } from "../discord/rest.ts";
 import { gmOf } from "../campaigns/roster.ts";
+import { adminUser } from "../discord/admin-dm.ts";
 import { claim, record, recordFailure, release } from "../projection/publications.ts";
 import { leaveForming } from "../campaigns/forming-signup.ts";
 import { schedulingChannel } from "../projection/staging.ts";
@@ -473,6 +474,11 @@ export async function decidersFor(env: Env, userId: string): Promise<string[]> {
         .get();
       if (day?.host) ids.add(day.host);
     }
+  }
+  // Nobody runs what they signed up for: Kith's admin, when Settings names one.
+  if (ids.size === 0) {
+    const admin = await adminUser(env);
+    if (admin) ids.add(admin);
   }
   ids.delete(userId);
   return [...ids];

@@ -32,6 +32,11 @@ rules that are easy to violate by accident.
   forming campaign, a game day. `campaigns.quorum` is the opt-out and the only one,
   and which rule applies is derived in `src/attendance/quorum.ts` rather than stored.
   Nothing else may decide it a second way.
+- **Admin goes by DM; players read the channel.** Anything only whoever runs a game acts
+  on (the can't-make-it call, letting somebody in, the register and recap, a stop sign
+  or suggestion for them) is DMed to that person: the campaign's GM, the day's host, or
+  the admin in Settings (`src/discord/admin-dm.ts`). The bot DMs nobody else. Closed
+  DMs fall back to the approvals channel or the thread, never in front of the table.
 - **Never write to the user's Social calendar.** Kith writes only to the Kith calendar.
 - **Test games never reach prod.** A campaign or game marked `staging` posts only to the
   Staging channels, stays off Google and server-wide events, and is organisers-only on the

@@ -209,6 +209,15 @@ describe("asking the GM", () => {
     expect(posted.filter((call) => call.path === "/channels/dm-chan/messages")).toHaveLength(1);
   });
 
+  it("asks Kith's admin for a campaign with no GM", async () => {
+    await db(env).delete(schema.campaignMembers).where(eq(schema.campaignMembers.userId, "gm-1"));
+    await setSetting(env, SETTING_KEYS.adminUserId, "p-2");
+    await vetoAndAsk();
+
+    expect(posted[0]?.body).toEqual({ recipient_id: "p-2" });
+    expect((await tap("move", "p-2")).data.content).toContain("Finding another date");
+  });
+
   it("falls back to a date poll for a campaign with no GM", async () => {
     await db(env).delete(schema.campaignMembers).where(eq(schema.campaignMembers.userId, "gm-1"));
     await vetoAndAsk();
